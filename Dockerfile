@@ -7,8 +7,9 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libgmp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install mysqli pdo pdo_mysql gd zip \
+    && docker-php-ext-install mysqli pdo pdo_mysql gd zip bcmath gmp \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && a2enmod rewrite \

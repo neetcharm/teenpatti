@@ -18,7 +18,7 @@ Connect to your VPS via SSH and install Docker:
 sudo apt update && sudo apt upgrade -y
 
 # Install Docker & Compose
-sudo apt install -y docker.io docker-compose nginx certbot python3-certbot-nginx
+sudo apt install -y docker.io docker-compose-plugin nginx certbot python3-certbot-nginx
 
 # Install Portainer (GUI for Docker)
 sudo docker volume create portainer_data
@@ -66,7 +66,7 @@ sudo docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/do
 
 ```bash
 # Build and start in detached mode
-docker-compose up -d --build
+docker compose up -d --build
 
 # Import your latest backup
 docker exec -i games_db mysql -u root -p'TikkiX_P9wR2mK_Secure_2026!#' games < install/backup_2026-04-21_01-24.sql
