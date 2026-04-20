@@ -54,7 +54,7 @@ sudo docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/do
    - `APP_DEBUG=false`
    - `APP_URL=https://game.tikkix.com`
    - `DB_HOST=games`
-   - `DB_PASSWORD=TikkiX_P9wR2mK_Secure_2026!#`
+   - `DB_PASSWORD="TikkiX_P9wR2mK_Secure_2026!#"`
    - `DB_DATABASE=games`
 
 3. **Update docker-compose.yml**:
@@ -69,7 +69,10 @@ sudo docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/do
 docker-compose up -d --build
 
 # Import your latest backup
-docker exec -i games_db mysql -u root -pTikkiX_P9wR2mK_Secure_2026!# games < install/backup_2026-04-21_01-24.sql
+docker exec -i games_db mysql -u root -p'TikkiX_P9wR2mK_Secure_2026!#' games < install/backup_2026-04-21_01-24.sql
+
+# Install PHP dependencies
+docker exec -it teenpatti_app composer install --no-dev --working-dir=core
 
 # Run migrations to ensure latest schema
 docker exec -it teenpatti_app php core/artisan migrate --force
