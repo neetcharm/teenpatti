@@ -1,0 +1,32 @@
+/core/storage/*.key
+/core/storage/framework/cache/data/*
+/core/storage/framework/sessions/*
+/core/storage/framework/views/*.php
+/core/storage/logs/*.log
+/core/vendor/
+/node_modules/
+core/.env
+.env
+.env.backup
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+/.idea
+/.vscode
+
+# Deploy logs
+/tools/deploy_debug.log
+/tools/*.log
+
+# Temp files
+/latest_error.txt
+/readlog.txt
+/db_output.txt
+/fix_db*.php
+
+# OS
+Thumbs.db
+.DS_Store

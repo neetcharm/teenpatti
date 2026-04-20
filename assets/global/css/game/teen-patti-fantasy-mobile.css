@@ -1,0 +1,988 @@
+﻿/*
+  Teen Patti Fantasy Mobile Override
+  Loaded after teen-patti.css to enforce mobile-first polished UI.
+*/
+
+:root {
+  --tpv2-bg-1: #12030a;
+  --tpv2-bg-2: #2a0714;
+  --tpv2-bg-3: #5c0f1f;
+  --tpv2-gold: #f8d74b;
+  --tpv2-gold-strong: #ffef92;
+  --tpv2-rose: #ff6d8c;
+  --tpv2-cyan: #76f7ff;
+  --tpv2-panel: rgba(12, 5, 17, 0.72);
+  --tpv2-border: rgba(248, 215, 75, 0.35);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at 50% -10%, #83263f 0%, var(--tpv2-bg-2) 38%, var(--tpv2-bg-1) 100%);
+  color: #fff;
+  overflow: hidden;
+}
+
+.tp-wv-root {
+  min-height: 100dvh;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  overflow: hidden;
+  width: 100%;
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 109, 140, 0.18) 0%, rgba(255, 109, 140, 0) 42%),
+    radial-gradient(circle at 90% 0%, rgba(118, 247, 255, 0.16) 0%, rgba(118, 247, 255, 0) 38%);
+}
+
+.tp-wv-root::before,
+.tp-wv-root::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(45px);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.tp-wv-root::before {
+  width: 280px;
+  height: 280px;
+  background: rgba(255, 90, 132, 0.35);
+  top: -140px;
+  left: -100px;
+}
+
+.tp-wv-root::after {
+  width: 240px;
+  height: 240px;
+  background: rgba(82, 200, 255, 0.3);
+  top: -120px;
+  right: -80px;
+}
+
+.tp-game-wrapper {
+  width: min(100%, 460px);
+  max-width: 460px;
+  height: 100dvh;
+  min-height: 100dvh;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(26, 8, 20, 0.88) 0%, rgba(41, 8, 20, 0.9) 44%, rgba(23, 5, 14, 0.96) 100%),
+    linear-gradient(140deg, var(--tpv2-bg-3), #2d0912);
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.tp-stage-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.tp-stage {
+  width: 100%;
+  transform-origin: top center;
+}
+
+.tp-game-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 245, 187, 0.12) 0%, rgba(255, 245, 187, 0) 60%),
+    repeating-linear-gradient(
+      -55deg,
+      rgba(255, 255, 255, 0.025) 0,
+      rgba(255, 255, 255, 0.025) 2px,
+      transparent 2px,
+      transparent 18px
+    );
+  pointer-events: none;
+}
+
+.tp-wv-topbar {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.2));
+  backdrop-filter: blur(8px);
+}
+
+.tp-wv-topbar .player-name {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 12px;
+  letter-spacing: 0.35px;
+  color: var(--tpv2-gold-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-wv-topbar .player-bal {
+  color: #7fffcf;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.tp-header {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 6px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+}
+
+.tp-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tp-logo-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 30% 25%, #fff2ad 0%, #f0ba2e 60%, #8f5c05 100%);
+  color: #351600;
+  box-shadow: 0 0 16px rgba(255, 219, 116, 0.6);
+}
+
+.tp-logo-text {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0.8px;
+  color: var(--tpv2-gold-strong);
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(255, 226, 126, 0.35);
+}
+
+.tp-btn-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, rgba(44, 20, 34, 0.95), rgba(23, 10, 20, 0.95));
+  color: #ffd976;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tp-btn-icon:active {
+  transform: scale(0.94);
+}
+
+.tp-btn-icon:hover {
+  border-color: rgba(255, 228, 145, 0.6);
+  box-shadow: 0 0 12px rgba(255, 228, 145, 0.35);
+}
+
+.tp-header-right {
+  display: flex;
+  gap: 8px;
+}
+
+.tp-timer-section {
+  position: relative;
+  z-index: 4;
+  margin: 2px 12px 4px;
+  padding: 10px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(17, 8, 22, 0.85), rgba(40, 10, 27, 0.8));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.tp-phase-badge {
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 10px;
+  letter-spacing: 1.15px;
+  text-transform: uppercase;
+}
+
+.tp-phase-badge.phase-betting {
+  background: rgba(73, 201, 128, 0.18);
+  border: 1px solid rgba(73, 201, 128, 0.55);
+  color: #85ffbe;
+}
+
+.tp-phase-badge.phase-shuffling {
+  background: rgba(255, 200, 94, 0.18);
+  border: 1px solid rgba(255, 200, 94, 0.55);
+  color: #ffe19e;
+}
+
+.tp-phase-badge.phase-dealing {
+  background: rgba(126, 198, 255, 0.18);
+  border: 1px solid rgba(126, 198, 255, 0.55);
+  color: #bde7ff;
+}
+
+.tp-phase-badge.phase-result {
+  background: rgba(248, 215, 75, 0.18);
+  border: 1px solid rgba(248, 215, 75, 0.6);
+  color: #ffe98e;
+}
+
+.tp-timer-p {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 2px solid rgba(248, 215, 75, 0.85);
+  background: linear-gradient(180deg, rgba(21, 12, 23, 0.94), rgba(11, 6, 16, 0.9));
+}
+
+.tp-timer-num {
+  min-width: 25px;
+  text-align: center;
+  font-size: 25px;
+  line-height: 1;
+  color: var(--tpv2-gold);
+  font-weight: 900;
+}
+
+.tp-dealer-section {
+  min-height: 166px;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  position: relative;
+  z-index: 5;
+}
+
+.tp-dealer-avatar {
+  width: 140px;
+  height: 160px;
+}
+
+.dealer-lady {
+  width: 112px;
+  height: 148px;
+  transform-origin: 50% 80%;
+  animation: dealer-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes dealer-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.015);
+  }
+}
+
+.lady-hair {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 18px rgba(163, 100, 255, 0.24);
+  animation: hair-drift 2.8s ease-in-out infinite;
+}
+
+@keyframes hair-drift {
+  0%,
+  100% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  50% {
+    transform: translateX(-50%) rotate(1.8deg);
+  }
+}
+
+.lady-eye {
+  overflow: hidden;
+}
+
+.lady-eye::after {
+  animation: eye-blink 4.8s infinite;
+  transform-origin: 50% 0;
+}
+
+@keyframes eye-blink {
+  0%, 42%, 45%, 100% {
+    transform: scaleY(1);
+  }
+  43%, 44% {
+    transform: scaleY(0.06);
+  }
+}
+
+.dealer-glow-ring {
+  width: 148px;
+  height: 148px;
+  border-top-color: rgba(255, 213, 109, 0.8);
+  border-bottom-color: rgba(104, 224, 255, 0.65);
+  opacity: 0.45;
+}
+
+.tp-dealer-name {
+  bottom: -1px;
+  padding: 3px 12px;
+  font-size: 10px;
+  letter-spacing: 0.75px;
+  background: linear-gradient(135deg, #ffe89e, #cf8e1a);
+}
+
+.tp-dealer-status {
+  bottom: -27px;
+}
+
+.tp-narration-bar {
+  margin: 4px 12px 8px;
+  min-height: 35px;
+  border: 1px solid var(--tpv2-border);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(31, 12, 31, 0.9), rgba(12, 8, 25, 0.88));
+}
+
+.tp-narration-text {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tp-play-area {
+  position: relative;
+  z-index: 5;
+  padding: 0 10px 4px;
+  flex: 0 0 auto;
+}
+
+.tp-columns {
+  gap: 7px;
+}
+
+.tp-col {
+  gap: 3px;
+}
+
+.tp-col.receiving {
+  transform: translateY(-2px);
+}
+
+.tp-col.round-winner .tp-char-frame {
+  box-shadow: 0 0 0 2px rgba(255, 243, 179, 0.8), 0 0 18px rgba(255, 215, 75, 0.4);
+}
+
+.tp-char-frame {
+  width: 84px;
+  height: 84px;
+  border-width: 3px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.42);
+}
+
+.tp-side-name {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 11px;
+  letter-spacing: 0.7px;
+  color: #ffeab3;
+}
+
+.tp-cards-row {
+  margin: 2px 0 0;
+  min-height: 67px;
+}
+
+.tp-hand-rank {
+  min-height: 18px;
+  font-size: 11px;
+}
+
+.tp-bet-slot {
+  min-height: 132px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(2px);
+}
+
+.tp-bet-slot.hot {
+  border-color: rgba(255, 238, 147, 0.95);
+}
+
+.tp-bet-info {
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(4, 3, 8, 0.76), rgba(4, 3, 8, 0.94));
+}
+
+.tp-history-bar {
+  position: relative;
+  z-index: 7;
+  margin-top: 3px;
+  padding: 10px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(11, 8, 15, 0.88), rgba(19, 10, 22, 0.88));
+}
+
+.tp-hist-label {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 11px;
+  color: #f7e2ad;
+}
+
+.tp-btn-chart {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffe88f;
+}
+
+.tp-footer {
+  position: relative;
+  bottom: auto;
+  z-index: 8;
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(13, 9, 17, 0.94), rgba(5, 4, 10, 0.98));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.tp-chips-row {
+  margin-bottom: 10px;
+  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+}
+
+.tp-chip-btn {
+  width: 50px;
+  height: 50px;
+  border-width: 2px;
+  justify-self: center;
+}
+
+.tp-chip-btn.selected {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7), 0 0 14px rgba(255, 217, 118, 0.4);
+}
+
+.tp-bottom-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) auto auto auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.tp-bal-p,
+.tp-win-p,
+.tp-btn-repeat,
+.tp-btn-topup {
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.tp-bal-p {
+  overflow: hidden;
+}
+
+.tp-bal-val {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tp-btn-repeat,
+.tp-btn-topup {
+  min-width: 84px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, #795353, #492f36);
+}
+
+.tp-btn-topup {
+  background: linear-gradient(180deg, #258a73, #125446);
+  border-color: rgba(154, 255, 222, 0.28);
+}
+
+.tp-btn-topup:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tp-round-summary {
+  padding: 14px 10px 16px;
+  background: linear-gradient(180deg, rgba(8, 5, 14, 0.97), rgba(17, 7, 16, 0.97));
+  backdrop-filter: blur(8px);
+}
+
+.tp-summary-title {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  letter-spacing: 0.7px;
+}
+
+.tp-summary-hand {
+  border-radius: 12px;
+  border-width: 1px;
+}
+
+.tp-overlay {
+  backdrop-filter: blur(3px);
+}
+
+.tp-stop-sign {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 27px;
+}
+
+.tp-winner-modal {
+  backdrop-filter: blur(5px);
+}
+
+.tp-avatar-pop-sign {
+  border-radius: 14px;
+  border-color: rgba(255, 248, 200, 0.9);
+}
+
+@media (max-width: 390px) {
+  .tp-logo-text {
+    font-size: 14px;
+  }
+
+  .tp-play-area {
+    padding: 0 8px 4px;
+  }
+
+  .tp-columns {
+    gap: 5px;
+  }
+
+  .tp-bottom-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tp-bal-p {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .tp-char-frame {
+    width: 76px;
+    height: 76px;
+  }
+
+  .tp-bet-slot {
+    min-height: 124px;
+  }
+
+  .tp-chip-btn {
+    width: 46px;
+    height: 46px;
+    font-size: 11px;
+  }
+
+  .tp-btn-repeat,
+  .tp-btn-topup {
+    min-width: 0;
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .tp-timer-num {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 360px) {
+  .tp-char-frame {
+    width: 70px;
+    height: 70px;
+  }
+
+  .tp-side-name,
+  .tp-bet-info,
+  .tp-hand-rank {
+    font-size: 10px;
+  }
+
+  .tp-chip-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 10px;
+  }
+
+  .tp-btn-repeat,
+  .tp-btn-topup {
+    font-size: 10px;
+    padding: 7px 8px;
+  }
+}
+
+@media (max-width: 430px) {
+  .tp-columns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 4px;
+  }
+
+  .tp-col {
+    min-width: 0;
+  }
+
+  .tp-char-frame {
+    width: 72px;
+    height: 72px;
+  }
+
+  .tp-side-name {
+    font-size: 9px;
+    letter-spacing: 0.4px;
+  }
+
+  .tp-cards-row {
+    gap: 1px;
+    min-height: 46px;
+  }
+
+  .tp-card-container,
+  .tp-card-img {
+    width: 30px;
+    height: 44px;
+  }
+
+  .tp-bet-slot {
+    min-height: 108px;
+    padding: 4px;
+  }
+
+  .tp-bet-info,
+  .tp-hand-rank {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .tp-char-frame {
+    width: 66px;
+    height: 66px;
+  }
+
+  .tp-card-container,
+  .tp-card-img {
+    width: 27px;
+    height: 40px;
+  }
+
+  .tp-bet-slot {
+    min-height: 100px;
+  }
+}
+
+@media (max-width: 360px) {
+  .tp-col {
+    gap: 2px;
+  }
+
+  .tp-char-frame {
+    width: 60px;
+    height: 60px;
+  }
+
+  .tp-char-label {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+
+  .tp-card-container,
+  .tp-card-img {
+    width: 24px;
+    height: 36px;
+  }
+
+  .tp-bet-slot {
+    min-height: 92px;
+  }
+}
+
+@media (max-height: 740px) {
+  .tp-wv-topbar {
+    padding: 6px 10px;
+  }
+
+  .tp-header {
+    padding: 10px 10px 4px;
+  }
+
+  .tp-timer-section {
+    margin: 2px 10px 4px;
+    padding: 8px 10px;
+  }
+
+  .tp-dealer-section {
+    min-height: 142px;
+    margin-top: 0;
+  }
+
+  .tp-dealer-avatar {
+    width: 122px;
+    height: 142px;
+  }
+
+  .dealer-lady {
+    width: 96px;
+    height: 126px;
+  }
+
+  .tp-dealer-name {
+    font-size: 9px;
+    padding: 2px 10px;
+  }
+
+  .tp-narration-bar {
+    margin: 3px 10px 6px;
+    min-height: 32px;
+  }
+
+  .tp-history-bar {
+    padding: 8px 10px;
+  }
+
+  .tp-footer {
+    padding-top: 8px;
+  }
+
+  .tp-chip-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-height: 620px) {
+  .tp-dealer-section {
+    min-height: 128px;
+  }
+
+  .tp-dealer-avatar {
+    width: 112px;
+    height: 130px;
+  }
+
+  .dealer-lady {
+    width: 88px;
+    height: 116px;
+  }
+
+  .tp-chip-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 10px;
+  }
+
+  .tp-bet-slot {
+    min-height: 86px;
+  }
+
+  .tp-history-bar {
+    padding: 6px 8px;
+  }
+
+  .tp-timer-num {
+    font-size: 20px;
+  }
+}
+
+@media (max-height: 680px) {
+  .tp-round-summary {
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding: 18px 12px 24px;
+  }
+
+  .tp-summary-title {
+    font-size: 16px;
+    line-height: 1.1;
+    letter-spacing: 0.35px;
+    margin-bottom: 8px;
+  }
+
+  .tp-summary-header-text {
+    font-size: 10px;
+  }
+
+  .tp-summary-hands {
+    gap: 6px;
+  }
+
+  .tp-summary-hand {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .tp-summary-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tp-summary-cards .tp-summary-card-css {
+    width: 30px;
+    height: 44px;
+  }
+
+  .tp-summary-winner-announce {
+    margin-top: 8px;
+    padding: 6px 10px;
+  }
+
+  .announce-text {
+    font-size: 12px;
+  }
+
+  .tp-summary-payout {
+    margin-top: 6px;
+    padding: 6px 8px;
+  }
+
+  .payout-amount {
+    font-size: 18px;
+  }
+
+  .payout-amount.loss-text {
+    font-size: 13px;
+  }
+
+  .tp-summary-next {
+    margin-top: 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-height: 620px) {
+  .tp-round-summary {
+    padding: 12px 10px 16px;
+  }
+
+  .tp-summary-title {
+    font-size: 12px;
+    line-height: 1.05;
+    letter-spacing: 0.2px;
+    margin-bottom: 6px;
+  }
+
+  .tp-summary-header {
+    display: none;
+  }
+
+  .tp-summary-hands {
+    gap: 4px;
+  }
+
+  .tp-summary-hand {
+    gap: 5px;
+    padding: 6px 7px;
+  }
+
+  .tp-summary-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .tp-summary-cards .tp-summary-card-css {
+    width: 22px;
+    height: 32px;
+  }
+
+  .tp-summary-side-name,
+  .tp-summary-rank {
+    font-size: 9px;
+  }
+
+  .tp-summary-rank {
+    padding: 1px 4px;
+  }
+
+  .tp-summary-card-names {
+    display: none;
+  }
+
+  .tp-summary-winner-announce {
+    gap: 5px;
+    margin-top: 6px;
+    padding: 5px 8px;
+  }
+
+  .announce-icon {
+    font-size: 14px;
+  }
+
+  .announce-text {
+    font-size: 10px;
+    letter-spacing: 0.2px;
+  }
+
+  .tp-summary-payout {
+    margin-top: 5px;
+    padding: 5px 7px;
+  }
+
+  .payout-label {
+    font-size: 10px;
+  }
+
+  .payout-amount {
+    font-size: 15px;
+  }
+
+  .payout-amount.loss-text {
+    font-size: 11px;
+  }
+
+  .tp-summary-next {
+    margin-top: 6px;
+    font-size: 11px;
+  }
+
+  .tp-summary-next .countdown-num {
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .tp-game-wrapper {
+    max-width: 430px;
+    border-radius: 18px;
+    margin: 16px 0;
+    height: calc(100dvh - 32px);
+    min-height: calc(100dvh - 32px);
+  }
+}

@@ -1,0 +1,43 @@
+services:
+  # The Game Application (Laravel 11)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: teenpatti_app
+    restart: always
+    ports:
+      - "8000:80" # Access at http://YOUR_SERVER_IP:8000
+    volumes:
+      - .:/var/www/html
+      - ./core/storage:/var/www/html/core/storage
+      - ./core/bootstrap/cache:/var/www/html/core/bootstrap/cache
+    depends_on:
+      - games
+      - redis
+    environment:
+      - DB_HOST=games
+      - REDIS_HOST=redis
+      - CACHE_STORE=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+
+  # MySQL Database Service
+  games:
+    image: mysql:8.2
+    container_name: games_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: games
+      MYSQL_ROOT_PASSWORD: password 
+    volumes:
+      - games_db_data:/var/lib/mysql
+
+  # Redis for Game Speed
+  redis:
+    image: redis:alpine
+    container_name: teenpatti_redis
+    restart: always
+
+volumes:
+  games_db_data:

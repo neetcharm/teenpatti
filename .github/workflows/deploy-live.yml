@@ -1,0 +1,71 @@
+name: Deploy Live
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-live-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to live server over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          command_timeout: 30m
+          script_stop: true
+          script: |
+            set -e
+
+            APP_DIR="${{ secrets.DEPLOY_PATH }}"
+            BRANCH="${{ github.ref_name }}"
+            TOKEN_REMOTE="https://x-access-token:${{ secrets.DEPLOY_REPO_TOKEN }}@github.com/${{ github.repository }}.git"
+            CLEAN_REMOTE="https://github.com/${{ github.repository }}.git"
+
+            if [ -z "$APP_DIR" ]; then
+              echo "DEPLOY_PATH secret is required."
+              exit 1
+            fi
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              mkdir -p "$(dirname "$APP_DIR")"
+              git clone --branch "$BRANCH" "$TOKEN_REMOTE" "$APP_DIR"
+            else
+              git -C "$APP_DIR" remote set-url origin "$TOKEN_REMOTE"
+              git -C "$APP_DIR" fetch --prune origin "$BRANCH"
+              git -C "$APP_DIR" checkout "$BRANCH"
+              git -C "$APP_DIR" reset --hard "origin/$BRANCH"
+            fi
+
+            git -C "$APP_DIR" remote set-url origin "$CLEAN_REMOTE"
+
+            cd "$APP_DIR"
+
+            APP_DIR="$APP_DIR" \
+            PHP_BIN="${{ secrets.DEPLOY_PHP_BIN }}" \
+            COMPOSER_BIN="${{ secrets.DEPLOY_COMPOSER_BIN }}" \
+            RUN_MIGRATIONS="${{ secrets.DEPLOY_RUN_MIGRATIONS }}" \
+            DEPLOY_SKIP_COMPOSER="${{ secrets.DEPLOY_SKIP_COMPOSER }}" \
+            DEPLOY_SKIP_ARTISAN="${{ secrets.DEPLOY_SKIP_ARTISAN }}" \
+            LIVE_APP_NAME="${{ secrets.LIVE_APP_NAME }}" \
+            LIVE_APP_URL="${{ secrets.LIVE_APP_URL }}" \
+            LIVE_APP_KEY="${{ secrets.LIVE_APP_KEY }}" \
+            LIVE_APP_TIMEZONE="${{ secrets.LIVE_APP_TIMEZONE }}" \
+            LIVE_DB_HOST="${{ secrets.LIVE_DB_HOST }}" \
+            LIVE_DB_PORT="${{ secrets.LIVE_DB_PORT }}" \
+            LIVE_DB_DATABASE="${{ secrets.LIVE_DB_DATABASE }}" \
+            LIVE_DB_USERNAME="${{ secrets.LIVE_DB_USERNAME }}" \
+            LIVE_DB_PASSWORD="${{ secrets.LIVE_DB_PASSWORD }}" \
+            LIVE_PURCHASECODE="${{ secrets.LIVE_PURCHASECODE }}" \
+            LIVE_LOG_LEVEL="${{ secrets.LIVE_LOG_LEVEL }}" \
+            bash tools/server_finalize_deploy.sh
