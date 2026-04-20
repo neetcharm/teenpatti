@@ -29,7 +29,7 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: games
-      MYSQL_ROOT_PASSWORD: password 
+      MYSQL_ROOT_PASSWORD: TikkiX_P9wR2mK_Secure_2026!#
     volumes:
       - games_db_data:/var/lib/mysql
 

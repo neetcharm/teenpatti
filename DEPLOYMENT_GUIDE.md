@@ -41,7 +41,7 @@ sudo docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/do
 
 1. **Clone your repository** to the VPS:
    ```bash
-   git clone https://github.com/your-repo/game.git /var/www/teenpatti
+   git clone https://github.com/saxena-deepanshu/teenpatti.git /var/www/teenpatti
    cd /var/www/teenpatti
    ```
 
@@ -54,11 +54,11 @@ sudo docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/do
    - `APP_DEBUG=false`
    - `APP_URL=https://game.tikkix.com`
    - `DB_HOST=games`
-   - `DB_PASSWORD=choose_a_strong_password`
+   - `DB_PASSWORD=TikkiX_P9wR2mK_Secure_2026!#`
    - `DB_DATABASE=games`
 
 3. **Update docker-compose.yml**:
-   Ensure the `MYSQL_ROOT_PASSWORD` matches what you put in `.env`.
+   Ensure the `MYSQL_ROOT_PASSWORD` in `docker-compose.yml` is also set to `TikkiX_P9wR2mK_Secure_2026!#`.
 
 ---
 
@@ -68,8 +68,8 @@ sudo docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/do
 # Build and start in detached mode
 docker-compose up -d --build
 
-# Import your database
-docker exec -i games_db mysql -u root -pchoose_a_strong_password games < install/database.sql
+# Import your latest backup
+docker exec -i games_db mysql -u root -pTikkiX_P9wR2mK_Secure_2026!# games < install/backup_2026-04-21_01-24.sql
 
 # Run migrations to ensure latest schema
 docker exec -it teenpatti_app php core/artisan migrate --force
