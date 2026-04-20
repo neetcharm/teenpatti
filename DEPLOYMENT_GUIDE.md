@@ -19,6 +19,10 @@ sudo apt update && sudo apt upgrade -y
 
 # Install Docker & Compose
 sudo apt install -y docker.io docker-compose nginx certbot python3-certbot-nginx
+
+# Install Portainer (GUI for Docker)
+sudo docker volume create portainer_data
+sudo docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
 ```
 
 ---
@@ -80,7 +84,7 @@ docker exec -it teenpatti_app php core/artisan migrate --force
    sudo nano /etc/nginx/sites-available/teenpatti
    ```
 
-2. **Paste this configuration** (Replace `game.yourdomain.com` with your actual domain):
+2. **Paste this configuration** (Replace `game.tikkix.com` with your actual domain):
    ```nginx
    server {
        listen 80;
@@ -113,9 +117,10 @@ docker exec -it teenpatti_app php core/artisan migrate --force
 
 ## 🏁 Step 6: Final Hardening
 
-1. **Firewall**: Ensure only ports 80, 443, and 22 (SSH) are open.
+1. **Firewall**: Ensure only ports 80, 443, 9443 (Portainer), and 22 (SSH) are open.
    ```bash
    sudo ufw allow 'Nginx Full'
+   sudo ufw allow 9443/tcp
    sudo ufw allow OpenSSH
    sudo ufw enable
    ```
@@ -128,3 +133,4 @@ docker exec -it teenpatti_app php core/artisan migrate --force
 Your game is now accessible at **`https://game.tikkix.com`**.
 - **Admin Panel**: `https://game.tikkix.com/admin`
 - **Tenant API**: `https://game.tikkix.com/api/v1/...`
+- **Portainer GUI**: `https://game.tikkix.com:9443` (Use your server IP if DNS isn't ready)
