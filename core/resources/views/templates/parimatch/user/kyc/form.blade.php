@@ -8,7 +8,7 @@
                         @csrf
 
                         <div class="row gy-2">
-                            <x-viser-form identifier="act" identifierValue="kyc" />
+                            <x-dynamic-form identifier="act" identifierValue="kyc" />
                         </div>
 
                         <div class="form-group">

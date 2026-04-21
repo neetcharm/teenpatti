@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Constants\Status;
 use App\Http\Controllers\Controller;
-use App\Lib\CurlRequest;
 use App\Models\AdminNotification;
 use App\Models\Deposit;
 use App\Models\Game;
@@ -282,48 +281,6 @@ class AdminController extends Controller {
             $url = url()->previous();
         }
         return redirect($url);
-    }
-
-    public function requestReport() {
-        $pageTitle            = 'Your Listed Report & Request';
-        $arr['app_name']      = systemDetails()['name'];
-        $arr['app_url']       = env('APP_URL');
-        $arr['purchase_code'] = env('PURCHASECODE');
-        $url                  = "https://license.vaivitech.com/issue/get?" . http_build_query($arr);
-        $response             = CurlRequest::curlContent($url);
-        $response             = json_decode($response);
-        if (!$response || !isset($response->status) || !isset($response->message)) {
-            return to_route('admin.dashboard')->withErrors('Something went wrong');
-        }
-        if ($response->status == 'error') {
-            return to_route('admin.dashboard')->withErrors($response->message);
-        }
-        $reports = $response->message[0];
-        return view('admin.reports', compact('reports', 'pageTitle'));
-    }
-
-    public function reportSubmit(Request $request) {
-        $request->validate([
-            'type'    => 'required|in:bug,feature',
-            'message' => 'required',
-        ]);
-        $url = 'https://license.vaivitech.com/issue/add';
-
-        $arr['app_name']      = systemDetails()['name'];
-        $arr['app_url']       = env('APP_URL');
-        $arr['purchase_code'] = env('PURCHASECODE');
-        $arr['req_type']      = $request->type;
-        $arr['message']       = $request->message;
-        $response             = CurlRequest::curlPostContent($url, $arr);
-        $response             = json_decode($response);
-        if (!$response || !isset($response->status) || !isset($response->message)) {
-            return to_route('admin.dashboard')->withErrors('Something went wrong');
-        }
-        if ($response->status == 'error') {
-            return back()->withErrors($response->message);
-        }
-        $notify[] = ['success', $response->message];
-        return back()->withNotify($notify);
     }
 
     public function readAllNotification() {

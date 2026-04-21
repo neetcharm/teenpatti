@@ -24,7 +24,7 @@
 
                                     </div>
 
-                                    <x-viser-form identifier="id" identifierValue="{{ $gateway->form_id }}" />
+                                    <x-dynamic-form identifier="id" identifierValue="{{ $gateway->form_id }}" />
                                 </div>
                                 <button type="submit" class="cmn-btn w-100">@lang('Pay Now')</button>
                             </form>

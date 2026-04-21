@@ -41,10 +41,6 @@ Route::middleware('admin')->group(function () {
         Route::post('notifications/delete-all', 'deleteAllNotification')->name('notifications.delete.all');
         Route::post('notifications/delete-single/{id}', 'deleteSingleNotification')->name('notifications.delete.single');
 
-        //Report Bugs
-        Route::get('request-report', 'requestReport')->name('request.report');
-        Route::post('request-report', 'reportSubmit');
-
         Route::get('download-attachments/{file_hash}', 'downloadAttachment')->name('download.attachment');
     });
 

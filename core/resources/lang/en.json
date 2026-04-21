@@ -639,7 +639,7 @@
     "Medium": "Medium",
     "High": "High",
     "Version": "Version",
-    "ViserAdmin Version": "ViserAdmin Version",
+    "Build Version": "Build Version",
     "Laravel Version": "Laravel Version",
     "Compiled views will be cleared": "Compiled views will be cleared",
     "Application cache will be cleared": "Application cache will be cleared",

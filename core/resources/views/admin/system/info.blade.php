@@ -10,7 +10,7 @@
                             <span>{{ systemDetails()['version'] }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                            <span>@lang('ViserAdmin Version')</span>
+                            <span>@lang('Build Version')</span>
                             <span>{{ systemDetails()['build_version'] }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
