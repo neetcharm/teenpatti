@@ -122,18 +122,43 @@ docker exec -it teenpatti_app php core/artisan migrate --force
 
 1. **Firewall**: Ensure only ports 80, 443, 9443 (Portainer), and 22 (SSH) are open.
    ```bash
-   sudo ufw allow 'Nginx Full'
+   sudo ufw allow 80/tcp
+   sudo ufw allow 443/tcp
    sudo ufw allow 9443/tcp
    sudo ufw allow OpenSSH
    sudo ufw enable
    ```
 
-2. **Admin Password**: Don't forget to reset your admin password using the `php artisan tinker` method we used locally!
+2. **Automated Tasks (Cron)**: The game requires a cron job. On your VPS, run:
+   ```bash
+   crontab -e
+   ```
+   Add this line (Replace `YOUR_CRON_KEY` with the key from Admin Panel -> System Configuration):
+   ```bash
+   * * * * * curl -fsS "https://game.tikkix.com/cron?key=YOUR_CRON_KEY" >/dev/null 2>&1
+   ```
+
+---
+
+## 🛠️ Step 7: Admin & Tenant SOP
+
+### 1. Admin Bootstrap
+1. Login to `https://game.tikkix.com/admin`
+2. **Immediate Action**: Change the default admin email and password.
+3. If you forget your password, reset it via Docker Tinker:
+   ```bash
+   docker exec -it teenpatti_app php core/artisan tinker --execute='$admin = \App\Models\Admin::where("username", "admin")->first(); $admin->password = Hash::make("NewPassword123"); $admin->save();'
+   ```
+
+### 2. Tenant Integration (Operator Mode)
+- **Internal Mode**: You manage their balance in your panel.
+- **Webhook Mode**: Their wallet is the source of truth (uses the Webhook URL you provide).
+- Give them their **API Key** and **Signing Secret** securely.
 
 ---
 
 ## ✅ You are LIVE!
 Your game is now accessible at **`https://game.tikkix.com`**.
 - **Admin Panel**: `https://game.tikkix.com/admin`
-- **Tenant API**: `https://game.tikkix.com/api/v1/...`
-- **Portainer GUI**: `https://game.tikkix.com:9443` (Use your server IP if DNS isn't ready)
+- **Portainer GUI**: `https://game.tikkix.com:9443`
+- **Integration Docs**: Found inside your Admin Panel.
