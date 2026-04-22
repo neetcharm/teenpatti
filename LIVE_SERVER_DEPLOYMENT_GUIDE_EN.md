@@ -133,13 +133,27 @@ Update at least:
 - `DB_PASSWORD`
 - `SESSION_DRIVER=file` (or redis/database if you manage them)
 - `CACHE_STORE=file` (or redis)
-- `QUEUE_CONNECTION=sync` (or `database`/`redis` if configured)
+- `QUEUE_CONNECTION=database` (recommended for webhook mode; `sync` is fallback)
 - `LOG_LEVEL=warning`
+- `TENANT_SESSION_IDLE_TIMEOUT_MINUTES=5` (auto-close inactive tenant sessions)
 
 Generate app key:
 
 ```bash
 php artisan key:generate
+```
+
+Queue notes:
+
+- If `QUEUE_CONNECTION=database`, ensure queue tables exist:
+  - `jobs`
+  - `failed_jobs`
+- If these tables are missing, create them once:
+
+```bash
+php artisan queue:table
+php artisan queue:failed-table
+php artisan migrate --force
 ```
 
 ---
@@ -149,6 +163,7 @@ php artisan key:generate
 ```bash
 cd /var/www/mygames/core
 composer install --no-dev --optimize-autoloader
+php artisan migrate --force
 php artisan optimize:clear
 php artisan config:cache
 php artisan route:cache
@@ -160,6 +175,13 @@ If `route:cache` fails due closures, keep:
 - `php artisan optimize:clear`
 - `php artisan config:cache`
 - `php artisan view:cache`
+
+Post-deploy quick checks:
+
+```bash
+php artisan route:list --path=api/v1
+php artisan schedule:list
+```
 
 ---
 
@@ -230,19 +252,57 @@ server {
 
 ---
 
-## 10. Cron Setup (Important)
+## 10. Cron and Scheduler Setup (Critical)
 
-The app has route-based cron at:
+This project now uses **two scheduling systems**. In production, configure both.
+
+### 10.1 Legacy route-based cron (existing platform jobs)
+
+Endpoint:
 
 - `GET /cron?key=YOUR_CRON_KEY`
 
-Generate/check key from app helper context (as configured in your app), then schedule every minute:
+Run every minute:
 
 ```bash
 * * * * * curl -fsS "https://yourdomain.com/cron?key=YOUR_CRON_KEY" >/dev/null 2>&1
 ```
 
-This updates `last_cron` and executes due jobs.
+This updates `last_cron` and executes legacy DB-configured cron jobs.
+
+### 10.2 Laravel scheduler (required for game/session automation)
+
+Required because these commands are scheduled in `routes/console.php`:
+
+- `teen-patti:resolve`
+- `andar-bahar:resolve`
+- `tenant:sessions:cleanup`
+
+Run every minute:
+
+```bash
+* * * * * cd /var/www/mygames/core && php artisan schedule:run >/dev/null 2>&1
+```
+
+Verify:
+
+```bash
+php artisan schedule:list
+```
+
+### 10.3 Queue worker (recommended for webhook-credit reliability)
+
+If using `QUEUE_CONNECTION=database` or `redis`, run a long-lived worker (Supervisor/systemd):
+
+```bash
+cd /var/www/mygames/core
+php artisan queue:work --tries=5 --timeout=30 --sleep=2
+```
+
+Notes:
+
+- Async win-credit jobs retry automatically.
+- If dispatch fails, code falls back to synchronous credit, but worker is still recommended for stable throughput.
 
 ---
 
@@ -354,12 +414,16 @@ In tenant-launched mode:
 
 ## 15. Tenant API Integration (How It Works)
 
-Base API:
+Core API endpoints:
 
 - `POST /api/v1/session/create`
+- `POST /api/v1/session/end`
+- `POST /api/v1/session/close` (legacy alias of `session/end`)
+- `GET /api/v1/game/{alias}/start`
+- `POST /api/v1/game/{alias}/play`
 - Legacy alias: `POST /api/v1/game/session`
 
-Required headers:
+Authentication headers:
 
 - `X-API-Key`
 - `X-Signature`
@@ -381,11 +445,30 @@ Session create response returns:
 - `player_balance`
 - `currency`
 - `expires_at`
+- `resumed` (`true` when same active player+game session is reused)
+
+Create behavior:
+
+- First call returns `201` (new session).
+- If same tenant/player/game already has active session, returns `200` with `resumed=true`.
 
 Launch:
 
 - Open `game_url` in Android/iOS/WebView.
 - Game endpoint: `/play?token={session_token}` validates and starts session.
+
+Start endpoint session resume behavior:
+
+- `GET /api/v1/game/{alias}/start` can resolve session from:
+  - existing PHP session (`tenant_session_id`)
+  - or `session_token` passed as query/body/header (`X-Session-Token`)
+
+Session end behavior:
+
+- Tenant backend can close session explicitly via:
+  - `POST /api/v1/session/end`
+  - or `POST /api/v1/session/close`
+- This marks status as `closed` and expires the token.
 
 ---
 
@@ -408,6 +491,25 @@ Launch:
   - `rollback`
 - You return updated balance + optional transaction ID.
 
+Webhook mode runtime behavior (important):
+
+- Launch may fetch a fresh balance from webhook.
+- During gameplay, balance refresh is throttled to avoid excessive calls.
+- Sync flow refreshes wallet balance after round completion (not on every sync tick).
+- Rollback now carries original debit context (`ref_txn_id`) and rollback amount is derived from original debit transaction.
+
+Tenant session inactivity behavior:
+
+- Inactive tenant sessions are auto-closed after `TENANT_SESSION_IDLE_TIMEOUT_MINUTES` (default `5`).
+- Closed sessions return `403` with a relaunch message on play/sync endpoints.
+
+Teen Patti crowd display behavior:
+
+- The `All` amount on each side is display-boosted with synthetic crowd volume.
+- Current display range is `50,00,000` to `1,50,00,000` per side (with live drift).
+- This is UI-only and does **not** change actual wallet debits/credits/payout calculations.
+- Config location: `assets/global/js/game/teenPatti.js` (`CROWD_DISPLAY_*` constants).
+
 ---
 
 ## 17. Separate Tenant Database (Optional)
@@ -420,6 +522,24 @@ When `use_separate_db = true` for a tenant:
 
 Use this only when you need strict tenant-level DB isolation.
 
+### 17.1 Tenant-Scoped Teen Patti Round Data (New)
+
+Recent production updates add tenant scope to round aggregation tables to prevent cross-tenant leakage in game-side totals/history.
+
+Migration adds tenant scope fields/indexes for:
+
+- `teen_patti_round_bets`
+- `teen_patti_round_history`
+
+Apply on production:
+
+```bash
+cd /var/www/mygames/core
+php artisan migrate --force
+```
+
+Do not skip this migration on old databases.
+
 ---
 
 ## 18. Production Verification Checklist
@@ -430,12 +550,16 @@ Run these checks after deployment:
 2. Admin login works: `/admin`
 3. Tenant login works: `/tenant/login`
 4. User login/register works: `/user/login`, `/user/register`
-5. API signed request to `/api/v1/session/create` returns `201`
+5. API signed request to `/api/v1/session/create` returns `201` (new) or `200` (`resumed=true`)
 6. Invalid signature returns `401`
 7. `/play?token=...` launches game correctly
-8. Cron updates successfully
-9. Logs are writable (`core/storage/logs`)
-10. SSL + redirects working
+8. `/api/v1/session/end` closes an active session correctly
+9. `/api/v1/game/teen_patti/start` works with `session_token` passed via query/header
+10. Legacy cron (`/cron?key=...`) runs every minute
+11. Laravel scheduler runs every minute (`php artisan schedule:list` shows due commands)
+12. If queue is enabled: worker processes jobs and `failed_jobs` remains stable
+13. Logs are writable (`core/storage/logs`)
+14. SSL + redirects working
 
 ---
 
@@ -483,6 +607,7 @@ $admin->save();
    - signed `POST /api/v1/session/create`
    - receives `game_url`
    - opens in WebView
+   - signed `POST /api/v1/session/end` successfully closes the session
 5. Tenant confirms wallet behavior (internal or webhook mode).
 
 ### 19.3 User Onboarding SOP
@@ -560,6 +685,40 @@ Check:
 - SSL certificate valid
 - Response time under timeout window
 
+### Issue: Session closes after 5 minutes
+
+This is expected inactivity behavior for tenant sessions.
+
+Options:
+
+- Keep default for security (`TENANT_SESSION_IDLE_TIMEOUT_MINUTES=5`)
+- Or increase timeout in `core/.env` if business policy requires
+- Ensure app relaunches session when 403 inactivity response is returned
+
+### Issue: Cross-tenant totals/history visible in game UI
+
+Check:
+
+- Run latest migrations: `php artisan migrate --force`
+- Confirm `teen_patti_round_bets` and `teen_patti_round_history` contain tenant scope columns/indexes
+
+### Issue: Wallet credits delayed or missing in webhook mode
+
+Check:
+
+- Queue connection is configured (`database` or `redis`)
+- Queue worker is running continuously
+- `jobs` and `failed_jobs` tables exist
+- Review `core/storage/logs/laravel.log` for `Async Wallet Win` failures
+
+### Issue: Commands in `schedule:list` never execute
+
+Check:
+
+- System cron for `php artisan schedule:run` is installed
+- Correct server path to project (`/var/www/mygames/core`)
+- Server time/timezone is correct
+
 ---
 
 ## 22. Suggested Go-Live Sequence
@@ -580,6 +739,9 @@ Check:
 ```bash
 cd /var/www/mygames/core
 
+# Required after updates
+php artisan migrate --force
+
 # Laravel cleanup
 php artisan optimize:clear
 
@@ -589,7 +751,17 @@ php artisan view:cache
 
 # Optional route cache (only if no closure route conflicts)
 php artisan route:cache
+
+# Validate routing/scheduler
+php artisan route:list --path=api/v1
+php artisan schedule:list
+
+# Manually test scheduled commands
+php artisan teen-patti:resolve
+php artisan tenant:sessions:cleanup
+
+# Queue worker (if QUEUE_CONNECTION != sync)
+php artisan queue:work --tries=5 --timeout=30 --sleep=2
 ```
 
 ---
-

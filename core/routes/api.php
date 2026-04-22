@@ -23,6 +23,9 @@ Route::namespace('Api')->name('api.')->group(function () {
     // ── Tenant Game Provider API  v1 ────────────────────────────────────────
     Route::prefix('v1')->name('v1.')->middleware(['throttle:60,1', \App\Modules\Tenant\TenantAuthMiddleware::class])->group(function () {
         Route::post('session/create', [\App\Modules\API\SessionController::class, 'create'])->name('session.create');
+        Route::post('session/end', [\App\Modules\API\SessionController::class, 'end'])->name('session.end');
+        // Legacy/doc compatibility endpoint
+        Route::post('session/close', [\App\Modules\API\SessionController::class, 'end'])->name('session.close');
         // Legacy/doc compatibility endpoint
         Route::post('game/session', [\App\Modules\API\SessionController::class, 'create'])->name('game.session');
         

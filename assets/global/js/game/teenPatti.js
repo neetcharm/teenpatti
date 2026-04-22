@@ -32,6 +32,14 @@ const SIDES = ["silver", "gold", "diamond"];
 const SIDE_LABELS = { silver: "Silver", gold: "Gold", diamond: "Diamond" };
 const SIDE_COLORS = { silver: "#c0c0c0", gold: "#e9d01b", diamond: "#b9f2ff" };
 
+// Display-only crowd volume (50 lakh to 1.5 crore) for "All" bets.
+const CROWD_DISPLAY_MIN = 5000000;
+const CROWD_DISPLAY_MAX = 15000000;
+const CROWD_DRIFT_MIN = 15000;
+const CROWD_DRIFT_MAX = 120000;
+let crowdDisplayRound = null;
+let crowdDisplayTotals = { silver: 0, gold: 0, diamond: 0 };
+
 const tpAudioPath = typeof tpAudioAssetPath !== "undefined"
     ? tpAudioAssetPath
     : (typeof audioAssetPath !== "undefined" ? audioAssetPath : "");
@@ -43,6 +51,56 @@ function avatarAsset(filename) {
         base += "/";
     }
     return base + filename;
+}
+
+function randomIntBetween(min, max) {
+    var lo = Math.floor(Math.min(min, max));
+    var hi = Math.floor(Math.max(min, max));
+    return Math.floor(Math.random() * (hi - lo + 1)) + lo;
+}
+
+function initCrowdDisplayForRound(round) {
+    crowdDisplayRound = safeAmount(round);
+
+    SIDES.forEach(function (side) {
+        crowdDisplayTotals[side] = randomIntBetween(CROWD_DISPLAY_MIN, CROWD_DISPLAY_MAX);
+    });
+}
+
+function driftCrowdDisplayTotals() {
+    SIDES.forEach(function (side) {
+        var current = safeAmount(crowdDisplayTotals[side]);
+        if (current <= 0) {
+            current = randomIntBetween(CROWD_DISPLAY_MIN, CROWD_DISPLAY_MAX);
+        }
+
+        var drift = randomIntBetween(CROWD_DRIFT_MIN, CROWD_DRIFT_MAX);
+        if (Math.random() < 0.45) {
+            drift = -drift;
+        }
+
+        var next = current + drift;
+        crowdDisplayTotals[side] = Math.max(CROWD_DISPLAY_MIN, Math.min(CROWD_DISPLAY_MAX, next));
+    });
+}
+
+function resolveDisplayTotals(round, realTotals) {
+    var roundNumber = safeAmount(round);
+
+    if (crowdDisplayRound === null || crowdDisplayRound !== roundNumber) {
+        initCrowdDisplayForRound(roundNumber);
+    } else {
+        driftCrowdDisplayTotals();
+    }
+
+    var display = { silver: 0, gold: 0, diamond: 0 };
+
+    SIDES.forEach(function (side) {
+        var real = safeAmount(realTotals && realTotals[side]);
+        display[side] = safeAmount(crowdDisplayTotals[side]) + Math.max(0, real);
+    });
+
+    return display;
 }
 
 /* ===== INITIALIZATION ===== */
@@ -1021,14 +1079,19 @@ function placeGlobalBet(choose) {
             }
 
             if (data && data.totals) {
+                var displayTotals = resolveDisplayTotals(currentRound, data.totals);
+
                 SIDES.forEach(function (side) {
                     var cap = sideCap(side);
                     var serverTotal = safeAmount(data.totals[side]);
+                    var displayTotal = safeAmount(displayTotals[side]);
+
                     if (serverTotal > lastTotals[side]) {
                         animateIncomingBets(side, serverTotal - lastTotals[side]);
                     }
-                    lastTotals[side] = Math.max(lastTotals[side], serverTotal);
-                    $("#tpAll" + cap).text(formatBetAmount(lastTotals[side]));
+
+                    lastTotals[side] = serverTotal;
+                    $("#tpAll" + cap).text(formatBetAmount(displayTotal));
                 });
             }
         },
@@ -1100,12 +1163,14 @@ function getRenderedCountdownSeconds() {
 }
 
 function updateTotals(data) {
+    var displayTotals = resolveDisplayTotals(data.round, data.bets);
+
     SIDES.forEach(function (side) {
         var cap = sideCap(side);
-        var total = safeAmount(data.bets[side]);
         var mine = safeAmount(data.my_bets[side]);
+        var displayTotal = safeAmount(displayTotals[side]);
 
-        $("#tpAll" + cap).text(formatBetAmount(total));
+        $("#tpAll" + cap).text(formatBetAmount(displayTotal));
         $("#tpYou" + cap).text(formatBetAmount(mine));
     });
 

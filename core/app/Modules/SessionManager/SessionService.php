@@ -35,6 +35,43 @@ class SessionService
     ): TenantSession {
         $user = $this->findOrCreateInternalUser($tenant, $playerId, $playerName);
 
+        $activeSession = TenantSession::where('tenant_id', $tenant->id)
+            ->where('player_id', $playerId)
+            ->where('game_id', $gameId)
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->latest('id')
+            ->first();
+
+        if ($activeSession) {
+            if ($this->isSessionIdle($activeSession)) {
+                $activeSession->forceFill([
+                    'status' => 'closed',
+                    'expires_at' => now(),
+                ])->save();
+            } else {
+                $ttl = $tenant->session_ttl_minutes ?? 60;
+
+                $activeSession->forceFill([
+                    'player_name' => $playerName,
+                    'currency' => $currency,
+                    'internal_user_id' => $user->id,
+                    'ip_address' => $ipAddress,
+                    'user_agent' => request()?->userAgent(),
+                    'expires_at' => Carbon::now()->addMinutes($ttl),
+                    'last_activity_at' => Carbon::now(),
+                ])->save();
+
+                // Keep returned balance warm on resume.
+                if ((float) $activeSession->balance_cache <= 0) {
+                    $this->hydrateInitialBalance($tenant, $activeSession, $user);
+                    $activeSession->refresh();
+                }
+
+                return $activeSession;
+            }
+        }
+
         TenantSession::where('tenant_id', $tenant->id)
             ->where('player_id', $playerId)
             ->where('game_id', $gameId)
@@ -65,6 +102,18 @@ class SessionService
         $this->hydrateInitialBalance($tenant, $session, $user);
 
         return $session;
+    }
+
+    private function isSessionIdle(TenantSession $session): bool
+    {
+        $idleMinutes = max(1, (int) config('game.tenant_session_idle_timeout_minutes', 5));
+        $lastActivity = $session->last_activity_at ?? $session->updated_at ?? $session->created_at;
+
+        if (!$lastActivity) {
+            return false;
+        }
+
+        return $lastActivity->lt(now()->subMinutes($idleMinutes));
     }
 
     private function hydrateInitialBalance(Tenant $tenant, TenantSession $session, User $user): void

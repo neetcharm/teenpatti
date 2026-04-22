@@ -16,3 +16,6 @@ Schedule::command('teen-patti:resolve')->everyMinute()->withoutOverlapping(15);
 
 // Andar Bahar 24/7 round resolver
 Schedule::command('andar-bahar:resolve')->everyMinute()->withoutOverlapping(15);
+
+// Auto-close stale tenant sessions (idle timeout from config/game.php)
+Schedule::command('tenant:sessions:cleanup')->everyMinute()->withoutOverlapping(10);

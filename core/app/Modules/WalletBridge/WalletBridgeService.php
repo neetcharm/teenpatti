@@ -46,8 +46,17 @@ class WalletBridgeService
         bool $async = false
     ) {
         if ($async) {
-            ProcessWalletWin::dispatch($session, $amount, $roundId, $transactionId, $description);
-            return true;
+            try {
+                ProcessWalletWin::dispatch((int) $session->id, $amount, $roundId, $transactionId, $description);
+                return true;
+            } catch (\Throwable $e) {
+                Log::error('Wallet credit queue dispatch failed, falling back to sync credit', [
+                    'session_id' => $session->id,
+                    'round_id' => $roundId,
+                    'amount' => $amount,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $tenant = $session->tenant;

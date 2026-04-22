@@ -37,7 +37,12 @@ class PlayController extends Controller {
         ]);
 
         $demoMode = ($isDemo === 'demo');
-        $manager  = new TeenPattiGlobalManager($demoMode);
+        $tenantSession = $demoMode ? null : $this->activeTenantSession(auth()->user());
+        if (!$demoMode && $this->hasTenantSessionContext() && !$tenantSession) {
+            return response()->json(['error' => 'Session closed due to inactivity. Please relaunch the game.'], 403);
+        }
+
+        $manager  = new TeenPattiGlobalManager($demoMode, $tenantSession?->tenant_id);
         $invest   = (float) $request->invest;
 
         $betResult = $manager->placeBet((int) auth()->id(), $request->choose, $invest);
@@ -45,6 +50,8 @@ class PlayController extends Controller {
         if (isset($betResult['error'])) {
             return response()->json(['error' => $betResult['error']], 422);
         }
+
+        $this->touchTenantSessionActivity($tenantSession);
 
         return response()->json([
             'balance' => showAmount((float) ($betResult['balance'] ?? 0), currencyFormat: false),
@@ -70,12 +77,32 @@ class PlayController extends Controller {
         }
 
         $demoMode = ($isDemo === 'demo');
-        $manager  = new TeenPattiGlobalManager($demoMode);
+        $tenantSession = $demoMode ? null : $this->activeTenantSession(auth()->user());
+        if (!$demoMode && $this->hasTenantSessionContext() && !$tenantSession) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Session closed due to inactivity. Please relaunch the game.',
+            ], 403);
+        }
+
+        $manager  = new TeenPattiGlobalManager($demoMode, $tenantSession?->tenant_id);
+        $this->touchTenantSessionActivity($tenantSession);
 
         // getSync() handles everything internally: phase detection,
         // auto-resolution, history, payouts — all crash-safe.
         $sync = $manager->getSync((int) auth()->id());
-        $sync['balance'] = $this->resolveGameBalance(auth()->user(), $demoMode, refreshTenant: true);
+
+        // Webhook balance fetch now runs once per completed round (not every sync).
+        $refreshTenantBalance = $tenantSession
+            ? $this->shouldRefreshTenantBalanceForCompletedRound($tenantSession, $sync)
+            : false;
+
+        $sync['balance'] = $this->resolveGameBalance(
+            auth()->user(),
+            $demoMode,
+            refreshTenant: $refreshTenantBalance,
+            tenantSession: $tenantSession
+        );
 
         return response()->json($sync);
     }
@@ -83,6 +110,13 @@ class PlayController extends Controller {
     public function tenantWalletRefresh(Request $request)
     {
         $tenantSession = $this->activeTenantSession(auth()->user());
+        if ($this->hasTenantSessionContext() && !$tenantSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session closed due to inactivity. Please relaunch the game.',
+            ], 403);
+        }
+
         if (!$tenantSession) {
             return response()->json([
                 'success' => true,
@@ -90,6 +124,8 @@ class PlayController extends Controller {
                 'currency' => null,
             ]);
         }
+
+        $this->touchTenantSessionActivity($tenantSession);
 
         $balance = $this->resolveTenantWalletBalance($tenantSession, forceRefresh: true);
 
@@ -110,7 +146,12 @@ class PlayController extends Controller {
 
         try {
             $demoMode = ($isDemo === 'demo');
-            $manager  = new TeenPattiGlobalManager($demoMode);
+            $tenantSession = $demoMode ? null : $this->activeTenantSession(auth()->user());
+            if (!$demoMode && $this->hasTenantSessionContext() && !$tenantSession) {
+                return response()->json(['history' => []], 403);
+            }
+
+            $manager  = new TeenPattiGlobalManager($demoMode, $tenantSession?->tenant_id);
             return response()->json(['history' => $manager->getHistory(50)]);
         } catch (\Throwable $e) {
             Log::error('TeenPatti history failed: ' . $e->getMessage());
@@ -138,13 +179,13 @@ class PlayController extends Controller {
         return 'Player ' . $user->id;
     }
 
-    private function resolveGameBalance($user, bool $demoMode, bool $refreshTenant = false): string
+    private function resolveGameBalance($user, bool $demoMode, bool $refreshTenant = false, ?TenantSession $tenantSession = null): string
     {
         if ($demoMode) {
             return showAmount((float) ($user->demo_balance ?? 0), currencyFormat: false);
         }
 
-        $tenantSession = $this->activeTenantSession($user);
+        $tenantSession = $tenantSession ?: $this->activeTenantSession($user);
         if ($tenantSession) {
             $balance = $refreshTenant
                 ? $this->resolveTenantWalletBalance($tenantSession, forceRefresh: false)
@@ -156,6 +197,34 @@ class PlayController extends Controller {
         return showAmount((float) ($user->balance ?? 0), currencyFormat: false);
     }
 
+    private function shouldRefreshTenantBalanceForCompletedRound(TenantSession $tenantSession, array $sync): bool
+    {
+        $tenant = $tenantSession->tenant;
+        if (!$tenant || ($tenant->balance_mode ?? 'internal') !== 'webhook') {
+            return false;
+        }
+
+        $phase = (string) ($sync['phase'] ?? '');
+        $result = $sync['result'] ?? null;
+        $round = (int) ($sync['round'] ?? 0);
+
+        if ($phase !== 'hold' || !is_array($result) || empty($result['winner']) || $round <= 0) {
+            return false;
+        }
+
+        $cacheKey = 'tenant_wallet_round_refresh:' . $tenantSession->id . ':' . $round;
+        return Cache::add($cacheKey, 1, now()->addHours(3));
+    }
+
+    private function touchTenantSessionActivity(?TenantSession $tenantSession): void
+    {
+        if (!$tenantSession || $tenantSession->status !== 'active') {
+            return;
+        }
+
+        $tenantSession->forceFill(['last_activity_at' => now()])->save();
+    }
+
     private function activeTenantSession($user): ?TenantSession
     {
         $tenantSessionId = (int) session('tenant_session_id');
@@ -163,12 +232,28 @@ class PlayController extends Controller {
             return null;
         }
 
-        return TenantSession::with('tenant')
+        $tenantSession = TenantSession::with('tenant')
             ->where('id', $tenantSessionId)
             ->where('internal_user_id', $user->id)
             ->where('status', 'active')
             ->where('expires_at', '>', now())
             ->first();
+
+        if (!$tenantSession) {
+            return null;
+        }
+
+        if ($this->isTenantSessionIdle($tenantSession)) {
+            $tenantSession->forceFill([
+                'status' => 'closed',
+                'expires_at' => now(),
+                'last_activity_at' => now(),
+            ])->save();
+
+            return null;
+        }
+
+        return $tenantSession;
     }
 
     private function resolveTenantWalletBalance(TenantSession $tenantSession, bool $forceRefresh = false): float
@@ -199,5 +284,22 @@ class PlayController extends Controller {
         }
 
         return (float) $tenantSession->balance_cache;
+    }
+
+    private function isTenantSessionIdle(TenantSession $tenantSession): bool
+    {
+        $idleMinutes = max(1, (int) config('game.tenant_session_idle_timeout_minutes', 5));
+        $lastActivity = $tenantSession->last_activity_at ?? $tenantSession->updated_at ?? $tenantSession->created_at;
+
+        if (!$lastActivity) {
+            return false;
+        }
+
+        return $lastActivity->lt(now()->subMinutes($idleMinutes));
+    }
+
+    private function hasTenantSessionContext(): bool
+    {
+        return (int) session('tenant_session_id') > 0;
     }
 }

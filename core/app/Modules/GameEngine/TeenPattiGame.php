@@ -8,13 +8,9 @@ use App\Modules\WalletBridge\WalletBridgeService;
 
 class TeenPattiGame extends BaseModularGame
 {
-    protected TeenPattiGlobalManager $manager;
-
     public function __construct(WalletBridgeService $wallet)
     {
         parent::__construct($wallet);
-        // We reuse the existing Manager logic for the rounds/phases but bridge the wallet
-        $this->manager = new TeenPattiGlobalManager(demoMode: false);
     }
 
     /**
@@ -22,7 +18,8 @@ class TeenPattiGame extends BaseModularGame
      */
     public function start(TenantSession $session, array $params): array
     {
-        $sync = $this->manager->getSync((int) $session->internal_user_id);
+        $manager = $this->managerForSession($session);
+        $sync = $manager->getSync((int) $session->internal_user_id);
         
         return [
             'status' => 'success',
@@ -36,43 +33,27 @@ class TeenPattiGame extends BaseModularGame
      */
     public function play(TenantSession $session, array $params): array
     {
+        $manager = $this->managerForSession($session);
         $placeholder = $params['choose'] ?? '';
         $amount      = (float) ($params['invest'] ?? 0);
 
-        // 1. Validate round phase
-        if ($this->manager->currentPhase() !== 'betting') {
-            return ['status' => 'error', 'message' => 'Betting is closed!'];
-        }
-
-        // 2. Debit external wallet BEFORE recording local state
-        $roundId = (string) $this->manager->currentRound();
-        $txnId   = 'tp_bet_' . uniqid();
-        
-        $newBalance = $this->debit($session, $amount, $roundId, $txnId);
-
-        if ($newBalance === false) {
-            return ['status' => 'error', 'message' => 'Insufficient funds in external wallet.'];
-        }
-
-        // 3. Update local session cache
-        $session->update(['balance_cache' => $newBalance]);
-
-        // 4. Register bet in the Global Manager (which uses Cache for real-time)
-        // Note: we might need to modify GlobalManager to skip internal balance checks if called from SaaS
-        // For now, we assume if we reached here, the debit is successful.
-        $betResult = $this->manager->placeBet((int) $session->internal_user_id, $placeholder, $amount);
+        // Delegate wallet debit/rollback and round write consistency to GlobalManager.
+        $betResult = $manager->placeBet((int) $session->internal_user_id, $placeholder, $amount);
 
         if (isset($betResult['error'])) {
-            // Rollback if needed (implemented in WalletBridgeService)
-            // For now return error
             return ['status' => 'error', 'message' => $betResult['error']];
         }
 
         return [
             'status'      => 'success',
-            'balance'     => $newBalance,
+            'balance'     => $betResult['balance'] ?? $session->balance_cache,
             'my_bets'     => $betResult['my_bets'] ?? [],
             'totals'      => $betResult['totals'] ?? [],
         ];
+    }
+
+    private function managerForSession(TenantSession $session): TeenPattiGlobalManager
+    {
+        return new TeenPattiGlobalManager(demoMode: false, tenantId: (int) $session->tenant_id);
     }
 }

@@ -35,12 +35,14 @@ class TeenPattiGlobalManager
     private const HISTORY_PREFIX  = 'tp_history_';
 
     private bool $demoMode;
+    private int $tenantId;
     private bool $roundBetTableReady = false;
     private static ?bool $roundBetTableAvailable = null;
 
-    public function __construct(bool $demoMode = false)
+    public function __construct(bool $demoMode = false, ?int $tenantId = null)
     {
         $this->demoMode = $demoMode;
+        $this->tenantId = max(0, (int) ($tenantId ?? 0));
         $this->roundBetTableReady = self::ensureRoundBetTable();
     }
 
@@ -198,6 +200,10 @@ class TeenPattiGlobalManager
                 $tenantSession = TenantSession::with('tenant')
                     ->where('internal_user_id', $userId)
                     ->where('game_id', 'teen_patti')
+                    ->when(
+                        $this->tenantScopeId() > 0,
+                        fn($query) => $query->where('tenant_id', $this->tenantScopeId())
+                    )
                     ->active()
                     ->latest('id')
                     ->first();
@@ -237,6 +243,10 @@ class TeenPattiGlobalManager
                     // the WebView balance does not snap back on the next sync.
                     TenantSession::where('internal_user_id', $userId)
                         ->where('game_id', 'teen_patti')
+                        ->when(
+                            $this->tenantScopeId() > 0,
+                            fn($query) => $query->where('tenant_id', $this->tenantScopeId())
+                        )
                         ->where('status', 'active')
                         ->where('expires_at', '>', now())
                         ->update(['balance_cache' => (float) $user->balance]);
@@ -356,7 +366,17 @@ class TeenPattiGlobalManager
                 return $this->getHistoryFromCache($limit);
             }
 
-            $rows = \App\Models\TeenPattiRoundHistory::where('is_demo', $this->demoMode)
+            $historyQuery = \App\Models\TeenPattiRoundHistory::where('is_demo', $this->demoMode);
+            $hasTenantColumn = Schema::hasColumn('teen_patti_round_history', 'tenant_id');
+
+            if ($hasTenantColumn) {
+                $historyQuery->where('tenant_id', $this->tenantScopeId());
+            } elseif ($this->tenantScopeId() > 0) {
+                // Avoid cross-tenant leakage before tenant_id migration is applied.
+                return $this->getHistoryFromCache($limit);
+            }
+
+            $rows = $historyQuery
                 ->orderByDesc('round_number')
                 ->limit($limit)
                 ->get(['round_number', 'winner', 'silver_total', 'gold_total', 'diamond_total',
@@ -415,7 +435,17 @@ class TeenPattiGlobalManager
                     $commissionPercent = 10.0; // default platform commission
                     $tenantSession = null;
                     try {
-                        $tenantSession = \App\Models\TenantSession::findActiveByUserId((int) $uid);
+                        $tenantSessionQuery = \App\Models\TenantSession::where('internal_user_id', (int) $uid)
+                            ->where('status', 'active')
+                            ->where('expires_at', '>', now())
+                            ->latest('id');
+
+                        if ($this->tenantScopeId() > 0) {
+                            $tenantSessionQuery->where('tenant_id', $this->tenantScopeId());
+                        }
+
+                        $tenantSession = $tenantSessionQuery->first();
+
                         if ($tenantSession && $tenantSession->tenant) {
                             $commissionPercent = (float) ($tenantSession->tenant->commission_percent ?? $commissionPercent);
                         }
@@ -495,26 +525,37 @@ class TeenPattiGlobalManager
                 return;
             }
 
+            $hasTenantColumn = Schema::hasColumn('teen_patti_round_history', 'tenant_id');
+            if (!$hasTenantColumn && $this->tenantScopeId() > 0) {
+                // Avoid storing tenant-scoped history in shared rows before migration.
+                return;
+            }
+
             $playerCount = count($bets['users'] ?? []);
-            \App\Models\TeenPattiRoundHistory::updateOrCreate(
-                ['round_number' => $round, 'is_demo' => $this->demoMode],
-                [
-                    'winner'        => $winner,
-                    'silver_total'  => round((float) ($totals['silver'] ?? 0), 2),
-                    'gold_total'    => round((float) ($totals['gold'] ?? 0), 2),
-                    'diamond_total' => round((float) ($totals['diamond'] ?? 0), 2),
-                    'total_pool'    => round(array_sum($totals), 2),
-                    'silver_cards'  => $hands['silver'] ?? [],
-                    'gold_cards'    => $hands['gold']   ?? [],
-                    'diamond_cards' => $hands['diamond'] ?? [],
-                    'silver_rank'   => $result['ranks']['silver'] ?? null,
-                    'gold_rank'     => $result['ranks']['gold']   ?? null,
-                    'diamond_rank'  => $result['ranks']['diamond'] ?? null,
-                    'player_count'  => $playerCount,
-                    'is_demo'       => $this->demoMode,
-                    'resolved_at'   => now(),
-                ]
-            );
+            $lookup = ['round_number' => $round, 'is_demo' => $this->demoMode];
+            $values = [
+                'winner'        => $winner,
+                'silver_total'  => round((float) ($totals['silver'] ?? 0), 2),
+                'gold_total'    => round((float) ($totals['gold'] ?? 0), 2),
+                'diamond_total' => round((float) ($totals['diamond'] ?? 0), 2),
+                'total_pool'    => round(array_sum($totals), 2),
+                'silver_cards'  => $hands['silver'] ?? [],
+                'gold_cards'    => $hands['gold']   ?? [],
+                'diamond_cards' => $hands['diamond'] ?? [],
+                'silver_rank'   => $result['ranks']['silver'] ?? null,
+                'gold_rank'     => $result['ranks']['gold']   ?? null,
+                'diamond_rank'  => $result['ranks']['diamond'] ?? null,
+                'player_count'  => $playerCount,
+                'is_demo'       => $this->demoMode,
+                'resolved_at'   => now(),
+            ];
+
+            if ($hasTenantColumn) {
+                $lookup['tenant_id'] = $this->tenantScopeId();
+                $values['tenant_id'] = $this->tenantScopeId();
+            }
+
+            \App\Models\TeenPattiRoundHistory::updateOrCreate($lookup, $values);
         } catch (\Throwable $e) {
             Log::warning("[TP] persistHistory failed for round #{$round}: " . $e->getMessage());
             // Non-blocking — game continues even if history table doesn't exist
@@ -535,15 +576,22 @@ class TeenPattiGlobalManager
                 Schema::create('teen_patti_round_bets', static function (Blueprint $table): void {
                     $table->id();
                     $table->unsignedBigInteger('round_number');
+                    $table->unsignedBigInteger('tenant_id')->default(0);
                     $table->boolean('is_demo')->default(false);
                     $table->unsignedBigInteger('user_id');
                     $table->string('side', 20);
                     $table->decimal('amount', 15, 2)->default(0);
                     $table->timestamps();
 
-                    $table->index(['round_number', 'is_demo'], 'tp_bets_round_demo_idx');
-                    $table->index(['round_number', 'is_demo', 'side'], 'tp_bets_round_side_idx');
-                    $table->index(['round_number', 'is_demo', 'user_id'], 'tp_bets_round_user_idx');
+                    $table->index(['round_number', 'tenant_id', 'is_demo'], 'tp_bets_round_tenant_demo_idx');
+                    $table->index(['round_number', 'tenant_id', 'is_demo', 'side'], 'tp_bets_round_tenant_side_idx');
+                    $table->index(['round_number', 'tenant_id', 'is_demo', 'user_id'], 'tp_bets_round_tenant_user_idx');
+                });
+            }
+
+            if (!Schema::hasColumn('teen_patti_round_bets', 'tenant_id')) {
+                Schema::table('teen_patti_round_bets', static function (Blueprint $table): void {
+                    $table->unsignedBigInteger('tenant_id')->default(0)->after('round_number');
                 });
             }
 
@@ -558,12 +606,12 @@ class TeenPattiGlobalManager
 
     private function snapshotKey(int $round): string
     {
-        return self::SNAPSHOT_PREFIX . ($this->demoMode ? 'd_' : 'l_') . $round;
+        return self::SNAPSHOT_PREFIX . ($this->demoMode ? 'd_' : 'l_') . $this->tenantScopeId() . '_' . $round;
     }
 
     private function historyCacheKey(): string
     {
-        return self::HISTORY_PREFIX . ($this->demoMode ? 'd' : 'l');
+        return self::HISTORY_PREFIX . ($this->demoMode ? 'd' : 'l') . '_' . $this->tenantScopeId();
     }
 
     private function recordRoundBet(int $round, int $userId, string $side, float $amount): void
@@ -571,6 +619,7 @@ class TeenPattiGlobalManager
         if ($this->roundBetTableReady) {
             DB::table('teen_patti_round_bets')->insert([
                 'round_number' => $round,
+                'tenant_id'    => $this->tenantScopeId(),
                 'is_demo'      => $this->demoMode ? 1 : 0,
                 'user_id'      => $userId,
                 'side'         => $side,
@@ -609,6 +658,7 @@ class TeenPattiGlobalManager
             $rows = DB::table('teen_patti_round_bets')
                 ->select('user_id', 'side', DB::raw('SUM(amount) as total_amount'))
                 ->where('round_number', $round)
+                ->where('tenant_id', $this->tenantScopeId())
                 ->where('is_demo', $this->demoMode ? 1 : 0)
                 ->groupBy('user_id', 'side')
                 ->get();
@@ -818,8 +868,25 @@ class TeenPattiGlobalManager
         return $elapsed < self::BET_WINDOW ? self::BET_WINDOW - $elapsed : self::ROUND_DURATION - $elapsed;
     }
 
-    protected function betsKey(int $round): string   { return self::BETS_PREFIX . ($this->demoMode ? 'd_' : '') . $round; }
-    protected function resultKey(int $round): string  { return self::RESULT_PREFIX . ($this->demoMode ? 'd_' : '') . $round; }
+    protected function betsKey(int $round): string
+    {
+        return self::BETS_PREFIX . ($this->demoMode ? 'd_' : 'l_') . $this->tenantScopeId() . '_' . $round;
+    }
+
+    protected function resultKey(int $round): string
+    {
+        return self::RESULT_PREFIX . ($this->demoMode ? 'd_' : 'l_') . $this->tenantScopeId() . '_' . $round;
+    }
+
+    private function tenantScopeId(): int
+    {
+        // Demo rounds stay globally scoped under 0.
+        if ($this->demoMode) {
+            return 0;
+        }
+
+        return max(0, $this->tenantId);
+    }
 
     /* ================================================================
      *  CARD DEALING

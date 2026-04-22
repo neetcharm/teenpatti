@@ -10,29 +10,35 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
+use Throwable;
 
 class ProcessWalletWin implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $session;
-    protected $amount;
-    protected $roundId;
-    protected $transactionId;
-    protected $description;
+    public int $tries = 5;
+    public int $timeout = 30;
+    public array $backoff = [10, 30, 60, 120, 240];
+
+    protected int $sessionId;
+    protected float $amount;
+    protected string $roundId;
+    protected ?string $transactionId;
+    protected ?string $description;
 
     /**
      * Create a new job instance.
      */
     public function __construct(
-        TenantSession $session,
+        int $sessionId,
         float $amount,
         string $roundId,
         ?string $transactionId = null,
         ?string $description = null
     )
     {
-        $this->session = $session;
+        $this->sessionId = $sessionId;
         $this->amount = $amount;
         $this->roundId = $roundId;
         $this->transactionId = $transactionId;
@@ -44,14 +50,24 @@ class ProcessWalletWin implements ShouldQueue
      */
     public function handle(WalletBridgeService $walletService)
     {
+        $session = TenantSession::with('tenant')->find($this->sessionId);
+        if (!$session) {
+            Log::warning("Async Wallet Win skipped: session not found", [
+                'session_id' => $this->sessionId,
+                'amount' => $this->amount,
+                'round' => $this->roundId,
+            ]);
+            return;
+        }
+
         Log::info("Processing Async Wallet Win Response", [
-            'session' => $this->session->session_token,
+            'session' => $session->session_token,
             'amount' => $this->amount,
             'round' => $this->roundId,
         ]);
 
         $result = $walletService->credit(
-            $this->session,
+            $session,
             $this->amount,
             $this->roundId,
             $this->transactionId,
@@ -61,10 +77,20 @@ class ProcessWalletWin implements ShouldQueue
 
         if ($result === false) {
             Log::error("Async Wallet Win Failed", [
-                'session' => $this->session->session_token,
-                'txn' => $this->transactionId
+                'session' => $session->session_token,
+                'txn' => $this->transactionId,
             ]);
-            // Logic for retry or admin alert can go here
+            throw new RuntimeException('Async wallet credit failed.');
         }
+    }
+
+    public function failed(Throwable $e): void
+    {
+        Log::error('Async Wallet Win permanently failed', [
+            'session_id' => $this->sessionId,
+            'round' => $this->roundId,
+            'txn' => $this->transactionId,
+            'error' => $e->getMessage(),
+        ]);
     }
 }

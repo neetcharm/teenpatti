@@ -8,6 +8,7 @@ class TeenPattiRoundHistory extends Model
 {
     protected $table    = 'teen_patti_round_history';
     protected $fillable = [
+        'tenant_id',
         'round_number','winner',
         'silver_total','gold_total','diamond_total','total_pool',
         'silver_cards','gold_cards','diamond_cards',
@@ -23,6 +24,7 @@ class TeenPattiRoundHistory extends Model
         'gold_total'    => 'float',
         'diamond_total' => 'float',
         'total_pool'    => 'float',
+        'tenant_id'     => 'integer',
         'is_demo'       => 'boolean',
         'resolved_at'   => 'datetime',
     ];

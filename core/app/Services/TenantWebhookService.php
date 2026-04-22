@@ -84,7 +84,9 @@ class TenantWebhookService
     public function rollback(TenantSession $session, string $originalTxnId, string $roundId): array
     {
         $txnId = $this->generateTxnId('rb');
-        return $this->call('rollback', $session, 0, $roundId, $txnId, $originalTxnId);
+        $rollbackAmount = $this->resolveRollbackAmount($originalTxnId);
+
+        return $this->call('rollback', $session, $rollbackAmount, $roundId, $txnId, $originalTxnId);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -313,6 +315,27 @@ class TenantWebhookService
     private function generateTxnId(string $prefix): string
     {
         return strtolower($prefix) . '_' . now()->format('Ymd') . '_' . Str::random(12);
+    }
+
+    private function resolveRollbackAmount(string $originalTxnId): float
+    {
+        try {
+            $debitTxn = $this->txn()->newQuery()
+                ->where('our_txn_id', $originalTxnId)
+                ->where('action', 'debit')
+                ->first();
+
+            if ($debitTxn) {
+                return round((float) $debitTxn->amount, 2);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Rollback amount lookup failed: ' . $e->getMessage(), [
+                'tenant_id' => $this->tenant->id,
+                'ref_txn_id' => $originalTxnId,
+            ]);
+        }
+
+        return 0.0;
     }
 
     private function syncLocalBalanceCache(TenantSession $session, float $balance): void
