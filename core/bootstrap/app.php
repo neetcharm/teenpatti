@@ -44,6 +44,9 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Trust all proxies (Nginx terminates SSL; Laravel must detect HTTPS via X-Forwarded-Proto)
+        $middleware->trustProxies(at: '*');
+
         $middleware->group('web',[
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
