@@ -4,12 +4,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('cron', 'CronController@cron')->name('cron');
 
-// ── Integration Documentation (admin-protected) ───────────────────────────────
+// Integration Documentation (admin-protected)
 Route::middleware('admin')->get('admin/docs/integration', function () {
     return view('admin.docs.integration', ['pageTitle' => 'Integration Documentation']);
 })->name('admin.docs.integration');
 
-// ── Tenant Panel ─────────────────────────────────────────────────────────────
+// Tenant Panel
 Route::prefix('tenant')->name('tenant.')->namespace('Tenant')->group(function () {
     // Guest
     Route::get('login',  'AuthController@showLogin')->name('login');
@@ -32,10 +32,10 @@ Route::prefix('tenant')->name('tenant.')->namespace('Tenant')->group(function ()
     });
 });
 
-// ── Teen Patti WebView (legacy ClientApp flow) ───────────────────────────────
+// Teen Patti WebView (legacy ClientApp flow)
 Route::get('/tp/{token}', 'TeenPattiWebViewController@serve')->name('tp.webview');
 
-// ── Tenant Game Provider – WebView Launch ────────────────────────────────────
+// Tenant Game Provider – WebView Launch
 // Tenant's Android / Web app opens this URL in a WebView.
 // {sessionToken} is passed as ?token=.
 // No auth middleware – controller validates session and starts web session.

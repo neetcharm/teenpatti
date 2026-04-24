@@ -63,7 +63,7 @@ class ClientController extends Controller
             'balance'          => 'nullable|numeric|min:0',
         ]);
 
-        // ── 1. Verify client app ────────────────────────────────────────────
+        // 1. Verify client app
         $app = ClientApp::where('client_key', $request->client_key)
             ->where('status', 1)
             ->first();
@@ -75,7 +75,7 @@ class ClientController extends Controller
             ], 401);
         }
 
-        // ── 2. Find or create internal user for this external player ────────
+        // 2. Find or create internal user for this external player
         // Username pattern: clt{app_id}_{slugified_external_id}
         $internalUsername = 'clt' . $app->id . '_' . Str::slug($request->external_user_id, '_');
         $internalEmail    = 'clt' . $app->id . '_' . md5($request->external_user_id) . '@tp.internal';
@@ -106,17 +106,17 @@ class ClientController extends Controller
             $user->save();
         }
 
-        // ── 3. Optional balance top-up ──────────────────────────────────────
+        // 3. Optional balance top-up
         if ($request->filled('balance') && (float) $request->balance > 0) {
             $user->balance += (float) $request->balance;
             $user->save();
         }
 
-        // ── 4. Rotate WebView token (one active token per user) ─────────────
+        // 4. Rotate WebView token (one active token per user)
         $user->tokens()->where('name', 'webview')->delete();
         $plainToken = $user->createToken('webview')->plainTextToken;
 
-        // ── 5. Build the WebView URL ─────────────────────────────────────────
+        // 5. Build the WebView URL
         $webviewUrl = url('/tp/' . $plainToken);
 
         return response()->json([

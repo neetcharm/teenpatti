@@ -340,7 +340,7 @@ Route::middleware('admin')->group(function () {
 
     });
 
-    // ── Game Provider Tenants ──────────────────────────────────────────────
+    // Game Provider Tenants
     Route::controller('TenantController')
         ->name('tenants.')
         ->prefix('tenants')

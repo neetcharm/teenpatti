@@ -188,7 +188,7 @@ class PlayController extends Controller {
         $tenantSession = $tenantSession ?: $this->activeTenantSession($user);
         if ($tenantSession) {
             $balance = $refreshTenant
-                ? $this->resolveTenantWalletBalance($tenantSession, forceRefresh: false)
+                ? $this->resolveTenantWalletBalance($tenantSession, forceRefresh: true)
                 : (float) $tenantSession->balance_cache;
 
             return showAmount($balance, currencyFormat: false);

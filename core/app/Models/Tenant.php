@@ -12,6 +12,7 @@ class Tenant extends Model
         'api_key', 'api_secret', 'webhook_secret', 'webhook_url', 'callback_url',
         'wallet_topup_url',
         'currency', 'commission_percent', 'min_bet', 'max_bet',
+        'silver_profit_x', 'gold_profit_x', 'diamond_profit_x',
         'session_ttl_minutes', 'allowed_ips', 'status', 'balance_mode',
         // Separate DB
         'use_separate_db', 'db_host', 'db_port', 'db_name', 'db_username', 'db_password_enc',
@@ -24,6 +25,9 @@ class Tenant extends Model
         'min_bet'         => 'float',
         'max_bet'         => 'float',
         'commission_percent' => 'float',
+        'silver_profit_x' => 'float',
+        'gold_profit_x'   => 'float',
+        'diamond_profit_x'=> 'float',
         'use_separate_db' => 'boolean',
         'db_port'         => 'integer',
     ];

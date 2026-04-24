@@ -22,7 +22,7 @@ class TeenPattiWebViewController extends Controller
 {
     public function serve(string $token)
     {
-        // ── 1. Validate token ────────────────────────────────────────────────
+        // 1. Validate token
         $accessToken = PersonalAccessToken::findToken($token);
 
         if (!$accessToken || $accessToken->name !== 'webview') {
@@ -36,10 +36,10 @@ class TeenPattiWebViewController extends Controller
             abort(403, 'Account is inactive.');
         }
 
-        // ── 2. Log into web session (enables existing play routes) ───────────
+        // 2. Log into web session (enables existing play routes)
         Auth::login($user, remember: false);
 
-        // ── 3. Build URL config for the game page ───────────────────────────
+        // 3. Build URL config for the game page
         $balance    = showAmount((float) $user->balance, currencyFormat: false);
         $syncUrl    = route('user.play.teen_patti.global.sync');
         $investUrl  = route('user.play.invest', ['teen_patti']);

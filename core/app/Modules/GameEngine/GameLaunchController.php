@@ -32,7 +32,7 @@ class GameLaunchController extends Controller
             abort(403, 'Session token missing.');
         }
 
-        // ── 1. Find and validate session ─────────────────────────────────
+        // 1. Find and validate session
         $tenantSession = TenantSession::with('tenant', 'internalUser')
             ->where('session_token', $sessionToken)
             ->where('status', 'active')
@@ -49,7 +49,7 @@ class GameLaunchController extends Controller
             abort(403, 'Player account is inactive.');
         }
 
-        // ── 1b. Verify the requested game is still enabled for tenant ─────
+        // 1b. Verify the requested game is still enabled for tenant
         $tenant = $tenantSession->tenant;
         $tenant->load('games');
         if (!$tenant->hasGame($tenantSession->game_id)) {
@@ -59,22 +59,22 @@ class GameLaunchController extends Controller
             abort(404, 'Only Teen Patti is available on this server.');
         }
 
-        // ── 2. Resolve the game ──────────────────────────────────────────
+        // 2. Resolve the game
         $game = Game::active()->where('alias', $tenantSession->game_id)->first();
         if (!$game) {
             abort(404, 'Game not found on server.');
         }
 
-        // ── 3. Log internal user into web session ─────────────────────────
+        // 3. Log internal user into web session
         Auth::login($user, remember: false);
 
-        // ── 4. Tag the PHP session so PlayController knows it's tenant ────
+        // 4. Tag the PHP session so PlayController knows it's tenant
         session(['tenant_session_id' => $tenantSession->id]);
 
-        // ── 5. Touch last activity ────────────────────────────────────────
+        // 5. Touch last activity
         $tenantSession->update(['last_activity_at' => now()]);
 
-        // ── 6. Build game page config ─────────────────────────────────────
+        // 6. Build game page config
         $liveBalance = $this->refreshLaunchBalance($tenantSession);
         $balance = number_format($liveBalance, 2, '.', '');
         $walletTopupUrl = (string) ($tenant->wallet_topup_url ?? '');
@@ -88,7 +88,7 @@ class GameLaunchController extends Controller
             'currency' => (string) $tenantSession->currency,
         ];
 
-        // ── 6a. Teen Patti tenant launches use dedicated mobile-first WebView ─
+        // 6a. Teen Patti tenant launches use dedicated mobile-first WebView.
         $normalizedAlias = str_replace('-', '_', strtolower((string) $game->alias));
         if ($normalizedAlias === 'teen_patti') {
             $syncUrl = route('user.play.teen_patti.global.sync');
@@ -109,7 +109,7 @@ class GameLaunchController extends Controller
             ));
         }
 
-        // ── 6. Dynamically resolve WebView ───────────────────────────────
+        // 6. Dynamically resolve WebView
         $viewName = $game->alias . '_saas';
         if (!view()->exists($viewName)) {
             $viewName = 'layouts.master_saas'; // Fallback

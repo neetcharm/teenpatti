@@ -167,7 +167,7 @@
                         <small class="text-muted">Panel login URL: <a href="{{ url('/tenant/login') }}" target="_blank">{{ url('/tenant/login') }}</a></small>
                     </div>
 
-                    {{-- ── Separate Database Section ────────────────────────── --}}
+                    {{-- Separate Database Section --}}
                     <hr class="my-4">
                     <h6 class="mb-3"><i class="las la-database text-primary"></i> Separate Database (Optional)</h6>
                     <p class="text-muted small mb-3">

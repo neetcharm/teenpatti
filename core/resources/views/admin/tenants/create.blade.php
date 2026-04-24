@@ -156,8 +156,8 @@
 
                     <div class="alert alert-info small">
                         <i class="las la-info-circle"></i>
-                        API Key, Webhook Secret, and Panel Password are auto-generated on save.
-                        You will see them <strong>once</strong> — copy them immediately.
+                        API Key, Webhook Secret, and Panel Password are created automatically on save.
+                        You will see them <strong>once</strong> - copy them immediately.
                     </div>
 
                     <button type="submit" class="btn btn--primary w-100">

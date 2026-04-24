@@ -19,9 +19,9 @@ use Illuminate\Support\Str;
  * Tenant server calls this to create a game session for one of their players.
  * The response contains a `game_url` that the tenant opens in an Android WebView.
  *
- * ─────────────────────────────────────────────────────────────
+ * 
  *  POST /api/v1/game/session
- * ─────────────────────────────────────────────────────────────
+ * 
  *  Request (JSON):
  *    api_key        string   Tenant's public key
  *    timestamp      int      Unix timestamp (must be within ±300s)
@@ -38,7 +38,7 @@ use Illuminate\Support\Str;
  *    game_url       string   Open this in Android WebView
  *    player_balance float    Current balance (from tenant webhook)
  *    expires_at     string   ISO-8601 expiry time
- * ─────────────────────────────────────────────────────────────
+ * 
  */
 class GameSessionController extends Controller
 {
@@ -57,18 +57,18 @@ class GameSessionController extends Controller
             'lang'        => 'nullable|string|max:10',
         ]);
 
-        // ── 1. Verify tenant ──────────────────────────────────────────────
+        // 1. Verify tenant
         $tenant = Tenant::where('api_key', $request->api_key)->where('status', 1)->first();
         if (!$tenant) {
             return $this->error('Invalid API key.', 401);
         }
 
-        // ── 2. Replay-attack guard (±5 minutes) ──────────────────────────
+        // 2. Replay-attack guard (±5 minutes)
         if (abs(time() - (int) $request->timestamp) > 300) {
             return $this->error('Request timestamp expired.', 401);
         }
 
-        // ── 3. Verify HMAC signature ──────────────────────────────────────
+        // 3. Verify HMAC signature
         $expectedSig = $this->computeSignature(
             $tenant,
             $request->api_key,
@@ -80,7 +80,7 @@ class GameSessionController extends Controller
             return $this->error('Invalid signature.', 401);
         }
 
-        // ── 4. Verify game is enabled for this tenant ─────────────────────
+        // 4. Verify game is enabled for this tenant
         $gameId   = $request->game_id ?? 'teen_patti';
         $currency = $request->currency ?? $tenant->currency;
 
@@ -91,14 +91,14 @@ class GameSessionController extends Controller
         }
         $user     = $this->findOrCreateInternalUser($tenant, $request->player_id, $request->player_name);
 
-        // ── 5. Expire any old active sessions for same player+game ────────
+        // 5. Expire any old active sessions for same player+game
         TenantSession::where('tenant_id', $tenant->id)
             ->where('player_id', $request->player_id)
             ->where('game_id', $gameId)
             ->where('status', 'active')
             ->update(['status' => 'expired']);
 
-        // ── 6. Create new session ──────────────────────────────────────────
+        // 6. Create new session
         $sessionToken = Str::random(64);
         $expiresAt    = now()->addMinutes($tenant->session_ttl_minutes);
 
@@ -117,7 +117,7 @@ class GameSessionController extends Controller
             'expires_at'       => $expiresAt,
         ]);
 
-        // ── 7. Fetch initial balance from tenant ───────────────────────────
+        // 7. Fetch initial balance from tenant
         $webhookService = new TenantWebhookService($tenant);
         $balanceResult  = $webhookService->balance($session);
         $initialBalance = $balanceResult['ok'] ? $balanceResult['balance'] : 0;
@@ -128,7 +128,7 @@ class GameSessionController extends Controller
         $user->balance = $initialBalance;
         $user->save();
 
-        // ── 8. Return game URL ─────────────────────────────────────────────
+        // 8. Return game URL
         $gameUrl = url('/launch/' . $sessionToken);
 
         return response()->json([
@@ -142,10 +142,10 @@ class GameSessionController extends Controller
         ]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // POST /api/v1/session/close
     // Body: { api_key, session_token, timestamp, signature }
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function close(Request $request)
     {
         $this->ensureTenantSchema();
@@ -185,11 +185,11 @@ class GameSessionController extends Controller
         return response()->json(['success' => true, 'message' => 'Session closed.', 'status' => $session->status]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // POST /api/v1/player/balance
     // Body: { api_key, session_token, timestamp, signature }
     // Fetches fresh balance from tenant webhook and returns it.
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function refreshBalance(Request $request)
     {
         $this->ensureTenantSchema();
@@ -238,9 +238,9 @@ class GameSessionController extends Controller
         ]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // GET /api/v1/session/status?api_key=...&session_token=...
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function status(Request $request)
     {
         $this->ensureTenantSchema();
@@ -271,10 +271,9 @@ class GameSessionController extends Controller
         ]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Internal helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //
     private function findOrCreateInternalUser(Tenant $tenant, string $playerId, string $playerName): User
     {
         $username = 'tn' . $tenant->id . '_' . Str::slug($playerId, '_');

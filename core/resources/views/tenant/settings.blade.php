@@ -149,25 +149,61 @@
                     </div>
 
                     <div class="alert alert-info mt-3 mb-3 small">
-                        <strong>Payout Rule:</strong> Winner side payout multiplier is dynamic. <br>
-                        Formula: <code>(Total Pool / Winner Side Pool) × (1 - Commission% / 100)</code>
+                        <strong>Payout Rule:</strong> Aap har side ke liye fixed winner profit set kar sakte ho. <br>
+                        Agar side ka <code>Profit X</code> blank hai to dynamic rule chalega:
+                        <code>(Total Pool / Winner Side Pool) × (1 - Commission% / 100)</code>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Silver Profit X</label>
+                            <input type="number" step="0.01" min="0" max="100" class="form-control"
+                                   name="silver_profit_x"
+                                   placeholder="Blank = Dynamic"
+                                   value="{{ old('silver_profit_x', $authTenant->silver_profit_x !== null ? number_format((float) $authTenant->silver_profit_x, 2, '.', '') : '') }}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Gold Profit X</label>
+                            <input type="number" step="0.01" min="0" max="100" class="form-control"
+                                   name="gold_profit_x"
+                                   placeholder="Blank = Dynamic"
+                                   value="{{ old('gold_profit_x', $authTenant->gold_profit_x !== null ? number_format((float) $authTenant->gold_profit_x, 2, '.', '') : '') }}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Diamond Profit X</label>
+                            <input type="number" step="0.01" min="0" max="100" class="form-control"
+                                   name="diamond_profit_x"
+                                   placeholder="Blank = Dynamic"
+                                   value="{{ old('diamond_profit_x', $authTenant->diamond_profit_x !== null ? number_format((float) $authTenant->diamond_profit_x, 2, '.', '') : '') }}">
+                        </div>
                     </div>
 
                     <div class="border rounded p-2 mb-3">
                         <div class="small fw-semibold mb-2">Multiplier Preview</div>
                         <div class="row g-2">
-                            <div class="col-4">
+                            <div class="col-3">
+                                <label class="form-label text-muted small mb-1">Winner Side</label>
+                                <select id="previewWinnerSide" class="form-select form-select-sm">
+                                    <option value="silver">Silver</option>
+                                    <option value="gold">Gold</option>
+                                    <option value="diamond">Diamond</option>
+                                </select>
+                            </div>
+                            <div class="col-3">
                                 <label class="form-label text-muted small mb-1">Total Pool</label>
                                 <input type="number" step="0.01" min="0" id="previewPool" class="form-control form-control-sm" value="10000">
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <label class="form-label text-muted small mb-1">Winner Pool</label>
                                 <input type="number" step="0.01" min="0.01" id="previewWinnerPool" class="form-control form-control-sm" value="2500">
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <label class="form-label text-muted small mb-1">Player Bet</label>
                                 <input type="number" step="0.01" min="0.01" id="previewBet" class="form-control form-control-sm" value="100">
                             </div>
+                        </div>
+                        <div class="small mt-2 text-info" id="previewMode">
+                            Mode: Dynamic Pool Formula
                         </div>
                         <div class="small mt-2">
                             Gross Multiplier: <strong id="previewGross">0.00x</strong> |
@@ -309,21 +345,41 @@ function copyField(id) {
 
 function updatePayoutPreview() {
     const commissionInput = document.querySelector('input[name="commission_percent"]');
+    const winnerSideInput = document.getElementById('previewWinnerSide');
     const poolInput = document.getElementById('previewPool');
     const winnerPoolInput = document.getElementById('previewWinnerPool');
     const betInput = document.getElementById('previewBet');
-    if (!commissionInput || !poolInput || !winnerPoolInput || !betInput) {
+    const modeOutput = document.getElementById('previewMode');
+    if (!commissionInput || !winnerSideInput || !poolInput || !winnerPoolInput || !betInput || !modeOutput) {
         return;
     }
 
+    const winnerSide = winnerSideInput.value || 'silver';
     const commission = Math.max(0, Math.min(95, parseFloat(commissionInput.value || '0') || 0));
     const pool = Math.max(0, parseFloat(poolInput.value || '0') || 0);
     const winnerPool = Math.max(0.01, parseFloat(winnerPoolInput.value || '0.01') || 0.01);
     const bet = Math.max(0, parseFloat(betInput.value || '0') || 0);
 
-    const gross = pool / winnerPool;
-    const net = gross * ((100 - commission) / 100);
-    const payout = bet * net;
+    const sideProfitInput = document.querySelector('input[name="' + winnerSide + '_profit_x"]');
+    const sideProfitRaw = sideProfitInput ? sideProfitInput.value.trim() : '';
+    const hasFixedProfit = sideProfitRaw !== '';
+
+    let gross = 0;
+    let net = 0;
+    let payout = 0;
+
+    if (hasFixedProfit) {
+        const profitX = Math.max(0, parseFloat(sideProfitRaw || '0') || 0);
+        gross = 1 + profitX;
+        net = gross;
+        payout = bet * net;
+        modeOutput.innerText = 'Mode: Fixed ' + winnerSide.charAt(0).toUpperCase() + winnerSide.slice(1) + ' Profit (' + profitX.toFixed(2) + 'x)';
+    } else {
+        gross = pool / winnerPool;
+        net = gross * ((100 - commission) / 100);
+        payout = bet * net;
+        modeOutput.innerText = 'Mode: Dynamic Pool Formula';
+    }
 
     document.getElementById('previewGross').innerText = gross.toFixed(2) + 'x';
     document.getElementById('previewNet').innerText = net.toFixed(2) + 'x';
@@ -331,16 +387,22 @@ function updatePayoutPreview() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    ['previewPool', 'previewWinnerPool', 'previewBet'].forEach(function (id) {
+    ['previewWinnerSide', 'previewPool', 'previewWinnerPool', 'previewBet'].forEach(function (id) {
         const el = document.getElementById(id);
         if (el) {
-            el.addEventListener('input', updatePayoutPreview);
+            el.addEventListener(id === 'previewWinnerSide' ? 'change' : 'input', updatePayoutPreview);
         }
     });
     const commissionInput = document.querySelector('input[name="commission_percent"]');
     if (commissionInput) {
         commissionInput.addEventListener('input', updatePayoutPreview);
     }
+    ['silver_profit_x', 'gold_profit_x', 'diamond_profit_x'].forEach(function (name) {
+        const el = document.querySelector('input[name="' + name + '"]');
+        if (el) {
+            el.addEventListener('input', updatePayoutPreview);
+        }
+    });
     updatePayoutPreview();
 });
 </script>

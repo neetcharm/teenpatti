@@ -18,11 +18,11 @@ use App\Models\Transaction;
  * Manages the global betting round with 20s betting and 15s result/hold phase.
  * Winner logic: lowest total bet placeholder wins (transparent pool rule).
  *
- * DESIGN RULES (bulletproof for shared hosting):
- *  - NO Cache::lock() — file driver locks are unreliable on shared hosts.
- *  - ALL DB writes wrapped in try/catch — never crash the game flow.
+ * Design notes:
+ *  - Avoid Cache::lock() because file driver locks may be unreliable on shared hosts.
+ *  - Keep DB writes inside try/catch so one failure does not stop the round flow.
  *  - Result is computed once and cached; re-reads from cache on subsequent calls.
- *  - History persistence is best-effort (non-blocking).
+ *  - History persistence is non-blocking.
  */
 class TeenPattiGlobalManager
 {
@@ -46,9 +46,7 @@ class TeenPattiGlobalManager
         $this->roundBetTableReady = self::ensureRoundBetTable();
     }
 
-    /* ================================================================
-     *  SYNC — single entry point, returns everything the frontend needs
-     * ================================================================ */
+    /* Sync: returns the full state the frontend needs. */
     public function getSync(int $userId): array
     {
         $round  = $this->currentRound();
@@ -74,7 +72,7 @@ class TeenPattiGlobalManager
             }
         }
 
-        // History — best-effort, never crash
+        // History fetch is non-blocking.
         $history = $this->getHistorySafe(20);
 
         return [
@@ -88,10 +86,7 @@ class TeenPattiGlobalManager
         ];
     }
 
-    /* ================================================================
-     *  RESOLVE ROUND — compute winner, deal cards, process payouts
-     *  No locks, no DB dependency. Pure cache-based.
-     * ================================================================ */
+    /* Resolve round: compute winner, deal cards, and process payouts. */
     public function resolveRound(int $round): ?array
     {
         $resultKey = $this->resultKey($round);
@@ -102,7 +97,7 @@ class TeenPattiGlobalManager
             return $existing;
         }
 
-        // 2. Compute the result (no locks needed — idempotent operation)
+        // 2. Compute the result (idempotent operation).
         try {
             $bets = $this->getRoundBetSnapshot($round, true);
 
@@ -146,12 +141,12 @@ class TeenPattiGlobalManager
                 'user_payouts' => $this->processPayoutsSafe($round, $winner, $bets),
             ];
 
-            // 3. Cache the result (15 minutes — way longer than round duration)
+            // 3. Cache the result for 15 minutes (longer than round duration).
             Cache::put($resultKey, $result, now()->addMinutes(15));
 
             Log::info("[TP] Round #{$round} resolved. Winner: {$winner}");
 
-            // 4. Best-effort: persist to DB history (non-blocking)
+            // 4. Persist to DB history without blocking gameplay.
             $this->persistHistorySafe($round, $winner, $totals, $hands, $result, $bets);
             $this->pushHistoryCache($result, $totals, count($bets['users'] ?? []));
 
@@ -355,9 +350,7 @@ class TeenPattiGlobalManager
         $transaction->save();
     }
 
-    /* ================================================================
-     *  HISTORY — safe retrieval from DB (never crashes)
-     * ================================================================ */
+    /* History retrieval from DB with safe fallback behavior. */
     private function getHistorySafe(int $limit = 20): array
     {
         try {
@@ -408,9 +401,7 @@ class TeenPattiGlobalManager
         return $this->getHistorySafe($limit);
     }
 
-    /* ================================================================
-     *  PAYOUTS — safe processing (never crashes resolveRound)
-     * ================================================================ */
+    /* Payout processing with guarded error handling. */
     private function processPayoutsSafe(int $round, string $winner, array $bets): array
     {
         try {
@@ -434,6 +425,9 @@ class TeenPattiGlobalManager
                 if ($userWinBet > 0) {
                     $commissionPercent = 10.0; // default platform commission
                     $tenantSession = null;
+                    $tenant = null;
+                    $profitMultiplierX = null;
+                    $payoutMode = 'dynamic_pool';
                     try {
                         $tenantSessionQuery = \App\Models\TenantSession::where('internal_user_id', (int) $uid)
                             ->where('status', 'active')
@@ -447,14 +441,23 @@ class TeenPattiGlobalManager
                         $tenantSession = $tenantSessionQuery->first();
 
                         if ($tenantSession && $tenantSession->tenant) {
-                            $commissionPercent = (float) ($tenantSession->tenant->commission_percent ?? $commissionPercent);
+                            $tenant = $tenantSession->tenant;
+                            $commissionPercent = (float) ($tenant->commission_percent ?? $commissionPercent);
+                            $profitMultiplierX = $this->tenantProfitMultiplierX($tenant, $winner);
                         }
                     } catch (\Throwable $e) {
                         // Tenant session lookup can fail safely
                     }
 
-                    $commissionPercent = max(0.0, min(95.0, $commissionPercent));
-                    $netMultiplier = $grossMultiplier * ((100.0 - $commissionPercent) / 100.0);
+                    if ($profitMultiplierX !== null) {
+                        $profitMultiplierX = max(0.0, $profitMultiplierX);
+                        $netMultiplier = 1.0 + $profitMultiplierX;
+                        $commissionPercent = 0.0;
+                        $payoutMode = 'fixed_profit_x';
+                    } else {
+                        $commissionPercent = max(0.0, min(95.0, $commissionPercent));
+                        $netMultiplier = $grossMultiplier * ((100.0 - $commissionPercent) / 100.0);
+                    }
                     $payout = round($userWinBet * $netMultiplier, 2);
 
                     $payouts[$uid] = [
@@ -462,7 +465,9 @@ class TeenPattiGlobalManager
                         'payout' => $payout,
                         'profit' => round($payout - $userWinBet, 2),
                         'multiplier' => round($netMultiplier, 4),
+                        'profit_multiplier_x' => $profitMultiplierX !== null ? round($profitMultiplierX, 4) : null,
                         'commission_percent' => round($commissionPercent, 2),
+                        'mode' => $payoutMode,
                     ];
 
                     try {
@@ -473,21 +478,32 @@ class TeenPattiGlobalManager
                             try {
                                 $wallet = app(\App\Modules\WalletBridge\WalletBridgeService::class);
                                 $creditTxnId = 'cr_' . now()->format('Ymd') . '_' . uniqid();
-                                $wallet->credit(
+                                $creditAsyncEnabled = (bool) config('game.wallet_win_credit_async', false);
+                                $creditResult = $wallet->credit(
                                     $tenantSession,
                                     $payout,
                                     'teen_patti_round_' . $round,
                                     $creditTxnId,
                                     "TeenPatti Win - Round {$round}",
-                                    async: true
+                                    async: $creditAsyncEnabled
                                 );
+
+                                if ($creditResult === false) {
+                                    Log::error("[TP] Tenant credit returned failure for user {$uid}", [
+                                        'round' => $round,
+                                        'tenant_session_id' => $tenantSession->id,
+                                        'txn_id' => $creditTxnId,
+                                        'amount' => $payout,
+                                        'async' => $creditAsyncEnabled,
+                                    ]);
+                                }
                             } catch (\Throwable $e) {
                                 Log::warning("[TP] Tenant credit failed for user {$uid}: " . $e->getMessage());
                             }
                             continue;
                         }
 
-                        // ── Normal (non-tenant) player ───────────────────────────
+                        // Normal (non-tenant) player
                         if ($this->demoMode) {
                             $user->demo_balance += $payout;
                             $user->save();
@@ -515,9 +531,32 @@ class TeenPattiGlobalManager
         return $payouts;
     }
 
-    /* ================================================================
-     *  HISTORY PERSISTENCE — best-effort, non-blocking
-     * ================================================================ */
+    private function tenantProfitMultiplierX(?\App\Models\Tenant $tenant, string $winner): ?float
+    {
+        if (!$tenant) {
+            return null;
+        }
+
+        $column = match ($winner) {
+            'silver' => 'silver_profit_x',
+            'gold' => 'gold_profit_x',
+            'diamond' => 'diamond_profit_x',
+            default => null,
+        };
+
+        if (!$column) {
+            return null;
+        }
+
+        $value = $tenant->{$column};
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (float) $value;
+    }
+
+    /* History persistence with non-blocking error handling. */
     private function persistHistorySafe(int $round, string $winner, array $totals, array $hands, array $result, array $bets): void
     {
         try {
@@ -558,7 +597,7 @@ class TeenPattiGlobalManager
             \App\Models\TeenPattiRoundHistory::updateOrCreate($lookup, $values);
         } catch (\Throwable $e) {
             Log::warning("[TP] persistHistory failed for round #{$round}: " . $e->getMessage());
-            // Non-blocking — game continues even if history table doesn't exist
+            // Non-blocking; game continues even if the history table is missing.
         }
     }
 

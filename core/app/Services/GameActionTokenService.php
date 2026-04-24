@@ -28,10 +28,9 @@ class GameActionTokenService
     // Only these exact amounts are legal bets. Prevents arbitrary values.
     public const VALID_CHIPS = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Issue a signed action token
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //
     /**
      * @param  int    $userId   Authenticated user
      * @param  string $alias    Game alias (e.g. teen_patti_global)
@@ -76,10 +75,9 @@ class GameActionTokenService
         ];
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Validate and consume a token
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //
     /**
      * @return array { ok, user_id, alias, action, amount, extra, error }
      */
@@ -87,7 +85,7 @@ class GameActionTokenService
     {
         $fail = fn(string $msg) => ['ok' => false, 'error' => $msg];
 
-        // ── Decode ────────────────────────────────────────────────────────────
+        // Decode
         $decoded = base64_decode($token, strict: true);
         if (!$decoded || !str_contains($decoded, '::')) {
             return $fail('Malformed action token.');
@@ -95,13 +93,13 @@ class GameActionTokenService
 
         [$payload, $signature] = explode('::', $decoded, 2);
 
-        // ── Verify HMAC ───────────────────────────────────────────────────────
+        // Verify HMAC
         $expected = hash_hmac('sha256', $payload, $this->signingKey());
         if (!hash_equals($expected, $signature)) {
             return $fail('Invalid action token signature — request may have been tampered with.');
         }
 
-        // ── Unpack payload ────────────────────────────────────────────────────
+        // Unpack payload
         $parts = explode('|', $payload);
         if (count($parts) < 7) {
             return $fail('Corrupted action token payload.');
@@ -109,12 +107,12 @@ class GameActionTokenService
 
         [$tUserId, $tAlias, $tAction, $tAmount, $tExtra, $tNonce, $tExpires] = $parts;
 
-        // ── Expiry ────────────────────────────────────────────────────────────
+        // Expiry
         if ((int) $tExpires < time()) {
             return $fail('Action token expired. Please try again.');
         }
 
-        // ── Binding checks: token must match current user + game ──────────────
+        // Binding checks: token must match current user + game
         if ((int) $tUserId !== $userId) {
             return $fail('Action token user mismatch.');
         }
@@ -122,7 +120,7 @@ class GameActionTokenService
             return $fail('Action token game mismatch.');
         }
 
-        // ── One-time use: consume from cache ──────────────────────────────────
+        // One-time use: consume from cache
         $cacheKey = $this->cacheKey($token);
         if (!Cache::has($cacheKey)) {
             return $fail('Action token already used or expired. Do not replay requests.');
@@ -138,10 +136,9 @@ class GameActionTokenService
         ];
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Nonce validation (for all game requests, not just bets)
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //
     /**
      * Call this to register a nonce and prevent replay.
      * Returns true if nonce is fresh; false if already used.
@@ -157,10 +154,9 @@ class GameActionTokenService
         return true;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //
     private function signingKey(): string
     {
         // Uses Laravel APP_KEY — never sent to client

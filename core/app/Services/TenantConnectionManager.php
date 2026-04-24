@@ -80,8 +80,7 @@ class TenantConnectionManager
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //
     private static function register(Tenant $tenant, string $key): void
     {
         $password = '';

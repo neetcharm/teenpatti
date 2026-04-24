@@ -2,7 +2,7 @@
 
 @push('style')
 <style>
-/* ── Documentation Styles ──────────────────────────────────────── */
+/* Documentation Styles */
 .doc-sidebar {
     position: sticky; top: 80px; max-height: calc(100vh - 100px);
     overflow-y: auto; padding-right: 6px;
@@ -157,7 +157,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             <span class="badge bg--primary px-3 py-2">API v1</span>
         </div>
 
-        {{-- ── INTRODUCTION ──────────────────────────────────────────────── --}}
+        {{-- INTRODUCTION --}}
         <div class="doc-section" id="intro">
             <h2><i class="las la-book-open text-primary"></i> Introduction</h2>
 
@@ -196,26 +196,22 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             </div>
         </div>
 
-        {{-- ── ARCHITECTURE ──────────────────────────────────────────────── --}}
+        {{-- ARCHITECTURE --}}
         <div class="doc-section" id="architecture">
             <h2><i class="las la-project-diagram text-primary"></i> Architecture</h2>
 
-            <pre class="code-block"><code><span class="cm">┌─────────────────┐         ┌──────────────────────────────────────────┐
-│  Your App/Server│         │           Our Game Platform               │
-│                 │         │                                            │
-│  1. POST        │────────▶│  /api/v1/session/create                   │
-│     X-API-Key   │         │  → Validates tenant + HMAC signature      │
-│     X-Signature │         │  → Creates TenantSession record            │
-│     JSON body   │◀────────│  ← Returns { data: { game_url, token } }  │
-│                 │         │                                            │
-│  2. Open        │         │                                            │
-│     game_url    │────────▶│  /play?token={session_token}              │
-│     in WebView  │         │  → Authenticates player                    │
-│                 │◀────────│  ← Renders game UI (full-screen WebView)  │
-│                 │         │                                            │
-│  3. Webhook     │◀────────│  POST your_webhook_url  (webhook mode)    │
-│     (optional)  │         │  → Notifies balance/debit/credit events   │
-└─────────────────┘         └──────────────────────────────────────────┘</span></code></pre>
+            <pre class="code-block"><code><span class="cm">Your App/Server                           Our Game Platform
+---------------------------------------------------------------
+1) POST /api/v1/session/create  --------> validates tenant + HMAC
+   headers: X-API-Key, X-Signature       creates TenantSession
+   body: JSON payload            <-------- returns game_url + token
+
+2) Open game_url in WebView      --------> /play?token={session_token}
+                                          authenticates player
+                                  <-------- renders game UI
+
+3) Webhook (optional)            <-------- POST to your webhook URL
+                                          (balance/debit/credit events)</span></code></pre>
 
             <h3>Balance Modes</h3>
             <div class="row g-3">
@@ -252,7 +248,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             </div>
         </div>
 
-        {{-- ── QUICK START ───────────────────────────────────────────────── --}}
+        {{-- QUICK START --}}
         <div class="doc-section" id="quickstart">
             <h2><i class="las la-rocket text-primary"></i> Quick Start (5 Minutes)</h2>
 
@@ -286,7 +282,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             </div>
         </div>
 
-        {{-- ── CREDENTIALS ───────────────────────────────────────────────── --}}
+        {{-- CREDENTIALS --}}
         <div class="doc-section" id="credentials">
             <h2><i class="las la-key text-primary"></i> API Credentials</h2>
 
@@ -306,7 +302,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             </div>
         </div>
 
-        {{-- ── SIGNING ───────────────────────────────────────────────────── --}}
+        {{-- SIGNING --}}
         <div class="doc-section" id="signing">
             <h2><i class="las la-signature text-primary"></i> Request Signing</h2>
             <p>Every session creation request must include an HMAC-SHA256 signature to prevent forgery.</p>
@@ -335,7 +331,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
 <span class="nm">$nonce</span>     <span class="op">=</span> <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(<span class="nb">16</span>));</code></pre>
         </div>
 
-        {{-- ── SESSION CREATE ────────────────────────────────────────────── --}}
+        {{-- SESSION CREATE --}}
         <div class="doc-section" id="session-create">
             <h2><i class="las la-play-circle text-primary"></i> Create Game Session</h2>
 
@@ -418,7 +414,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             </div>
         </div>
 
-        {{-- ── SESSION CLOSE ─────────────────────────────────────────────── --}}
+        {{-- SESSION CLOSE --}}
         <div class="doc-section" id="session-close">
             <h2><i class="las la-stop-circle text-primary"></i> Close Session</h2>
             <div class="doc-note warning">
@@ -427,7 +423,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             </div>
         </div>
 
-        {{-- ── SESSION STATUS ────────────────────────────────────────────── --}}
+        {{-- SESSION STATUS --}}
         <div class="doc-section" id="session-status">
             <h2><i class="las la-info-circle text-primary"></i> Session Status</h2>
             <div class="doc-note warning">
@@ -436,7 +432,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             </div>
         </div>
 
-        {{-- ── BALANCE REFRESH ───────────────────────────────────────────── --}}
+        {{-- BALANCE REFRESH --}}
         <div class="doc-section" id="balance-refresh">
             <h2><i class="las la-sync text-primary"></i> Refresh Balance</h2>
             <div class="doc-note warning">
@@ -445,7 +441,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
             </div>
         </div>
 
-        {{-- ── ANDROID ───────────────────────────────────────────────────── --}}
+        {{-- ANDROID --}}
         <div class="doc-section" id="android">
             <h2><i class="lab la-android text-primary"></i> Android WebView Integration</h2>
 
@@ -526,7 +522,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
 }</code></pre>
         </div>
 
-        {{-- ── iOS ────────────────────────────────────────────────────────── --}}
+        {{-- iOS --}}
         <div class="doc-section" id="ios">
             <h2><i class="lab la-apple text-primary"></i> iOS WKWebView Integration</h2>
 
@@ -567,7 +563,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
 }</code></pre>
         </div>
 
-        {{-- ── WEB ────────────────────────────────────────────────────────── --}}
+        {{-- WEB --}}
         <div class="doc-section" id="web">
             <h2><i class="las la-globe text-primary"></i> Web / iFrame Integration</h2>
 
@@ -591,7 +587,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
 <span class="op">&lt;/</span><span class="kw">script</span><span class="op">&gt;</span></code></pre>
         </div>
 
-        {{-- ── WEBHOOK ────────────────────────────────────────────────────── --}}
+        {{-- WEBHOOK --}}
         <div class="doc-section" id="webhook">
             <h2><i class="las la-exchange-alt text-primary"></i> Webhook Setup (Webhook Mode)</h2>
 
@@ -664,7 +660,7 @@ pre.code-block code { color: #e2e8f0; font-family: 'Cascadia Code','Fira Code','
 });</code></pre>
         </div>
 
-        {{-- ── INTERNAL MODE ─────────────────────────────────────────────── --}}
+        {{-- INTERNAL MODE --}}
         <div class="doc-section" id="internal-mode">
             <h2><i class="las la-coins text-primary"></i> Internal Balance Mode</h2>
 
@@ -697,7 +693,7 @@ Player wins 800
 Our DB: users.balance = 5300  (instantly)</span></code></pre>
         </div>
 
-        {{-- ── WEBHOOK MODE ──────────────────────────────────────────────── --}}
+        {{-- WEBHOOK MODE --}}
         <div class="doc-section" id="webhook-mode">
             <h2><i class="las la-server text-primary"></i> Webhook Balance Mode</h2>
 
@@ -714,7 +710,7 @@ Our DB: users.balance = 5300  (instantly)</span></code></pre>
             Store our <code>transaction_id</code> and check for duplicates to prevent double-crediting on retries.</p>
         </div>
 
-        {{-- ── SEPARATE DB ───────────────────────────────────────────────── --}}
+        {{-- SEPARATE DB --}}
         <div class="doc-section" id="separate-db">
             <h2><i class="las la-database text-primary"></i> Separate Database Setup</h2>
 
@@ -758,7 +754,7 @@ Our DB: users.balance = 5300  (instantly)</span></code></pre>
             </div>
         </div>
 
-        {{-- ── SECURITY ──────────────────────────────────────────────────── --}}
+        {{-- SECURITY --}}
         <div class="doc-section" id="security">
             <h2><i class="las la-shield-alt text-primary"></i> Security Guide</h2>
 
@@ -793,7 +789,7 @@ Our DB: users.balance = 5300  (instantly)</span></code></pre>
             </table>
         </div>
 
-        {{-- ── ERROR CODES ───────────────────────────────────────────────── --}}
+        {{-- ERROR CODES --}}
         <div class="doc-section" id="errors">
             <h2><i class="las la-exclamation-triangle text-primary"></i> Error Codes</h2>
 

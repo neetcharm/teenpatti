@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
  * Handles all outgoing HTTP calls to a tenant's webhook URL.
  *
  * Protocol (POST JSON):
- * ─────────────────────
+ * 
  * Request fields sent to tenant:
  *   action         string  – balance | debit | credit | rollback
  *   player_id      string  – Tenant's own user identifier
@@ -47,10 +47,9 @@ class TenantWebhookService
         $this->tenant = $tenant;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    //
     // Public API
-    // ────────────────────────────────────────────────────────────────────────
-
+    //
     /**
      * Fetch player's current balance from tenant.
      */
@@ -89,10 +88,9 @@ class TenantWebhookService
         return $this->call('rollback', $session, $rollbackAmount, $roundId, $txnId, $originalTxnId);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    //
     // Internal
-    // ────────────────────────────────────────────────────────────────────────
-
+    //
     private function call(
         string         $action,
         TenantSession  $session,
@@ -103,7 +101,7 @@ class TenantWebhookService
     ): array {
         $txnId = $txnId ?? $this->generateTxnId($action);
 
-        // ── Internal balance mode: operate on our DB, no HTTP call ───────────
+        // Internal balance mode: operate on our DB, no HTTP call
         if (($this->tenant->balance_mode ?? 'webhook') === 'internal') {
             return $this->callInternal($action, $session, $amount, $roundId, $txnId, $refTxnId);
         }
@@ -209,10 +207,9 @@ class TenantWebhookService
         }
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    //
     // Internal balance mode – no HTTP call, operate directly on our DB
-    // ────────────────────────────────────────────────────────────────────────
-
+    //
     private function callInternal(
         string        $action,
         TenantSession $session,
@@ -229,12 +226,12 @@ class TenantWebhookService
         $balanceBefore = round((float) $user->balance, 2);
         $newBalance    = $balanceBefore;
 
-        // ── Balance inquiry – no state change ────────────────────────────────
+        // Balance inquiry – no state change
         if ($action === 'balance') {
             return ['ok' => true, 'balance' => $balanceBefore, 'txn_id' => $txnId, 'message' => 'ok'];
         }
 
-        // ── Debit (bet) ───────────────────────────────────────────────────────
+        // Debit (bet)
         if ($action === 'debit') {
             if ($balanceBefore < $amount) {
                 return ['ok' => false, 'balance' => $balanceBefore, 'txn_id' => $txnId, 'message' => 'Insufficient balance'];
@@ -242,12 +239,12 @@ class TenantWebhookService
             $newBalance = round($balanceBefore - $amount, 2);
         }
 
-        // ── Credit (win) ──────────────────────────────────────────────────────
+        // Credit (win)
         if ($action === 'credit') {
             $newBalance = round($balanceBefore + $amount, 2);
         }
 
-        // ── Rollback (reverse a debit) ────────────────────────────────────────
+        // Rollback (reverse a debit)
         if ($action === 'rollback') {
             $origTxn = $this->txn()->newQuery()->where('our_txn_id', $refTxnId)->where('action', 'debit')->first();
             $refundAmount = $origTxn ? round((float) $origTxn->amount, 2) : 0;

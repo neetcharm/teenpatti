@@ -35,21 +35,21 @@ class ValidateGameRequest
         $nonce = $request->input('_nonce') ?? $request->header('X-Game-Nonce');
         $ts    = $request->input('_ts')    ?? $request->header('X-Game-Timestamp');
 
-        // ── 1. Both fields required ───────────────────────────────────────────
+        // 1. Both fields required
         if (!$nonce || !$ts) {
             return response()->json([
                 'error' => 'Missing request security fields (_nonce, _ts). Update your game client.',
             ], 422);
         }
 
-        // ── 2. Timestamp within ±30 seconds ──────────────────────────────────
+        // 2. Timestamp within ±30 seconds
         if (abs(time() - (int) $ts) > 30) {
             return response()->json([
                 'error' => 'Request timestamp expired. Please try again.',
             ], 422);
         }
 
-        // ── 3. Nonce is single-use ────────────────────────────────────────────
+        // 3. Nonce is single-use
         $userId = auth()->id();
         if (!$this->tokens->consumeNonce((string) $nonce, (int) $userId)) {
             return response()->json([

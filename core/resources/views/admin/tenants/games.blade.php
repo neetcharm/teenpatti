@@ -2,7 +2,7 @@
 
 @push('style')
 <style>
-/* ── Game Assignment Page ─────────────────────────────────────── */
+/* Game Assignment Page */
 .game-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

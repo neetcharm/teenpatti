@@ -969,6 +969,12 @@ function showWinnerModal(result) {
         $("#tpWinVal").text(formatBetAmount(payout));
         playTpSound("win.wav");
         if (typeof triggerFantasyWin === "function") triggerFantasyWin();
+
+        if (typeof refreshTenantWalletBalance === "function") {
+            setTimeout(function () {
+                refreshTenantWalletBalance();
+            }, 350);
+        }
     } else if (hasOwnBet) {
         $("#tpWinnerStatusMsg")
             .addClass("lost")

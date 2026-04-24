@@ -59,7 +59,9 @@ class AppServiceProvider extends ServiceProvider {
             ]);
         });
 
-        \URL::forceScheme('https');
+        if (gs('force_ssl')) {
+            \URL::forceScheme('https');
+        }
 
         Paginator::useBootstrapFive();
     }

@@ -16,9 +16,9 @@ use Illuminate\Support\Str;
 
 class TenantController extends Controller
 {
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // List all tenants
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function index()
     {
         $pageTitle = 'Game Provider Tenants';
@@ -26,18 +26,18 @@ class TenantController extends Controller
         return view('admin.tenants.index', compact('pageTitle', 'tenants'));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Create form
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function create()
     {
         $pageTitle = 'Add New Tenant';
         return view('admin.tenants.create', compact('pageTitle'));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Store new tenant
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function store(Request $request)
     {
         $balanceMode = $request->input('balance_mode', 'internal');
@@ -104,9 +104,9 @@ class TenantController extends Controller
         return redirect()->route('admin.tenants.index')->withNotify($notify);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Edit form
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function edit(int $id)
     {
         $pageTitle = 'Edit Tenant';
@@ -114,9 +114,9 @@ class TenantController extends Controller
         return view('admin.tenants.edit', compact('pageTitle', 'tenant'));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Update tenant
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function update(Request $request, int $id)
     {
         $tenant = Tenant::findOrFail($id);
@@ -176,9 +176,9 @@ class TenantController extends Controller
         return back()->withNotify($notify);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Toggle status
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function toggleStatus(int $id)
     {
         $tenant         = Tenant::findOrFail($id);
@@ -190,9 +190,9 @@ class TenantController extends Controller
         return back()->withNotify($notify);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Regenerate API key + webhook secret
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function regenerateKeys(int $id)
     {
         $tenant = Tenant::findOrFail($id);
@@ -217,9 +217,9 @@ class TenantController extends Controller
         return redirect()->route('admin.tenants.index')->withNotify($notify);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Active sessions for a tenant
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function sessions(int $id)
     {
         $tenant    = Tenant::findOrFail($id);
@@ -230,9 +230,9 @@ class TenantController extends Controller
         return view('admin.tenants.sessions', compact('pageTitle', 'tenant', 'sessions'));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Webhook transaction log for a tenant
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function transactions(int $id)
     {
         $tenant       = Tenant::findOrFail($id);
@@ -243,9 +243,9 @@ class TenantController extends Controller
         return view('admin.tenants.transactions', compact('pageTitle', 'tenant', 'transactions'));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Test separate DB connection (AJAX)
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function testDb(int $id)
     {
         $tenant = Tenant::findOrFail($id);
@@ -253,9 +253,9 @@ class TenantController extends Controller
         return response()->json($result);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Game assignment — show
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function games(int $id)
     {
         $tenant    = Tenant::with('games')->findOrFail($id);
@@ -270,9 +270,9 @@ class TenantController extends Controller
         return view('admin.tenants.games', compact('pageTitle', 'tenant', 'allGames', 'assigned'));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Game assignment — save
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     public function updateGames(Request $request, int $id)
     {
         $tenant   = Tenant::findOrFail($id);

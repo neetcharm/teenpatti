@@ -46,7 +46,7 @@ class SetupTenantDatabase extends Command
             return 1;
         }
 
-        // ── Test connectivity ─────────────────────────────────────────────
+        // Test connectivity
         $this->line('  Testing connection to <fg=yellow>' . $tenant->db_host . ':' . ($tenant->db_port ?? 3306) . '/' . $tenant->db_name . '</>...');
 
         $test = TenantConnectionManager::test($tenant);
@@ -61,7 +61,7 @@ class SetupTenantDatabase extends Command
             return 0;
         }
 
-        // ── Connect and migrate ───────────────────────────────────────────
+        // Connect and migrate
         $conn = TenantConnectionManager::for($tenant);
 
         try {

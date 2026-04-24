@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="{{ asset('assets/global/css/game/teen-patti-fantasy-mobile.css') }}?v={{ $tpFantasyCssV }}">
 
     <style>
-        /* ── WebView reset – no site chrome ──────────────────────────── */
+        /* WebView reset – no site chrome */
         *, *::before, *::after { box-sizing: border-box; }
 
         html, body {
@@ -76,6 +76,29 @@
             transform-origin: top center;
             transform: scale(1);
             will-change: transform;
+        }
+
+        /* Compact split-screen mode in party room */
+        .tp-game-wrapper.tp-compact-split .tp-dealer-section {
+            display: none;
+        }
+
+        .tp-game-wrapper.tp-compact-split .tp-timer-section {
+            margin: 2px 10px 4px;
+            padding: 7px 9px;
+        }
+
+        .tp-game-wrapper.tp-compact-split .tp-narration-bar {
+            margin: 2px 10px 5px;
+            min-height: 28px;
+        }
+
+        .tp-game-wrapper.tp-compact-split .tp-play-area {
+            padding-top: 2px;
+        }
+
+        .tp-game-wrapper.tp-compact-split .tp-footer {
+            padding-top: 6px;
         }
 
         /* Balance / Win bar at the very top */
@@ -134,13 +157,13 @@
         <div class="tp-stage-shell" id="tpStageShell">
             <div class="tp-stage" id="tpGameStage">
 
-                {{-- ── Top bar: player name + balance ── --}}
+                {{-- Top bar: player name + balance --}}
                 <div class="tp-wv-topbar">
                     <span class="player-name">{{ $user->firstname }}</span>
                     <span>Balance: <strong class="player-bal bal">{{ $balance }}</strong></span>
                 </div>
 
-                {{-- ── Header ── --}}
+                {{-- Header --}}
                 <div class="tp-header">
                     {{-- Close button posts a JS message to Android so the app can close WebView --}}
                     <button class="tp-btn-icon" onclick="closeWebView()"><i class="fas fa-times"></i></button>
@@ -154,7 +177,7 @@
                     </div>
                 </div>
 
-                {{-- ── Timer / Phase badge ── --}}
+                {{-- Timer / Phase badge --}}
                 <div class="tp-timer-section">
                     <div id="tpPhaseBadge" class="tp-phase-badge phase-betting">Place Your Bets</div>
                     <div class="tp-timer-p">
@@ -163,7 +186,7 @@
                     </div>
                 </div>
 
-                {{-- ── Fantasy Dealer Lady ── --}}
+                {{-- Fantasy Dealer Lady --}}
                 <div class="tp-dealer-section">
                     <div class="tp-dealer-avatar" id="tpDealerAvatar">
                         <div class="dealer-lady">
@@ -200,13 +223,13 @@
                     </div>
                 </div>
 
-                {{-- ── Narration bar ── --}}
+                {{-- Narration bar --}}
                 <div class="tp-narration-bar" id="tpNarrationBar">
                     <div class="tp-narration-icon"><i class="fas fa-comment-dots"></i></div>
                     <div class="tp-narration-text" id="tpNarrationText"></div>
                 </div>
 
-                {{-- ── Betting columns: Silver / Gold / Diamond ── --}}
+                {{-- Betting columns: Silver / Gold / Diamond --}}
                 <div class="tp-play-area">
                     <div class="tp-columns">
 
@@ -276,14 +299,14 @@
                     </div>
                 </div>
 
-                {{-- ── History bar ── --}}
+                {{-- History bar --}}
                 <div class="tp-history-bar">
                     <span class="tp-hist-label">Result</span>
                     <div class="tp-hist-items" id="tpHistory"></div>
                     <button class="tp-btn-chart"><i class="fas fa-chart-line"></i></button>
                 </div>
 
-                {{-- ── Chip selector + balance/win/repeat ── --}}
+                {{-- Chip selector + balance/win/repeat --}}
                 <div class="tp-footer">
                     <div class="tp-chips-row">
                         <div class="tp-chip-btn c-400 selected" data-value="400"><span>400</span></div>
@@ -315,7 +338,7 @@
             </div>
         </div>
 
-        {{-- ── History slide panel ── --}}
+        {{-- History slide panel --}}
         <div id="tpHistBackdrop" class="tp-hist-panel-backdrop"></div>
         <div id="tpHistPanel" class="tp-hist-panel">
             <div class="tp-hist-panel-header">
@@ -331,13 +354,13 @@
             </div>
         </div>
 
-        {{-- ── Stop-betting overlay ── --}}
+        {{-- Stop-betting overlay --}}
         <div class="tp-overlay" id="tpStopOverlay">
             <img src="{{ asset('assets/templates/parimatch/images/stop_betting.png') }}" class="tp-stop-char" alt="stop">
             <div class="tp-stop-sign"><span>Stop Betting!</span></div>
         </div>
 
-        {{-- ── Winner modal ── --}}
+        {{-- Winner modal --}}
         <div class="tp-winner-modal" id="tpWinnerModal">
             <div class="tp-avatar-pop">
                 <div class="tp-avatar-pop-frame">
@@ -350,7 +373,7 @@
             </div>
         </div>
 
-        {{-- ── Round summary panel ── --}}
+        {{-- Round summary panel --}}
         <div class="tp-round-summary" id="tpRoundSummary">
             <div class="tp-summary-title" id="tpSummaryTitle">Round Summary</div>
             <div class="tp-summary-hands" id="tpSummaryHands"></div>
@@ -365,16 +388,14 @@
 {{-- Hidden form for CSRF token (jQuery reads from meta tag, not form) --}}
 <form id="game" method="post" style="display:none">@csrf</form>
 
-{{-- ════════════════════════════════════════════════════════════════
-     Scripts
-     ════════════════════════════════════════════════════════════════ --}}
+{{-- Scripts --}}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 {{-- Set up CSRF + base URL before loading game JS --}}
 <script>
 "use strict";
 
-// ── CSRF: send with every AJAX request ───────────────────────────────
+// CSRF: send with every AJAX request
 $.ajaxSetup({
     headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -382,7 +403,7 @@ $.ajaxSetup({
     }
 });
 
-// ── Game config variables (read by teenPatti.js) ──────────────────────
+// Game config variables (read by teenPatti.js)
 var imagePath        = "{{ asset(activeTemplate(true) . 'images/cards/') }}";
 var avatarPath       = "{{ asset('assets/templates/parimatch/images/') }}";
 var cardBackImage    = "{{ asset(activeTemplate(true) . 'images/cards/BACK.png') }}";
@@ -396,7 +417,7 @@ var walletTopupUrl   = @json($walletTopupUrl ?? '');
 var walletRefreshUrl = @json($walletRefreshUrl ?? '');
 var walletContext    = @json($walletContext ?? (object) []);
 
-// ── Hide loader after first sync ──────────────────────────────────────
+// Hide loader after first sync
 var tpWvLoaderHidden = false;
 var walletRefreshInFlight = false;
 var walletRefreshBurst = null;
@@ -421,11 +442,21 @@ function tpFitStageToViewport() {
     }
 
     stage.style.transform = 'scale(1)';
+    stage.style.width = '100%';
     stageShell.style.height = 'auto';
 
+    var viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
     var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     var wrapperHeight = wrapper.clientHeight || viewportHeight;
     var availableHeight = Math.max(0, Math.min(viewportHeight, wrapperHeight));
+
+    var compactRatioThreshold = 1.45;
+    var isCompactSplit = viewportWidth > 0
+        && availableHeight > 0
+        && (availableHeight / viewportWidth) < compactRatioThreshold;
+
+    wrapper.classList.toggle('tp-compact-split', isCompactSplit);
+
     var naturalHeight = Math.ceil(stage.scrollHeight || stage.offsetHeight || 0);
 
     if (!naturalHeight || !availableHeight) {
@@ -433,6 +464,10 @@ function tpFitStageToViewport() {
     }
 
     var scale = Math.min(1, availableHeight / naturalHeight);
+    if (isCompactSplit && scale < 1) {
+        stage.style.width = (100 / scale).toFixed(3) + '%';
+    }
+
     stage.style.transform = 'scale(' + scale + ')';
     stageShell.style.height = Math.ceil(naturalHeight * scale) + 'px';
 }
@@ -488,7 +523,7 @@ function startWalletRefreshBurst() {
     }, 2500);
 }
 
-// ── Android WebView bridge: allow app to close the WebView ────────────
+// Android WebView bridge: allow app to close the WebView
 function closeWebView() {
     // If the Android app has injected a JS interface named "AndroidBridge",
     // call its close() method. Otherwise just call window.close().
@@ -548,7 +583,7 @@ function refreshTenantWalletBalance() {
     });
 }
 
-// ── Balance refresh helper (called by teenPatti.js after win/loss) ────
+// Balance refresh helper (called by teenPatti.js after win/loss)
 // The existing game JS updates .bal elements; this also syncs the topbar.
 $(document).ready(function () {
     tpFitStageToViewport();

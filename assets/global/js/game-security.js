@@ -27,10 +27,9 @@ class GameSecurity {
         this.baseUrl = baseUrl;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Public API
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //
     /**
      * Request an action token from server, then return params ready for invest.
      *
@@ -63,10 +62,9 @@ class GameSecurity {
         };
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    //
     // Internal
-    // ─────────────────────────────────────────────────────────────────────────
-
+    //
     async _issueToken(alias, action, amount, choose) {
         const resp = await fetch(this.baseUrl + '/api/game/action-token', {
             method:  'POST',
@@ -102,9 +100,9 @@ class GameSecurity {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+//
 // jQuery AJAX prefilter — auto-attach _nonce + _ts to every POST
-// ─────────────────────────────────────────────────────────────────────────────
+//
 // This covers any existing jQuery $.ajax / $.post calls in the game JS
 // that don't use GameSecurity.bet() directly.
 
