@@ -426,7 +426,7 @@ class TeenPattiGlobalManager
                     $commissionPercent = 10.0; // default platform commission
                     $tenantSession = null;
                     $tenant = null;
-                    $profitMultiplierX = null;
+                    $fixedPayoutMultiplierX = null;
                     $payoutMode = 'dynamic_pool';
                     try {
                         $tenantSessionQuery = \App\Models\TenantSession::where('internal_user_id', (int) $uid)
@@ -443,19 +443,18 @@ class TeenPattiGlobalManager
                         if ($tenantSession && $tenantSession->tenant) {
                             $tenant = $tenantSession->tenant;
                             $commissionPercent = (float) ($tenant->commission_percent ?? $commissionPercent);
-                            $profitMultiplierX = $this->tenantProfitMultiplierX($tenant, $winner);
+                            $fixedPayoutMultiplierX = $this->tenantFixedPayoutMultiplierX($tenant, $winner);
                         }
                     } catch (\Throwable $e) {
                         // Tenant session lookup can fail safely
                     }
 
-                    if ($profitMultiplierX !== null) {
-                        $profitMultiplierX = max(0.0, $profitMultiplierX);
-                        $netMultiplier = 1.0 + $profitMultiplierX;
-                        $commissionPercent = 0.0;
-                        $payoutMode = 'fixed_profit_x';
+                    $commissionPercent = max(0.0, min(95.0, $commissionPercent));
+                    if ($fixedPayoutMultiplierX !== null) {
+                        $fixedPayoutMultiplierX = max(0.0, $fixedPayoutMultiplierX);
+                        $netMultiplier = $fixedPayoutMultiplierX * ((100.0 - $commissionPercent) / 100.0);
+                        $payoutMode = 'fixed_payout_x';
                     } else {
-                        $commissionPercent = max(0.0, min(95.0, $commissionPercent));
                         $netMultiplier = $grossMultiplier * ((100.0 - $commissionPercent) / 100.0);
                     }
                     $payout = round($userWinBet * $netMultiplier, 2);
@@ -465,7 +464,8 @@ class TeenPattiGlobalManager
                         'payout' => $payout,
                         'profit' => round($payout - $userWinBet, 2),
                         'multiplier' => round($netMultiplier, 4),
-                        'profit_multiplier_x' => $profitMultiplierX !== null ? round($profitMultiplierX, 4) : null,
+                        'payout_multiplier_x' => $fixedPayoutMultiplierX !== null ? round($fixedPayoutMultiplierX, 4) : null,
+                        'profit_multiplier_x' => $fixedPayoutMultiplierX !== null ? round(max(0.0, $fixedPayoutMultiplierX - 1.0), 4) : null,
                         'commission_percent' => round($commissionPercent, 2),
                         'mode' => $payoutMode,
                     ];
@@ -477,7 +477,7 @@ class TeenPattiGlobalManager
                         if (!$this->demoMode && $tenantSession) {
                             try {
                                 $wallet = app(\App\Modules\WalletBridge\WalletBridgeService::class);
-                                $creditTxnId = 'cr_' . now()->format('Ymd') . '_' . uniqid();
+                                $creditTxnId = $this->winCreditTxnId($tenantSession, $round, (int) $uid);
                                 $creditAsyncEnabled = (bool) config('game.wallet_win_credit_async', false);
                                 $creditResult = $wallet->credit(
                                     $tenantSession,
@@ -505,9 +505,17 @@ class TeenPattiGlobalManager
 
                         // Normal (non-tenant) player
                         if ($this->demoMode) {
+                            if ($this->hasLocalWinPayout($uid, $round)) {
+                                continue;
+                            }
+
                             $user->demo_balance += $payout;
                             $user->save();
                         } else {
+                            if ($this->hasLocalWinPayout($uid, $round)) {
+                                continue;
+                            }
+
                             $user->balance += $payout;
                             $user->save();
 
@@ -531,7 +539,24 @@ class TeenPattiGlobalManager
         return $payouts;
     }
 
-    private function tenantProfitMultiplierX(?\App\Models\Tenant $tenant, string $winner): ?float
+    private function winCreditTxnId(TenantSession $tenantSession, int $round, int $userId): string
+    {
+        return 'cr_tp_t' . $tenantSession->tenant_id . '_r' . $round . '_u' . $userId;
+    }
+
+    private function hasLocalWinPayout(int|string $userId, int $round): bool
+    {
+        if ($this->demoMode) {
+            return false;
+        }
+
+        return Transaction::where('user_id', (int) $userId)
+            ->where('trx_type', '+')
+            ->where('details', "TeenPatti Global Win - Round {$round}")
+            ->exists();
+    }
+
+    private function tenantFixedPayoutMultiplierX(?\App\Models\Tenant $tenant, string $winner): ?float
     {
         if (!$tenant) {
             return null;

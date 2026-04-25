@@ -101,6 +101,13 @@ class TenantWebhookService
     ): array {
         $txnId = $txnId ?? $this->generateTxnId($action);
 
+        if ($action !== 'balance') {
+            $existingTxn = $this->findExistingTxn($txnId);
+            if ($existingTxn) {
+                return $this->existingTxnResult($existingTxn);
+            }
+        }
+
         // Internal balance mode: operate on our DB, no HTTP call
         if (($this->tenant->balance_mode ?? 'webhook') === 'internal') {
             return $this->callInternal($action, $session, $amount, $roundId, $txnId, $refTxnId);
@@ -143,7 +150,16 @@ class TenantWebhookService
             'request_payload' => $payload,
             'status'          => 'pending',
         ]);
-        $txnRecord->save();
+        try {
+            $txnRecord->save();
+        } catch (\Throwable $e) {
+            $existingTxn = $this->findExistingTxn($txnId);
+            if ($existingTxn) {
+                return $this->existingTxnResult($existingTxn);
+            }
+
+            throw $e;
+        }
 
         // Make the HTTP call
         try {
@@ -218,6 +234,13 @@ class TenantWebhookService
         string        $txnId,
         ?string       $refTxnId
     ): array {
+        if ($action !== 'balance') {
+            $existingTxn = $this->findExistingTxn($txnId);
+            if ($existingTxn) {
+                return $this->existingTxnResult($existingTxn);
+            }
+        }
+
         $user = User::find($session->internal_user_id);
         if (!$user) {
             return ['ok' => false, 'balance' => (float) $session->balance_cache, 'txn_id' => $txnId, 'message' => 'Player not found'];
@@ -251,30 +274,45 @@ class TenantWebhookService
             $newBalance   = round($balanceBefore + $refundAmount, 2);
         }
 
-        // Persist
+        try {
+            $txnRecord = $this->txn()->fill([
+                'tenant_id'        => $this->tenant->id,
+                'session_id'       => $session->id,
+                'action'           => $action,
+                'player_id'        => $session->player_id,
+                'round_id'         => $roundId,
+                'game_id'          => $session->game_id,
+                'our_txn_id'       => $txnId,
+                'tenant_txn_id'    => 'int_' . $txnId,
+                'ref_txn_id'       => $refTxnId,
+                'amount'           => $amount,
+                'balance_before'   => $balanceBefore,
+                'balance_after'    => $balanceBefore,
+                'request_payload'  => ['mode' => 'internal', 'action' => $action, 'amount' => $amount],
+                'status'           => 'pending',
+            ]);
+            $txnRecord->save();
+        } catch (\Throwable $e) {
+            $existingTxn = $this->findExistingTxn($txnId);
+            if ($existingTxn) {
+                return $this->existingTxnResult($existingTxn);
+            }
+
+            throw $e;
+        }
+
+        // Persist only after the unique transaction ID is reserved.
         $user->balance = $newBalance;
         $user->save();
 
         $session->balance_cache = $newBalance;
         $session->save();
 
-        $this->txn()->fill([
-            'tenant_id'        => $this->tenant->id,
-            'session_id'       => $session->id,
-            'action'           => $action,
-            'player_id'        => $session->player_id,
-            'round_id'         => $roundId,
-            'game_id'          => $session->game_id,
-            'our_txn_id'       => $txnId,
-            'tenant_txn_id'    => 'int_' . $txnId,
-            'ref_txn_id'       => $refTxnId,
-            'amount'           => $amount,
-            'balance_before'   => $balanceBefore,
+        $txnRecord->update([
             'balance_after'    => $newBalance,
-            'request_payload'  => ['mode' => 'internal', 'action' => $action, 'amount' => $amount],
             'response_payload' => ['status' => 'ok', 'balance' => $newBalance],
             'status'           => 'ok',
-        ])->save();
+        ]);
 
         return ['ok' => true, 'balance' => $newBalance, 'txn_id' => $txnId, 'message' => 'ok'];
     }
@@ -346,6 +384,34 @@ class TenantWebhookService
         User::where('id', $session->internal_user_id)->update([
             'balance' => $balance,
         ]);
+    }
+
+    private function findExistingTxn(string $txnId): ?TenantTransaction
+    {
+        try {
+            return $this->txn()->newQuery()->where('our_txn_id', $txnId)->first();
+        } catch (\Throwable $e) {
+            Log::warning('Tenant transaction idempotency lookup failed: ' . $e->getMessage(), [
+                'tenant_id' => $this->tenant->id,
+                'our_txn_id' => $txnId,
+            ]);
+
+            return null;
+        }
+    }
+
+    private function existingTxnResult(TenantTransaction $txn): array
+    {
+        $status = (string) ($txn->status ?? '');
+        $ok = $status === 'ok';
+        $balance = (float) ($ok ? $txn->balance_after : $txn->balance_before);
+
+        return [
+            'ok' => $ok,
+            'balance' => $balance,
+            'txn_id' => (string) $txn->our_txn_id,
+            'message' => $ok ? 'duplicate_ignored' : ($txn->error_message ?: 'Transaction already exists'),
+        ];
     }
 
     /** Returns a new TenantTransaction builder on the correct connection. */

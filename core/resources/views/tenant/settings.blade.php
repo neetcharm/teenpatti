@@ -149,28 +149,28 @@
                     </div>
 
                     <div class="alert alert-info mt-3 mb-3 small">
-                        <strong>Payout Rule:</strong> Aap har side ke liye fixed winner profit set kar sakte ho. <br>
-                        Agar side ka <code>Profit X</code> blank hai to dynamic rule chalega:
+                        <strong>Payout Rule:</strong> Aap har side ke liye fixed winner payout multiplier set kar sakte ho. <br>
+                        Example: <code>2.80x</code> aur <code>10%</code> commission par 2000 bet ka total return <code>5040</code>. Agar side ka multiplier blank hai to dynamic rule chalega:
                         <code>(Total Pool / Winner Side Pool) × (1 - Commission% / 100)</code>
                     </div>
 
                     <div class="row g-2 mb-3">
                         <div class="col-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Silver Profit X</label>
+                            <label class="form-label text-muted small fw-bold text-uppercase">Silver Payout X</label>
                             <input type="number" step="0.01" min="0" max="100" class="form-control"
                                    name="silver_profit_x"
                                    placeholder="Blank = Dynamic"
                                    value="{{ old('silver_profit_x', $authTenant->silver_profit_x !== null ? number_format((float) $authTenant->silver_profit_x, 2, '.', '') : '') }}">
                         </div>
                         <div class="col-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Gold Profit X</label>
+                            <label class="form-label text-muted small fw-bold text-uppercase">Gold Payout X</label>
                             <input type="number" step="0.01" min="0" max="100" class="form-control"
                                    name="gold_profit_x"
                                    placeholder="Blank = Dynamic"
                                    value="{{ old('gold_profit_x', $authTenant->gold_profit_x !== null ? number_format((float) $authTenant->gold_profit_x, 2, '.', '') : '') }}">
                         </div>
                         <div class="col-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Diamond Profit X</label>
+                            <label class="form-label text-muted small fw-bold text-uppercase">Diamond Payout X</label>
                             <input type="number" step="0.01" min="0" max="100" class="form-control"
                                    name="diamond_profit_x"
                                    placeholder="Blank = Dynamic"
@@ -369,11 +369,11 @@ function updatePayoutPreview() {
     let payout = 0;
 
     if (hasFixedProfit) {
-        const profitX = Math.max(0, parseFloat(sideProfitRaw || '0') || 0);
-        gross = 1 + profitX;
-        net = gross;
+        const payoutX = Math.max(0, parseFloat(sideProfitRaw || '0') || 0);
+        gross = payoutX;
+        net = gross * ((100 - commission) / 100);
         payout = bet * net;
-        modeOutput.innerText = 'Mode: Fixed ' + winnerSide.charAt(0).toUpperCase() + winnerSide.slice(1) + ' Profit (' + profitX.toFixed(2) + 'x)';
+        modeOutput.innerText = 'Mode: Fixed ' + winnerSide.charAt(0).toUpperCase() + winnerSide.slice(1) + ' Payout (' + payoutX.toFixed(2) + 'x)';
     } else {
         gross = pool / winnerPool;
         net = gross * ((100 - commission) / 100);

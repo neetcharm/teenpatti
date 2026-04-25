@@ -203,13 +203,11 @@
 
 @php
     $tpCssVersion = @filemtime(public_path('assets/global/css/game/teen-patti.css')) ?: time();
-    $tpPremiumCssVersion = @filemtime(public_path('assets/global/css/game/teen-patti-premium.css')) ?: time();
     $tpJsVersion = @filemtime(public_path('assets/global/js/game/teenPatti.js')) ?: time();
 @endphp
 
 @push('style-lib')
     <link href="{{ asset('assets/global/css/game/teen-patti.css') }}?v={{ $tpCssVersion }}" rel="stylesheet">
-    <link href="{{ asset('assets/global/css/game/teen-patti-premium.css') }}?v={{ $tpPremiumCssVersion }}" rel="stylesheet">
 @endpush
 
 @push('script-lib')

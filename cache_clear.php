@@ -78,8 +78,29 @@ if (is_dir($cacheDir)) {
 }
 echo "  Bootstrap cache files cleared: {$cleared}\n";
 
-// 3. Clear file-based cache  
-echo "\n[3] Clearing File Cache:\n";
+// 3. Force Laravel out of maintenance mode
+echo "\n[3] Maintenance Mode:\n";
+$maintenanceFiles = [
+    $coreDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'framework' . DIRECTORY_SEPARATOR . 'down',
+    $coreDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'framework' . DIRECTORY_SEPARATOR . 'maintenance.php',
+];
+$maintenanceCleared = 0;
+foreach ($maintenanceFiles as $maintenanceFile) {
+    if (is_file($maintenanceFile)) {
+        if (@unlink($maintenanceFile)) {
+            echo "  Deleted: " . str_replace($coreDir . DIRECTORY_SEPARATOR, '', $maintenanceFile) . "\n";
+            $maintenanceCleared++;
+        } else {
+            echo "  WARNING: Could not delete " . str_replace($coreDir . DIRECTORY_SEPARATOR, '', $maintenanceFile) . "\n";
+        }
+    }
+}
+echo $maintenanceCleared > 0
+    ? "  Maintenance mode disabled by removing marker file(s).\n"
+    : "  No Laravel maintenance marker found.\n";
+
+// 4. Clear file-based cache
+echo "\n[4] Clearing File Cache:\n";
 $fileCacheDir = $coreDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'framework' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'data';
 $cacheCleared = 0;
 if (is_dir($fileCacheDir)) {
@@ -96,8 +117,8 @@ if (is_dir($fileCacheDir)) {
 }
 echo "  File cache entries cleared: {$cacheCleared}\n";
 
-// 4. Clear compiled views
-echo "\n[4] Clearing Compiled Views:\n";
+// 5. Clear compiled views
+echo "\n[5] Clearing Compiled Views:\n";
 $viewsDir = $coreDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'framework' . DIRECTORY_SEPARATOR . 'views';
 $viewsCleared = 0;
 if (is_dir($viewsDir)) {
@@ -108,8 +129,8 @@ if (is_dir($viewsDir)) {
 }
 echo "  Compiled views cleared: {$viewsCleared}\n";
 
-// 5. Clear sessions
-echo "\n[5] Clearing File Sessions:\n";
+// 6. Clear sessions
+echo "\n[6] Clearing File Sessions:\n";
 $sessDir = $coreDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'framework' . DIRECTORY_SEPARATOR . 'sessions';
 $sessCleared = 0;
 if (is_dir($sessDir)) {
@@ -122,8 +143,8 @@ if (is_dir($sessDir)) {
 }
 echo "  Sessions cleared: {$sessCleared}\n";
 
-// 6. OPcache reset
-echo "\n[6] OPcache:\n";
+// 7. OPcache reset
+echo "\n[7] OPcache:\n";
 if (function_exists('opcache_reset')) {
     @opcache_reset();
     echo "  OPcache reset: OK\n";
@@ -131,8 +152,8 @@ if (function_exists('opcache_reset')) {
     echo "  OPcache not available\n";
 }
 
-// 7. Test Teen Patti sync logic (without Laravel)
-echo "\n[7] Teen Patti Timer Diagnostics:\n";
+// 8. Test Teen Patti sync logic (without Laravel)
+echo "\n[8] Teen Patti Timer Diagnostics:\n";
 $BET_WINDOW = 20;
 $HOLD_WINDOW = 15;
 $ROUND_DURATION = $BET_WINDOW + $HOLD_WINDOW;
@@ -149,8 +170,8 @@ echo "  Phase: {$phase}\n";
 echo "  Seconds remaining: {$remaining}\n";
 echo "  Round duration: {$ROUND_DURATION}s (bet:{$BET_WINDOW} + hold:{$HOLD_WINDOW})\n";
 
-// 8. Try to run artisan
-echo "\n[8] Artisan Commands:\n";
+// 9. Try to run artisan
+echo "\n[9] Artisan Commands:\n";
 if (function_exists('exec')) {
     $phpBin = 'php';
     // Try common PHP paths on Hostinger
@@ -170,7 +191,13 @@ if (function_exists('exec')) {
     exec($cmd, $output, $exitCode);
     echo "  optimize:clear exit code: {$exitCode}\n";
     foreach ($output as $line) echo "    {$line}\n";
-    
+
+    $cmdUp = 'cd ' . escapeshellarg($coreDir) . ' && ' . $phpBin . ' artisan up 2>&1';
+    $outputUp = [];
+    exec($cmdUp, $outputUp, $exitCodeUp);
+    echo "  up exit code: {$exitCodeUp}\n";
+    foreach ($outputUp as $line) echo "    {$line}\n";
+
     $cmd2 = 'cd ' . escapeshellarg($coreDir) . ' && ' . $phpBin . ' artisan config:cache 2>&1';
     $output2 = [];
     exec($cmd2, $output2, $exitCode2);
@@ -180,14 +207,16 @@ if (function_exists('exec')) {
     echo "  (Using shell_exec fallback)\n";
     $out = shell_exec('cd ' . escapeshellarg($coreDir) . ' && php artisan optimize:clear 2>&1');
     echo "  " . trim((string)$out) . "\n";
+    $outUp = shell_exec('cd ' . escapeshellarg($coreDir) . ' && php artisan up 2>&1');
+    echo "  " . trim((string)$outUp) . "\n";
     $out2 = shell_exec('cd ' . escapeshellarg($coreDir) . ' && php artisan config:cache 2>&1');
     echo "  " . trim((string)$out2) . "\n";
 } else {
     echo "  WARNING: exec/shell_exec not available!\n";
 }
 
-// 9. Verify storage directories
-echo "\n[9] Storage Directory Check:\n";
+// 10. Verify storage directories
+echo "\n[10] Storage Directory Check:\n";
 $dirs = [
     'storage/app',
     'storage/framework/cache',

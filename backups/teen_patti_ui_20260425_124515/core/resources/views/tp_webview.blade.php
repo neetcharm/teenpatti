@@ -23,8 +23,6 @@
     <link rel="stylesheet" href="{{ asset('assets/global/css/game/teen-patti.css') }}?v={{ $tpCssV }}">
     @php $tpFantasyCssV = @filemtime(public_path('assets/global/css/game/teen-patti-fantasy-mobile.css')) ?: time(); @endphp
     <link rel="stylesheet" href="{{ asset('assets/global/css/game/teen-patti-fantasy-mobile.css') }}?v={{ $tpFantasyCssV }}">
-    @php $tpPremiumCssV = @filemtime(public_path('assets/global/css/game/teen-patti-premium.css')) ?: time(); @endphp
-    <link rel="stylesheet" href="{{ asset('assets/global/css/game/teen-patti-premium.css') }}?v={{ $tpPremiumCssV }}">
 
     <style>
         /* WebView reset – no site chrome */
