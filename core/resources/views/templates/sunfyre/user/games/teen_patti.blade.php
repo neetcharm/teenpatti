@@ -113,6 +113,78 @@ document.body.classList.add('tp-game-page');
         line-height: 1.08 !important;
     }
 </style>
+<style>
+    body.tp-game-page {
+        background:
+            radial-gradient(circle at 12% 0%, rgba(36, 210, 255, 0.28), transparent 30%),
+            radial-gradient(circle at 90% 4%, rgba(255, 116, 188, 0.26), transparent 34%),
+            linear-gradient(160deg, #e9fbff 0%, #f5efff 50%, #fff8e7 100%) !important;
+    }
+
+    .tp-game-wrapper {
+        background:
+            linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(227, 249, 255, 0.44) 44%, rgba(255, 238, 249, 0.5)),
+            radial-gradient(circle at 50% 16%, rgba(255, 218, 93, 0.28), transparent 34%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.72) !important;
+        box-shadow: 0 24px 60px rgba(72, 102, 136, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+        backdrop-filter: blur(22px) saturate(150%) !important;
+        -webkit-backdrop-filter: blur(22px) saturate(150%) !important;
+    }
+
+    .tp-header,
+    .tp-timer-section,
+    .tp-history-bar,
+    .tp-footer,
+    .tp-col,
+    .tp-bet-slot,
+    .tp-bal-p,
+    .tp-win-p {
+        background: rgba(255, 255, 255, 0.34) !important;
+        border-color: rgba(255, 255, 255, 0.58) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 12px 26px rgba(70, 110, 140, 0.16) !important;
+        backdrop-filter: blur(18px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+    }
+
+    .tp-logo-text,
+    .tp-side-name,
+    .tp-hist-label {
+        color: #20343f !important;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+    }
+
+    .tp-btn-icon,
+    .tp-timer-p {
+        background: rgba(255, 255, 255, 0.48) !important;
+        border-color: rgba(255, 208, 92, 0.72) !important;
+        color: #25313d !important;
+    }
+
+    .tp-phase-badge {
+        background: linear-gradient(180deg, rgba(35, 210, 157, 0.74), rgba(24, 157, 128, 0.78)) !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.62) !important;
+    }
+
+    .tp-bet-info,
+    .tp-hand-rank {
+        background: rgba(255, 255, 255, 0.44) !important;
+        color: #25313d !important;
+    }
+
+    .gold-text,
+    .tp-bal-val,
+    .tp-win-val {
+        color: #008b6f !important;
+        text-shadow: none !important;
+    }
+
+    .tp-btn-repeat {
+        background: linear-gradient(180deg, #ffd96a 0%, #f4b533 100%) !important;
+        color: #2b2100 !important;
+        border-color: rgba(255, 255, 255, 0.62) !important;
+    }
+</style>
 
 <div class="row align-items-center justify-content-center min-vh-100 p-0 m-0">
     <div class="col-12 col-md-8 col-lg-5 p-0">

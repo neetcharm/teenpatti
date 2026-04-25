@@ -14,7 +14,9 @@
 
 
     @include('Template::partials.footer')
-    @include('Template::partials.fantasy_animations')
+    @unless(request()->routeIs('user.play.game') && request()->route('alias') === 'teen_patti')
+        @include('Template::partials.fantasy_animations')
+    @endunless
 @endsection
 
 
