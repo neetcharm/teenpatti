@@ -1,5 +1,118 @@
 @extends('Template::layouts.master')
 @section('content')
+<script>
+document.body.classList.add('tp-game-page');
+</script>
+<style>
+    html, body.tp-game-page {
+        overflow: hidden !important;
+        background: #050505 !important;
+    }
+
+    body.tp-game-page .header,
+    body.tp-game-page .breadcrumb,
+    body.tp-game-page .footer-area,
+    body.tp-game-page footer,
+    body.tp-game-page .scroll-top,
+    body.tp-game-page .scroll-to-top {
+        display: none !important;
+    }
+
+    body.tp-game-page section.py-100,
+    body.tp-game-page section.py-100 > .container,
+    body.tp-game-page .row.min-vh-100,
+    body.tp-game-page .col-12 {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100svh !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .tp-game-wrapper {
+        width: min(100vw, 375px) !important;
+        max-width: min(100vw, 375px) !important;
+        height: 100svh !important;
+        min-height: 0 !important;
+        margin: 0 auto !important;
+        border-radius: 0 !important;
+        overflow: hidden !important;
+        background:
+            linear-gradient(180deg, rgba(8, 9, 7, 0.74) 0%, rgba(8, 9, 7, 0.94) 100%),
+            radial-gradient(ellipse at 50% 34%, rgba(13, 87, 56, 0.86) 0%, rgba(6, 46, 32, 0.76) 38%, rgba(5, 5, 5, 0.94) 78%),
+            linear-gradient(145deg, #1c0b08 0%, #052417 44%, #070707 100%) !important;
+    }
+
+    .tp-play-area {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 4px 4px 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    .tp-columns {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        gap: 3px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    .tp-col {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 0 1 auto !important;
+        padding: 5px 2px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    .tp-char-frame {
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 15px !important;
+    }
+
+    .tp-side-name {
+        font-size: 8px !important;
+        letter-spacing: 0.2px !important;
+        white-space: nowrap !important;
+    }
+
+    .tp-cards-row {
+        min-height: 33px !important;
+        gap: 1px !important;
+    }
+
+    .tp-card-container,
+    .tp-card-img {
+        width: 18px !important;
+        height: 27px !important;
+    }
+
+    .tp-hand-rank {
+        width: 84% !important;
+        min-width: 0 !important;
+        min-height: 19px !important;
+        margin: 2px 0 !important;
+    }
+
+    .tp-bet-slot {
+        min-height: 70px !important;
+    }
+
+    .tp-bet-info {
+        font-size: 7px !important;
+        line-height: 1.08 !important;
+    }
+</style>
 
 <div class="row align-items-center justify-content-center min-vh-100 p-0 m-0">
     <div class="col-12 col-md-8 col-lg-5 p-0">
