@@ -1,4 +1,4 @@
-var staticCacheName = "pwa-v20260426-teenpatti-layout";
+var staticCacheName = "pwa-v20260426-teenpatti-glass-fit";
 
 self.addEventListener("install", function (event) {
     self.skipWaiting();

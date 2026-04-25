@@ -114,74 +114,6 @@ function resolveDisplayTotals(round, realTotals) {
     return display;
 }
 
-function setImportantStyle(element, property, value) {
-    if (!element || !element.style) return;
-    element.style.setProperty(property, value, "important");
-}
-
-function enforceTeenPattiLayout() {
-    document.body.classList.add("tp-game-page");
-
-    var fantasyOverlay = document.getElementById("fantasy-overlay");
-    if (fantasyOverlay) {
-        fantasyOverlay.remove();
-    }
-
-    var wrapper = document.querySelector(".tp-game-wrapper");
-    var playArea = document.querySelector(".tp-play-area");
-    var columns = document.querySelector(".tp-columns");
-    var viewportWidth = Math.max(320, Math.min(window.innerWidth || 360, 360));
-
-    setImportantStyle(wrapper, "width", viewportWidth + "px");
-    setImportantStyle(wrapper, "max-width", "100vw");
-    setImportantStyle(wrapper, "min-height", "0");
-    setImportantStyle(wrapper, "height", "100svh");
-    setImportantStyle(wrapper, "overflow", "hidden");
-    setImportantStyle(wrapper, "margin-left", "auto");
-    setImportantStyle(wrapper, "margin-right", "auto");
-
-    setImportantStyle(playArea, "width", "100%");
-    setImportantStyle(playArea, "max-width", "100%");
-    setImportantStyle(playArea, "overflow", "hidden");
-    setImportantStyle(playArea, "padding-left", "4px");
-    setImportantStyle(playArea, "padding-right", "4px");
-
-    setImportantStyle(columns, "display", "grid");
-    setImportantStyle(columns, "grid-template-columns", "repeat(3, minmax(0, 1fr))");
-    setImportantStyle(columns, "width", "100%");
-    setImportantStyle(columns, "max-width", "100%");
-    setImportantStyle(columns, "gap", "3px");
-    setImportantStyle(columns, "overflow", "hidden");
-
-    document.querySelectorAll(".tp-col").forEach(function (column) {
-        setImportantStyle(column, "width", "100%");
-        setImportantStyle(column, "max-width", "100%");
-        setImportantStyle(column, "min-width", "0");
-        setImportantStyle(column, "flex", "0 1 auto");
-        setImportantStyle(column, "overflow", "hidden");
-        setImportantStyle(column, "padding-left", "2px");
-        setImportantStyle(column, "padding-right", "2px");
-        setImportantStyle(column, "box-sizing", "border-box");
-    });
-}
-
-function scheduleTeenPattiLayoutGuard() {
-    enforceTeenPattiLayout();
-    [50, 150, 350, 700, 1200, 2000].forEach(function (delay) {
-        setTimeout(enforceTeenPattiLayout, delay);
-    });
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", scheduleTeenPattiLayoutGuard);
-} else {
-    scheduleTeenPattiLayoutGuard();
-}
-
-window.addEventListener("load", scheduleTeenPattiLayoutGuard);
-window.addEventListener("resize", enforceTeenPattiLayout);
-window.addEventListener("orientationchange", scheduleTeenPattiLayoutGuard);
-
 /* ===== INITIALIZATION ===== */
 function bootTeenPattiGame() {
     if (typeof window.jQuery === "undefined") {
@@ -323,8 +255,6 @@ function syncGlobalState() {
 }
 
 function updateUI(data) {
-    enforceTeenPattiLayout();
-
     var prevPhase = currentPhase;
     var prevRound = currentRound;
 
@@ -664,7 +594,6 @@ function handleResult(result) {
                 }
                 triggerWinConfetti(winner);
 
-                // Show winner modal immediately
                 showWinnerModal(result);
 
                 animationTimers.push(setTimeout(function () {
@@ -985,7 +914,7 @@ function showWinnerModal(result) {
         playTpSound("lose.wav");
     }
 
-    $("#tpWinnerModal").css("display", "flex");
+    closeWinnerModal();
 }
 
 function closeWinnerModal() {

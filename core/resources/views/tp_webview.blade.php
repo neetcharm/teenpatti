@@ -21,10 +21,6 @@
     {{-- Teen Patti CSS --}}
     @php $tpCssV = @filemtime(public_path('assets/global/css/game/teen-patti.css')) ?: time(); @endphp
     <link rel="stylesheet" href="{{ asset('assets/global/css/game/teen-patti.css') }}?v={{ $tpCssV }}">
-    @php $tpFantasyCssV = @filemtime(public_path('assets/global/css/game/teen-patti-fantasy-mobile.css')) ?: time(); @endphp
-    <link rel="stylesheet" href="{{ asset('assets/global/css/game/teen-patti-fantasy-mobile.css') }}?v={{ $tpFantasyCssV }}">
-    @php $tpPremiumCssV = @filemtime(public_path('assets/global/css/game/teen-patti-premium.css')) ?: time(); @endphp
-    <link rel="stylesheet" href="{{ asset('assets/global/css/game/teen-patti-premium.css') }}?v={{ $tpPremiumCssV }}">
 
     <style>
         /* WebView reset – no site chrome */
@@ -126,8 +122,8 @@
         @keyframes wvSpin { to { transform: rotate(360deg); } }
 
         .tp-wv-root .tp-game-wrapper {
-            width: 100vw;
-            max-width: min(430px, 100vw);
+            width: min(100vw, 390px);
+            max-width: 100vw;
             height: 100dvh;
             min-height: 0;
         }
