@@ -11,7 +11,7 @@ let ambientRainInterval = null;
 
 let currentPhase = "betting";
 let currentRound = null;
-let selectedChip = 400;
+let selectedChip = normalizeChipValues()[0] || 400;
 let isBettingEnabled = true;
 let resultShownForRound = null;
 let countdownSeconds = 20;
@@ -20,7 +20,6 @@ let lastCoinSoundAt = 0;
 let isDealingInProgress = false;
 let dealingStartedAt = 0;       // Timestamp when dealing began (for watchdog)
 let dealingForRound = null;     // Which round the current animation is for
-let summaryCountdownTimer = null;
 let animationTimers = [];       // Track all setTimeout IDs for abort
 let countdownTargetTime = 0;
 
@@ -31,6 +30,18 @@ let lastResultData = null;
 const SIDES = ["silver", "gold", "diamond"];
 const SIDE_LABELS = { silver: "Silver", gold: "Gold", diamond: "Diamond" };
 const SIDE_COLORS = { silver: "#c0c0c0", gold: "#e9d01b", diamond: "#b9f2ff" };
+
+function normalizeChipValues() {
+    var raw = (typeof tpChipValues !== "undefined" && Array.isArray(tpChipValues)) ? tpChipValues : [400, 2000, 4000, 20000, 40000];
+    var values = [];
+    raw.forEach(function (value) {
+        var amount = safeAmount(value);
+        if (amount > 0 && values.indexOf(amount) === -1) {
+            values.push(amount);
+        }
+    });
+    return values.length ? values : [400, 2000, 4000, 20000, 40000];
+}
 
 // Display-only crowd volume (50 lakh to 1.5 crore) for "All" bets.
 const CROWD_DISPLAY_MIN = 5000000;
@@ -177,7 +188,7 @@ $(function () {
         SIDES.forEach(function (side) {
             const amount = safeAmount(latestMyBets[side]);
             if (amount > 0) {
-                const unit = selectedChip > 0 ? selectedChip : 400;
+                const unit = selectedChip > 0 ? selectedChip : (normalizeChipValues()[0] || 400);
                 const clicks = Math.max(1, Math.round(amount / unit));
                 for (let i = 0; i < clicks; i++) {
                     placeGlobalBet(side);
@@ -421,7 +432,7 @@ function createSparkles(x, y, count) {
    Phase 1: Shuffle (1s)
    Phase 2: Deal all 9 cards fast (2.4s - 3 per side simultaneously)
    Phase 3: Rank reveals (1.2s)
-   Phase 4: Winner highlight + summary (1.4s)
+   Phase 4: Winner highlight (1.4s)
    Total: ~6 seconds — fits within the 7s server hold window
    ============================================================ */
 function handleResult(result) {
@@ -543,12 +554,10 @@ function handleResult(result) {
                 // Show winner modal immediately
                 showWinnerModal(result);
 
-                // After 1.4s, transition to summary
                 animationTimers.push(setTimeout(function () {
                     closeWinnerModal();
                     hideNarration();
-                    showRoundSummary(result);
-                    // Animation is "done" — summary stays until round changes
+                    $(".tp-timer-section").removeClass("hide-timer");
                     isDealingInProgress = false;
                     dealingStartedAt = 0;
                 }, 1400));
@@ -571,17 +580,12 @@ function clearAnimationTimers() {
 /* ===== Force reset: abort any running animation and reset to clean state ===== */
 function forceResetRound() {
     clearAnimationTimers();
-    if (summaryCountdownTimer) {
-        clearInterval(summaryCountdownTimer);
-        summaryCountdownTimer = null;
-    }
     isDealingInProgress = false;
     dealingStartedAt = 0;
     dealingForRound = null;
     resultShownForRound = null;
 
     // Reset all UI elements immediately
-    $("#tpRoundSummary").removeClass("show").css("display", "");
     $(".tp-timer-section").removeClass("hide-timer");
     hideNarration();
     closeWinnerModal();
@@ -739,128 +743,9 @@ function highlightWinnerColumn(winner) {
     }
 }
 
-/* ===== ROUND SUMMARY PANEL (7 second countdown) ===== */
-function showRoundSummary(result) {
-    var winner = String(result.winner || "").toLowerCase();
-    var hands = result.hands || {};
-    var ranks = result.ranks || {};
-    var payouts = result.user_payouts || {};
-    var payoutEntry = payouts[String(currentUserId)] || null;
-
-    var roundNum = result.round || currentRound;
-    var compactSummaryTitle = window.matchMedia("(max-width: 360px), (max-height: 620px)").matches;
-    $("#tpSummaryTitle").text(
-        compactSummaryTitle
-            ? "Round #" + roundNum + " Summary"
-            : "Round #" + roundNum + " - Complete Summary"
-    );
-
-    // Sort: winner first
-    var sortedSides = SIDES.slice().sort(function (a, b) {
-        if (a === winner) return -1;
-        if (b === winner) return 1;
-        return 0;
-    });
-
-    var html = "";
-
-    // Header row
-    html += '<div class="tp-summary-header">';
-    html += '<div class="tp-summary-header-text">Who got what? Let\'s see...</div>';
-    html += '</div>';
-
-    sortedSides.forEach(function (side) {
-        var cap = sideCap(side);
-        var isWinner = side === winner;
-        var sideCards = Array.isArray(hands[side]) ? hands[side] : [];
-        var sideRank = ranks[side] || "--";
-        var handClass = isWinner ? "winner-hand" : "loser-hand";
-
-        html += '<div class="tp-summary-hand ' + handClass + '">';
-
-        // Avatar
-        html += '<div class="tp-summary-avatar s-' + side + '">';
-        html += '<img src="' + avatarAsset(side + '_character.png') + '" alt="' + cap + '">';
-        html += '</div>';
-
-        // Cards — CSS-drawn faces, no image loading
-        html += '<div class="tp-summary-cards">';
-        for (var c = 0; c < 3; c++) {
-            var card = sideCards[c] || "BACK";
-            var code = normalizeCardCode(card);
-            if (code) {
-                html += '<div class="tp-summary-card-css">' + createCardFaceHTML(code) + '</div>';
-            } else {
-                html += '<div class="tp-summary-card-css"><div class="tp-cf blk"></div></div>';
-            }
-        }
-        html += '</div>';
-
-        // Info
-        html += '<div class="tp-summary-info">';
-        html += '<div class="tp-summary-side-name" style="color:' + SIDE_COLORS[side] + '">' + cap + '</div>';
-        html += '<div class="tp-summary-rank">' + sideRank + '</div>';
-        html += '<div class="tp-summary-card-names">' + buildHandText(sideCards) + '</div>';
-        html += '</div>';
-
-        html += '</div>';
-    });
-
-    // Winner announcement
-    html += '<div class="tp-summary-winner-announce">';
-    html += '<div class="announce-icon">&#127942;</div>';
-    html += '<div class="announce-text">' + SIDE_LABELS[winner] + ' WINS with ' + (ranks[winner] || "High Card") + '!</div>';
-    html += '</div>';
-
-    // User payout info
-    var hasOwnBet = SIDES.some(function (side) { return safeAmount(latestMyBets[side]) > 0; });
-    if (payoutEntry) {
-        var payout = safeAmount(payoutEntry.payout);
-        html += '<div class="tp-summary-payout win">';
-        html += '<div class="payout-label">Your Winnings</div>';
-        html += '<div class="payout-amount">+' + formatBetAmount(payout) + '</div>';
-        html += '</div>';
-    } else if (hasOwnBet) {
-        html += '<div class="tp-summary-payout loss">';
-        html += '<div class="payout-label">Result</div>';
-        html += '<div class="payout-amount loss-text">Better luck next round!</div>';
-        html += '</div>';
-    }
-
-    $("#tpSummaryHands").html(html);
-    // CRITICAL FIX: Remove any stale display:none before adding show class
-    $("#tpRoundSummary").css("display", "").addClass("show");
-
-    // Show time remaining until next round (server-driven, not fixed 7s)
-    var serverRemaining = Math.max(0, countdownSeconds);
-    $("#tpNextRoundCountdown").text(serverRemaining);
-
-    if (summaryCountdownTimer) clearInterval(summaryCountdownTimer);
-    summaryCountdownTimer = setInterval(function () {
-        var remaining = Math.max(0, countdownSeconds);
-        $("#tpNextRoundCountdown").text(remaining);
-        // Don't auto-close here — let updateUI handle the round transition
-        // This just updates the displayed countdown number
-        if (remaining <= 0) {
-            clearInterval(summaryCountdownTimer);
-            summaryCountdownTimer = null;
-        }
-    }, 500);
-}
-
 function closeSummaryAndReset() {
-    $("#tpRoundSummary").removeClass("show");
-    // CRITICAL FIX: Use css("display","") instead of .hide() which sets display:none permanently
-    setTimeout(function () {
-        $("#tpRoundSummary").css("display", "");
-    }, 500);
     $(".tp-timer-section").removeClass("hide-timer");
     hideNarration();
-
-    if (summaryCountdownTimer) {
-        clearInterval(summaryCountdownTimer);
-        summaryCountdownTimer = null;
-    }
 
     isDealingInProgress = false;
     dealingStartedAt = 0;
@@ -1009,12 +894,6 @@ function lockBetting() {
 function unlockBetting() {
     if (isBettingEnabled) return;
     if (isDealingInProgress) return;
-
-    // Close the round summary if it's still showing
-    if ($("#tpRoundSummary").hasClass("show")) {
-        closeSummaryAndReset();
-        return; // closeSummaryAndReset already resets everything
-    }
 
     isBettingEnabled = true;
     closeWinnerModal();
@@ -1237,7 +1116,8 @@ function startAmbientRain() {
     if (ambientRainInterval) clearInterval(ambientRainInterval);
 
     // Dense multi-chip rain: 3 tiers of intervals for layered effect
-    var amounts = [400, 400, 400, 400, 2000, 2000, 4000, 10000];
+    var configuredAmounts = normalizeChipValues();
+    var amounts = configuredAmounts.concat(configuredAmounts, configuredAmounts.slice(0, 3));
 
     function rainTick() {
         if (!isBettingEnabled) return;

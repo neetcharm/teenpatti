@@ -80,29 +80,6 @@
             will-change: transform;
         }
 
-        /* Compact split-screen mode in party room */
-        .tp-game-wrapper.tp-compact-split .tp-dealer-section {
-            display: none;
-        }
-
-        .tp-game-wrapper.tp-compact-split .tp-timer-section {
-            margin: 2px 10px 4px;
-            padding: 7px 9px;
-        }
-
-        .tp-game-wrapper.tp-compact-split .tp-narration-bar {
-            margin: 2px 10px 5px;
-            min-height: 28px;
-        }
-
-        .tp-game-wrapper.tp-compact-split .tp-play-area {
-            padding-top: 2px;
-        }
-
-        .tp-game-wrapper.tp-compact-split .tp-footer {
-            padding-top: 6px;
-        }
-
         /* Balance / Win bar at the very top */
         .tp-wv-topbar {
             display: flex;
@@ -147,6 +124,24 @@
             animation: wvSpin .7s linear infinite;
         }
         @keyframes wvSpin { to { transform: rotate(360deg); } }
+
+        .tp-wv-root .tp-game-wrapper {
+            width: 100vw;
+            max-width: min(430px, 100vw);
+            height: 100dvh;
+            min-height: 0;
+        }
+
+        .tp-stage {
+            min-width: 0;
+            overflow: hidden;
+            display: grid;
+            grid-template-rows: auto auto minmax(88px, .44fr) minmax(212px, 1fr) auto auto;
+        }
+
+        .tp-wv-topbar {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -191,28 +186,22 @@
                 {{-- Fantasy Dealer Lady --}}
                 <div class="tp-dealer-section">
                     <div class="tp-dealer-avatar" id="tpDealerAvatar">
-                        <div class="dealer-lady">
-                            <div class="lady-hair">
-                                <div class="hair-strand left-strand"></div>
-                                <div class="hair-strand right-strand"></div>
+                        <div class="tp-dealer-avatar-body">
+                            <img
+                                src="{{ asset('assets/templates/parimatch/images/dealer_avatar_body.png') }}"
+                                class="tp-dealer-avatar-img"
+                                alt="Dealer Avatar"
+                                loading="eager"
+                                decoding="async"
+                            >
+                            <div class="tp-dealer-hand-layer tp-dealer-hand-right" aria-hidden="true">
+                                <img
+                                    src="{{ asset('assets/templates/parimatch/images/dealer_avatar_hand_right.png') }}"
+                                    alt=""
+                                    loading="eager"
+                                    decoding="async"
+                                >
                             </div>
-                            <div class="lady-tiara"><div class="tiara-gem"></div></div>
-                            <div class="lady-face">
-                                <div class="lady-eye left-eye"><div class="eye-pupil"></div></div>
-                                <div class="lady-eye right-eye"><div class="eye-pupil"></div></div>
-                                <div class="lady-bindi"></div>
-                                <div class="lady-nose"></div>
-                                <div class="lady-lips"></div>
-                            </div>
-                            <div class="lady-earring left-earring"></div>
-                            <div class="lady-earring right-earring"></div>
-                            <div class="lady-neck"><div class="lady-necklace"></div></div>
-                            <div class="lady-dress">
-                                <div class="dress-detail"></div>
-                                <div class="lady-dupatta"></div>
-                            </div>
-                            <div class="lady-hand left-hand"></div>
-                            <div class="lady-hand right-hand"></div>
                         </div>
                         <div class="dealer-glow-ring"></div>
                         <div class="tp-dealer-name">Dealer Riya</div>
@@ -310,12 +299,19 @@
 
                 {{-- Chip selector + balance/win/repeat --}}
                 <div class="tp-footer">
+                    @php
+                        $teenPattiChipValues = array_values($teenPattiChipValues ?? \App\Models\Tenant::DEFAULT_TEEN_PATTI_CHIPS);
+                        $chipLabel = static function ($amount) {
+                            $amount = (int) $amount;
+                            return $amount >= 1000 && $amount % 1000 === 0 ? ((int) ($amount / 1000)) . 'K' : number_format($amount);
+                        };
+                    @endphp
                     <div class="tp-chips-row">
-                        <div class="tp-chip-btn c-400 selected" data-value="400"><span>400</span></div>
-                        <div class="tp-chip-btn c-2k" data-value="2000"><span>2K</span></div>
-                        <div class="tp-chip-btn c-4k" data-value="4000"><span>4K</span></div>
-                        <div class="tp-chip-btn c-20k" data-value="20000"><span>20K</span></div>
-                        <div class="tp-chip-btn c-40k" data-value="40000"><span>40K</span></div>
+                        @foreach($teenPattiChipValues as $index => $chipAmount)
+                            <div class="tp-chip-btn chip-color-{{ $index % 5 }} {{ $index === 0 ? 'selected' : '' }}" data-value="{{ (int) $chipAmount }}">
+                                <span>{{ $chipLabel($chipAmount) }}</span>
+                            </div>
+                        @endforeach
                     </div>
                     <div class="tp-bottom-actions">
                         <div class="tp-bal-p">
@@ -358,7 +354,7 @@
 
         {{-- Stop-betting overlay --}}
         <div class="tp-overlay" id="tpStopOverlay">
-            <img src="{{ asset('assets/templates/parimatch/images/stop_betting.png') }}" class="tp-stop-char" alt="stop">
+            <img src="{{ asset('assets/templates/parimatch/images/dealer_avatar_body.png') }}" class="tp-stop-char tp-stop-avatar" alt="Betting Stopped Avatar">
             <div class="tp-stop-sign"><span>Stop Betting!</span></div>
         </div>
 
@@ -372,15 +368,6 @@
                     <div class="tp-pop-round" id="tpWinnerRoundTitle">Round Result</div>
                     <div class="tp-pop-message" id="tpWinnerStatusMsg">Winner Popup</div>
                 </div>
-            </div>
-        </div>
-
-        {{-- Round summary panel --}}
-        <div class="tp-round-summary" id="tpRoundSummary">
-            <div class="tp-summary-title" id="tpSummaryTitle">Round Summary</div>
-            <div class="tp-summary-hands" id="tpSummaryHands"></div>
-            <div class="tp-summary-next">
-                Next round in <span class="countdown-num" id="tpNextRoundCountdown">7</span>
             </div>
         </div>
 
@@ -418,6 +405,7 @@ var currentUserId    = "{{ auth()->id() }}";
 var walletTopupUrl   = @json($walletTopupUrl ?? '');
 var walletRefreshUrl = @json($walletRefreshUrl ?? '');
 var walletContext    = @json($walletContext ?? (object) []);
+var tpChipValues     = @json(array_values($teenPattiChipValues ?? \App\Models\Tenant::DEFAULT_TEEN_PATTI_CHIPS));
 
 // Hide loader after first sync
 var tpWvLoaderHidden = false;
@@ -444,20 +432,11 @@ function tpFitStageToViewport() {
     }
 
     stage.style.transform = 'scale(1)';
-    stage.style.width = '100%';
     stageShell.style.height = 'auto';
 
-    var viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
     var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     var wrapperHeight = wrapper.clientHeight || viewportHeight;
     var availableHeight = Math.max(0, Math.min(viewportHeight, wrapperHeight));
-
-    var compactRatioThreshold = 1.45;
-    var isCompactSplit = viewportWidth > 0
-        && availableHeight > 0
-        && (availableHeight / viewportWidth) < compactRatioThreshold;
-
-    wrapper.classList.toggle('tp-compact-split', isCompactSplit);
 
     var naturalHeight = Math.ceil(stage.scrollHeight || stage.offsetHeight || 0);
 
@@ -466,10 +445,6 @@ function tpFitStageToViewport() {
     }
 
     var scale = Math.min(1, availableHeight / naturalHeight);
-    if (isCompactSplit && scale < 1) {
-        stage.style.width = (100 / scale).toFixed(3) + '%';
-    }
-
     stage.style.transform = 'scale(' + scale + ')';
     stageShell.style.height = Math.ceil(naturalHeight * scale) + 'px';
 }

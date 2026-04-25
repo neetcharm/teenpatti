@@ -141,6 +141,16 @@
                                    value="{{ old('max_bet', number_format((float) $authTenant->max_bet, 2, '.', '')) }}">
                         </div>
                         <div class="col-12">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Teen Patti Chip Amounts</label>
+                            <input type="text" class="form-control font-monospace"
+                                   name="teen_patti_chips"
+                                   placeholder="400, 2K, 4K, 20K, 40K"
+                                   value="{{ old('teen_patti_chips', implode(', ', array_map(fn($amount) => $amount >= 1000 && $amount % 1000 === 0 ? ((int) ($amount / 1000)) . 'K' : (string) $amount, $authTenant->teenPattiChipValues()))) }}">
+                            <small class="text-muted">
+                                Configure 1 to 8 chips. Example: <code>400, 2K, 5K, 10K</code>. These amounts appear in the game footer and are enforced by the bet API.
+                            </small>
+                        </div>
+                        <div class="col-12">
                             <label class="form-label text-muted small fw-bold text-uppercase">Session TTL (minutes)</label>
                             <input type="number" min="5" max="1440" class="form-control"
                                    name="session_ttl_minutes"
@@ -149,31 +159,31 @@
                     </div>
 
                     <div class="alert alert-info mt-3 mb-3 small">
-                        <strong>Payout Rule:</strong> Aap har side ke liye fixed winner payout multiplier set kar sakte ho. <br>
-                        Example: <code>2.80x</code> aur <code>10%</code> commission par 2000 bet ka total return <code>5040</code>. Agar side ka multiplier blank hai to dynamic rule chalega:
+                        <strong>Payout Rule:</strong> Set a fixed winner payout multiplier for each side. <br>
+                        Example: with <code>2.80x</code> and <code>10%</code> commission, a 2000 bet returns <code>5040</code>. Leave a side blank to use the dynamic rule:
                         <code>(Total Pool / Winner Side Pool) × (1 - Commission% / 100)</code>
                     </div>
 
                     <div class="row g-2 mb-3">
                         <div class="col-4">
                             <label class="form-label text-muted small fw-bold text-uppercase">Silver Payout X</label>
-                            <input type="number" step="0.01" min="0" max="100" class="form-control"
+                            <input type="text" inputmode="decimal" class="form-control"
                                    name="silver_profit_x"
-                                   placeholder="Blank = Dynamic"
+                                   placeholder="Blank = Dynamic, e.g. 2.8x"
                                    value="{{ old('silver_profit_x', $authTenant->silver_profit_x !== null ? number_format((float) $authTenant->silver_profit_x, 2, '.', '') : '') }}">
                         </div>
                         <div class="col-4">
                             <label class="form-label text-muted small fw-bold text-uppercase">Gold Payout X</label>
-                            <input type="number" step="0.01" min="0" max="100" class="form-control"
+                            <input type="text" inputmode="decimal" class="form-control"
                                    name="gold_profit_x"
-                                   placeholder="Blank = Dynamic"
+                                   placeholder="Blank = Dynamic, e.g. 2.9x"
                                    value="{{ old('gold_profit_x', $authTenant->gold_profit_x !== null ? number_format((float) $authTenant->gold_profit_x, 2, '.', '') : '') }}">
                         </div>
                         <div class="col-4">
                             <label class="form-label text-muted small fw-bold text-uppercase">Diamond Payout X</label>
-                            <input type="number" step="0.01" min="0" max="100" class="form-control"
+                            <input type="text" inputmode="decimal" class="form-control"
                                    name="diamond_profit_x"
-                                   placeholder="Blank = Dynamic"
+                                   placeholder="Blank = Dynamic, e.g. 3x"
                                    value="{{ old('diamond_profit_x', $authTenant->diamond_profit_x !== null ? number_format((float) $authTenant->diamond_profit_x, 2, '.', '') : '') }}">
                         </div>
                     </div>
@@ -252,11 +262,11 @@
 
                 @if($authTenant->balance_mode === 'webhook')
                     <div class="alert alert-warning small">
-                        <strong>Wallet Sync Contract:</strong> session create aur game focus par hum aapke webhook ko
-                        <code>action=balance</code> ke saath hit karte hain. In-game <code>Top Up</code> button aapke
-                        configured wallet URL me <code>player_id</code>, <code>player_name</code>, <code>session_token</code>,
-                        <code>game_id</code>, <code>currency</code>, <code>tenant_id</code> aur <code>return_url</code>
-                        query params append karta hai, taki aap sahi user wallet open karke user ko game me wapas bhej sako.
+                        <strong>Wallet Sync Contract:</strong> session creation and game focus trigger your webhook with
+                        <code>action=balance</code>. The in-game <code>Top Up</code> button appends
+                        <code>player_id</code>, <code>player_name</code>, <code>session_token</code>,
+                        <code>game_id</code>, <code>currency</code>, <code>tenant_id</code>, and <code>return_url</code>
+                        query parameters to your configured wallet URL so the correct player wallet can be opened and returned to the game.
                     </div>
                 @endif
 

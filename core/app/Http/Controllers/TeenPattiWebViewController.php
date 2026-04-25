@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
+use App\Models\Tenant;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
@@ -45,7 +46,8 @@ class TeenPattiWebViewController extends Controller
         $investUrl  = route('user.play.invest', ['teen_patti']);
         $gameEndUrl = route('user.play.end', ['teen_patti']);
         $historyUrl = route('user.play.teen_patti.history');
+        $teenPattiChipValues = Tenant::DEFAULT_TEEN_PATTI_CHIPS;
 
-        return view('tp_webview', compact('user', 'balance', 'syncUrl', 'investUrl', 'gameEndUrl', 'historyUrl'));
+        return view('tp_webview', compact('user', 'balance', 'syncUrl', 'investUrl', 'gameEndUrl', 'historyUrl', 'teenPattiChipValues'));
     }
 }

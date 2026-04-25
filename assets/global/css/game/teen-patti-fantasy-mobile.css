@@ -291,11 +291,12 @@ body {
   height: 160px;
 }
 
-.dealer-lady {
+.dealer-lady,
+.tp-dealer-avatar-body {
   width: 112px;
   height: 148px;
   transform-origin: 50% 80%;
-  animation: dealer-breathe 3.4s ease-in-out infinite;
+  animation: none;
 }
 
 @keyframes dealer-breathe {
@@ -475,16 +476,20 @@ body {
 .tp-chips-row {
   margin-bottom: 10px;
   gap: 6px;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  justify-content: flex-start;
   align-items: center;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 7px;
+  scrollbar-width: thin;
 }
 
 .tp-chip-btn {
   width: 50px;
   height: 50px;
+  flex: 0 0 50px;
   border-width: 2px;
-  justify-self: center;
 }
 
 .tp-chip-btn.selected {
@@ -560,6 +565,12 @@ body {
   font-size: 27px;
 }
 
+.tp-stop-avatar {
+  width: min(240px, 78vw);
+  max-height: 46vh;
+  margin-bottom: -26px;
+}
+
 .tp-winner-modal {
   backdrop-filter: blur(5px);
 }
@@ -603,6 +614,7 @@ body {
   .tp-chip-btn {
     width: 46px;
     height: 46px;
+    flex-basis: 46px;
     font-size: 11px;
   }
 
@@ -634,6 +646,7 @@ body {
   .tp-chip-btn {
     width: 40px;
     height: 40px;
+    flex-basis: 40px;
     font-size: 10px;
   }
 
@@ -756,7 +769,8 @@ body {
     height: 142px;
   }
 
-  .dealer-lady {
+  .dealer-lady,
+  .tp-dealer-avatar-body {
     width: 96px;
     height: 126px;
   }
@@ -782,6 +796,7 @@ body {
   .tp-chip-btn {
     width: 44px;
     height: 44px;
+    flex-basis: 44px;
   }
 }
 
@@ -795,7 +810,8 @@ body {
     height: 130px;
   }
 
-  .dealer-lady {
+  .dealer-lady,
+  .tp-dealer-avatar-body {
     width: 88px;
     height: 116px;
   }
@@ -803,6 +819,7 @@ body {
   .tp-chip-btn {
     width: 40px;
     height: 40px;
+    flex-basis: 40px;
     font-size: 10px;
   }
 
@@ -985,4 +1002,246 @@ body {
     height: calc(100dvh - 32px);
     min-height: calc(100dvh - 32px);
   }
+}
+
+/* Compact glass layout shared with the site game screen */
+.tp-wv-root {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(0, 229, 255, 0.28), transparent 30%),
+    radial-gradient(circle at 90% 4%, rgba(255, 69, 168, 0.24), transparent 34%),
+    linear-gradient(155deg, #061722 0%, #191037 48%, #040710 100%);
+}
+
+.tp-wv-root .tp-game-wrapper {
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: min(430px, 100vw);
+  height: 100dvh;
+  min-height: 0;
+  background:
+    linear-gradient(145deg, rgba(19, 91, 112, 0.64), rgba(43, 20, 85, 0.7) 48%, rgba(8, 10, 28, 0.78)),
+    radial-gradient(circle at 50% 18%, rgba(255, 217, 88, 0.22), transparent 30%);
+  border-inline: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+}
+
+.tp-wv-root .tp-stage {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(88px, 0.44fr) minmax(212px, 1fr) auto auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tp-wv-root .tp-wv-topbar {
+  display: none;
+}
+
+.tp-wv-root .tp-header {
+  min-height: 46px;
+  padding: 6px 10px;
+  background: rgba(4, 11, 26, 0.54);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.tp-wv-root .tp-timer-section {
+  margin: 4px 8px 2px;
+}
+
+.tp-wv-root .tp-dealer-section {
+  min-height: 90px;
+}
+
+.tp-wv-root .tp-dealer-avatar {
+  width: 76px;
+  height: 94px;
+}
+
+.tp-wv-root .tp-dealer-avatar-body {
+  width: 66px;
+  height: 88px;
+}
+
+.tp-wv-root .dealer-glow-ring {
+  width: 94px;
+  height: 94px;
+}
+
+.tp-wv-root .tp-dealer-status,
+.tp-wv-root .tp-narration-bar {
+  display: none !important;
+}
+
+.tp-wv-root .tp-play-area {
+  min-height: 0;
+  overflow: hidden;
+  padding: 3px 7px 0;
+}
+
+.tp-wv-root .tp-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: 100%;
+  min-width: 0;
+  gap: 5px;
+}
+
+.tp-wv-root .tp-col {
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 5px 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 14px 28px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
+}
+
+.tp-wv-root .tp-char-frame {
+  width: 54px;
+  height: 54px;
+}
+
+.tp-wv-root .tp-card-container,
+.tp-wv-root .tp-card-img {
+  width: 23px;
+  height: 34px;
+}
+
+.tp-wv-root .tp-bet-slot {
+  min-height: 78px;
+}
+
+.tp-wv-root .tp-history-bar {
+  min-height: 36px;
+  margin: 4px 9px;
+  padding: 5px 7px;
+  gap: 6px;
+  border-radius: 14px;
+  background: rgba(4, 10, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.tp-wv-root .tp-hist-label {
+  flex: 0 0 auto;
+  min-width: 38px;
+  white-space: nowrap;
+  font-size: 9px;
+}
+
+.tp-wv-root .tp-hist-items {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tp-wv-root .tp-hist-dot {
+  width: 15px;
+  height: 22px;
+  flex: 0 0 15px;
+  font-size: 9px;
+}
+
+.tp-wv-root .tp-footer {
+  padding: 6px 9px calc(6px + env(safe-area-inset-bottom));
+  background: rgba(2, 7, 18, 0.62);
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.tp-wv-root .tp-chips-row {
+  justify-content: flex-start;
+  gap: 9px;
+  margin-bottom: 8px;
+  padding: 2px 1px 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tp-wv-root .tp-chip-btn {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  font-size: 11px;
+}
+
+.tp-wv-root .tp-bottom-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px 86px;
+  gap: 6px;
+}
+
+.tp-wv-root .tp-bal-p,
+.tp-wv-root .tp-win-p,
+.tp-wv-root .tp-btn-repeat {
+  height: 36px;
+}
+
+.tp-wv-root .tp-btn-repeat {
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  padding-inline: 8px;
+}
+
+.tp-wv-root .tp-round-summary,
+.tp-wv-root .tp-round-summary.show {
+  display: none !important;
+}
+
+.tp-wv-root .tp-game-wrapper {
+  width: 100vw !important;
+  max-width: min(100vw, 390px) !important;
+}
+
+.tp-wv-root .tp-play-area {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-left: 5px !important;
+  padding-right: 5px !important;
+  overflow: hidden !important;
+}
+
+.tp-wv-root .tp-columns {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  gap: 4px !important;
+  overflow: hidden !important;
+}
+
+.tp-wv-root .tp-col {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex: 0 1 auto !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+.tp-wv-root .tp-char-frame {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.tp-wv-root .tp-card-container,
+.tp-wv-root .tp-card-img {
+  width: 21px !important;
+  height: 31px !important;
+}
+
+.tp-wv-root .tp-hand-rank {
+  min-width: 0 !important;
+  width: 82% !important;
+}
+
+.tp-wv-root .tp-bet-info {
+  font-size: 8px !important;
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Games\GamePlayer;
 use App\Http\Controllers\Controller;
 use App\Models\Game;
+use App\Models\Tenant;
 use App\Models\TenantSession;
 use App\Services\TeenPattiGlobalManager;
 use App\Services\TenantWebhookService;
@@ -25,7 +26,10 @@ class PlayController extends Controller {
             abort_if($isDemo !== 'demo', 404);
         }
         $balance = ($isDemo === 'demo') ? @$user->demo_balance : @$user->balance;
-        return view('Template::user.games.' . $viewAlias, compact('game', 'pageTitle', 'isDemo', 'balance'));
+        $tenantSession = ($isDemo === 'demo') ? null : $this->activeTenantSession($user);
+        $teenPattiChipValues = $tenantSession?->tenant?->teenPattiChipValues() ?? Tenant::DEFAULT_TEEN_PATTI_CHIPS;
+
+        return view('Template::user.games.' . $viewAlias, compact('game', 'pageTitle', 'isDemo', 'balance', 'teenPattiChipValues'));
     }
 
     public function investGame(Request $request, $alias, $isDemo = null) {

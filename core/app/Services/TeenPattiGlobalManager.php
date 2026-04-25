@@ -108,8 +108,8 @@ class TeenPattiGlobalManager
             ];
 
             // Winner by pool rule: the deck with lowest total pool wins.
-            asort($totals);
-            $winner = array_key_first($totals);
+            // If all sides are tied, choose randomly so empty rounds do not always show Silver.
+            $winner = $this->chooseWinnerFromTotals($totals);
 
             // Deal hands (rigged so winner gets best hand)
             $hands = $this->dealRiggedHands($winner);
@@ -136,7 +136,7 @@ class TeenPattiGlobalManager
                 'reason' => sprintf(
                     'Pool rule: %s had the lowest total bets (%.2f), so it wins this round.',
                     ucfirst($winner),
-                    (float) $totals[$winner]
+                    (float) ($totals[$winner] ?? 0)
                 ),
                 'user_payouts' => $this->processPayoutsSafe($round, $winner, $bets),
             ];
@@ -158,6 +158,23 @@ class TeenPattiGlobalManager
             // Even on failure, try to return whatever is in cache
             return Cache::get($resultKey);
         }
+    }
+
+    private function chooseWinnerFromTotals(array $totals): string
+    {
+        $normalized = [
+            'silver'  => (float) ($totals['silver'] ?? 0),
+            'gold'    => (float) ($totals['gold'] ?? 0),
+            'diamond' => (float) ($totals['diamond'] ?? 0),
+        ];
+
+        $lowest = min($normalized);
+        $candidates = array_keys(array_filter(
+            $normalized,
+            static fn(float $amount): bool => abs($amount - $lowest) < 0.00001
+        ));
+
+        return $candidates[array_rand($candidates)];
     }
 
     /* ================================================================
@@ -276,6 +293,11 @@ class TeenPattiGlobalManager
 
         if ($this->currentPhase() !== 'betting' || $this->currentRound() !== $round) {
             return ['error' => 'Betting is closed!'];
+        }
+
+        $allowedChips = $tenant->teenPattiChipValues();
+        if (!in_array((int) round($amount), $allowedChips, true)) {
+            return ['error' => 'Invalid chip amount for this tenant'];
         }
 
         $walletRoundId = 'teen_patti_round_' . $round;

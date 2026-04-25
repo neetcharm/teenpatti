@@ -29,28 +29,22 @@
             <!-- ===== FANTASY DEALER LADY ===== -->
             <div class="tp-dealer-section">
                 <div class="tp-dealer-avatar" id="tpDealerAvatar">
-                    <div class="dealer-lady">
-                        <div class="lady-hair">
-                            <div class="hair-strand left-strand"></div>
-                            <div class="hair-strand right-strand"></div>
+                    <div class="tp-dealer-avatar-body">
+                        <img
+                            src="{{ asset('assets/templates/parimatch/images/dealer_avatar_body.png') }}"
+                            class="tp-dealer-avatar-img"
+                            alt="Dealer Avatar"
+                            loading="eager"
+                            decoding="async"
+                        >
+                        <div class="tp-dealer-hand-layer tp-dealer-hand-right" aria-hidden="true">
+                            <img
+                                src="{{ asset('assets/templates/parimatch/images/dealer_avatar_hand_right.png') }}"
+                                alt=""
+                                loading="eager"
+                                decoding="async"
+                            >
                         </div>
-                        <div class="lady-tiara"><div class="tiara-gem"></div></div>
-                        <div class="lady-face">
-                            <div class="lady-eye left-eye"><div class="eye-pupil"></div></div>
-                            <div class="lady-eye right-eye"><div class="eye-pupil"></div></div>
-                            <div class="lady-bindi"></div>
-                            <div class="lady-nose"></div>
-                            <div class="lady-lips"></div>
-                        </div>
-                        <div class="lady-earring left-earring"></div>
-                        <div class="lady-earring right-earring"></div>
-                        <div class="lady-neck"><div class="lady-necklace"></div></div>
-                        <div class="lady-dress">
-                            <div class="dress-detail"></div>
-                            <div class="lady-dupatta"></div>
-                        </div>
-                        <div class="lady-hand left-hand"></div>
-                        <div class="lady-hand right-hand"></div>
                     </div>
                     <div class="dealer-glow-ring"></div>
                     <div class="tp-dealer-name">Dealer Riya</div>
@@ -144,12 +138,19 @@
             </div>
 
             <div class="tp-footer">
+                @php
+                    $teenPattiChipValues = array_values($teenPattiChipValues ?? \App\Models\Tenant::DEFAULT_TEEN_PATTI_CHIPS);
+                    $chipLabel = static function ($amount) {
+                        $amount = (int) $amount;
+                        return $amount >= 1000 && $amount % 1000 === 0 ? ((int) ($amount / 1000)) . 'K' : number_format($amount);
+                    };
+                @endphp
                 <div class="tp-chips-row">
-                    <div class="tp-chip-btn c-400 selected" data-value="400"><span>400</span></div>
-                    <div class="tp-chip-btn c-2k" data-value="2000"><span>2K</span></div>
-                    <div class="tp-chip-btn c-4k" data-value="4000"><span>4K</span></div>
-                    <div class="tp-chip-btn c-20k" data-value="20000"><span>20K</span></div>
-                    <div class="tp-chip-btn c-40k" data-value="40000"><span>40K</span></div>
+                    @foreach($teenPattiChipValues as $index => $chipAmount)
+                        <div class="tp-chip-btn chip-color-{{ $index % 5 }} {{ $index === 0 ? 'selected' : '' }}" data-value="{{ (int) $chipAmount }}">
+                            <span>{{ $chipLabel($chipAmount) }}</span>
+                        </div>
+                    @endforeach
                 </div>
                 <div class="tp-bottom-actions">
                     <div class="tp-bal-p">
@@ -165,7 +166,7 @@
             </div>
 
             <div class="tp-overlay" id="tpStopOverlay">
-                <img src="{{ asset('assets/templates/parimatch/images/stop_betting.png') }}" class="tp-stop-char" alt="stop">
+                <img src="{{ asset('assets/templates/parimatch/images/dealer_avatar_body.png') }}" class="tp-stop-char tp-stop-avatar" alt="Betting Stopped Avatar">
                 <div class="tp-stop-sign">
                     <span>@lang('Stop Betting!')</span>
                 </div>
@@ -180,17 +181,6 @@
                         <div class="tp-pop-round" id="tpWinnerRoundTitle">@lang('Round Result')</div>
                         <div class="tp-pop-message" id="tpWinnerStatusMsg">@lang('Winner Popup')</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- ===== ROUND SUMMARY PANEL ===== -->
-            <div class="tp-round-summary" id="tpRoundSummary">
-                <div class="tp-summary-title" id="tpSummaryTitle">Round Summary</div>
-                <div class="tp-summary-hands" id="tpSummaryHands">
-                    <!-- Dynamically filled -->
-                </div>
-                <div class="tp-summary-next">
-                    Next round in <span class="countdown-num" id="tpNextRoundCountdown">7</span>
                 </div>
             </div>
 
@@ -220,6 +210,7 @@
 @push('script')
 <script>
 "use strict";
+document.body.classList.add('tp-game-page');
 let imagePath = "{{ asset(activeTemplate(true) . 'images/cards/') }}";
 let avatarPath = "{{ asset('assets/templates/parimatch/images/') }}";
 let cardBackImage = "{{ asset(activeTemplate(true) . 'images/cards/BACK.png') }}";
@@ -228,5 +219,6 @@ let syncUrl = "{{ route('user.play.teen_patti.global.sync', [@$isDemo]) }}";
 let gameEndUrl = "{{ route('user.play.end', ['teen_patti', @$isDemo]) }}";
 let tpAudioAssetPath = "{{ asset('assets/audio') }}";
 let currentUserId = "{{ auth()->id() }}";
+let tpChipValues = @json(array_values($teenPattiChipValues ?? \App\Models\Tenant::DEFAULT_TEEN_PATTI_CHIPS));
 </script>
 @endpush

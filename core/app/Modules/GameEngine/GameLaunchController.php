@@ -95,6 +95,7 @@ class GameLaunchController extends Controller
             $investUrl = route('user.play.invest', ['teen_patti']);
             $gameEndUrl = route('user.play.end', ['teen_patti']);
             $historyUrl = route('user.play.teen_patti.history');
+            $teenPattiChipValues = $tenant->teenPattiChipValues();
 
             return view('tp_webview', compact(
                 'user',
@@ -103,6 +104,7 @@ class GameLaunchController extends Controller
                 'investUrl',
                 'gameEndUrl',
                 'historyUrl',
+                'teenPattiChipValues',
                 'walletTopupUrl',
                 'walletRefreshUrl',
                 'walletContext'

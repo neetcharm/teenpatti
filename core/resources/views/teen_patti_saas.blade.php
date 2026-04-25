@@ -25,6 +25,15 @@
             {{-- Dealer --}}
             <div class="tp-dealer-section">
                 <div class="tp-dealer-avatar" id="tpDealerAvatar">
+                    <div class="tp-dealer-avatar-body">
+                        <img
+                            src="{{ asset('assets/templates/parimatch/images/dealer_avatar_body.png') }}"
+                            class="tp-dealer-avatar-img"
+                            alt="Dealer Avatar"
+                            loading="eager"
+                            decoding="async"
+                        >
+                    </div>
                     <div class="dealer-glow-ring"></div>
                 </div>
                 <div class="tp-dealer-status" id="tpDealerStatus">Waiting...</div>
@@ -85,11 +94,19 @@
 
             {{-- Chips --}}
             <div class="tp-footer">
+                @php
+                    $teenPattiChipValues = array_values($teenPattiChipValues ?? \App\Models\Tenant::DEFAULT_TEEN_PATTI_CHIPS);
+                    $chipLabel = static function ($amount) {
+                        $amount = (int) $amount;
+                        return $amount >= 1000 && $amount % 1000 === 0 ? ((int) ($amount / 1000)) . 'K' : number_format($amount);
+                    };
+                @endphp
                 <div class="tp-chips-row">
-                    <div class="tp-chip-btn c-400 selected" data-amount="10"><span>10</span></div>
-                    <div class="tp-chip-btn c-2k" data-amount="50"><span>50</span></div>
-                    <div class="tp-chip-btn c-4k" data-amount="100"><span>100</span></div>
-                    <div class="tp-chip-btn c-20k" data-amount="500"><span>500</span></div>
+                    @foreach($teenPattiChipValues as $index => $chipAmount)
+                        <div class="tp-chip-btn chip-color-{{ $index % 5 }} {{ $index === 0 ? 'selected' : '' }}" data-amount="{{ (int) $chipAmount }}">
+                            <span>{{ $chipLabel($chipAmount) }}</span>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -98,7 +115,7 @@
 
 @push('game_script')
     <script>
-        let currentBet = 10;
+        let currentBet = @json((int) ($teenPattiChipValues[0] ?? \App\Models\Tenant::DEFAULT_TEEN_PATTI_CHIPS[0]));
         let isBetting = false;
 
         $('.tp-chip-btn').on('click', function() {

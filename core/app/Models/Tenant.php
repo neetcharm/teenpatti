@@ -7,12 +7,15 @@ use Illuminate\Support\Facades\Crypt;
 
 class Tenant extends Model
 {
+    public const DEFAULT_TEEN_PATTI_CHIPS = [400, 2000, 4000, 20000, 40000];
+
     protected $fillable = [
         'name', 'email', 'password',
         'api_key', 'api_secret', 'webhook_secret', 'webhook_url', 'callback_url',
         'wallet_topup_url',
         'currency', 'commission_percent', 'min_bet', 'max_bet',
         'silver_profit_x', 'gold_profit_x', 'diamond_profit_x',
+        'teen_patti_chips',
         'session_ttl_minutes', 'allowed_ips', 'status', 'balance_mode',
         // Separate DB
         'use_separate_db', 'db_host', 'db_port', 'db_name', 'db_username', 'db_password_enc',
@@ -28,6 +31,7 @@ class Tenant extends Model
         'silver_profit_x' => 'float',
         'gold_profit_x'   => 'float',
         'diamond_profit_x'=> 'float',
+        'teen_patti_chips'=> 'array',
         'use_separate_db' => 'boolean',
         'db_port'         => 'integer',
     ];
@@ -71,6 +75,17 @@ class Tenant extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 1);
+    }
+
+    public function teenPattiChipValues(): array
+    {
+        $values = is_array($this->teen_patti_chips ?? null) ? $this->teen_patti_chips : [];
+        $values = array_values(array_filter(array_map(
+            static fn($value): int => (int) round((float) $value),
+            $values
+        ), static fn(int $value): bool => $value > 0));
+
+        return !empty($values) ? array_slice(array_values(array_unique($values)), 0, 8) : self::DEFAULT_TEEN_PATTI_CHIPS;
     }
 
     /**

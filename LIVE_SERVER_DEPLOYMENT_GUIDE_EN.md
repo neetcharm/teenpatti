@@ -83,7 +83,6 @@ Important structure:
 - `/var/www/mygames/index.php` (entry point)
 - `/var/www/mygames/core` (Laravel app)
 - `/var/www/mygames/assets`
-- `/var/www/mygames/install/game.sql` (DB seed/export file in this repo)
 
 ---
 
@@ -98,15 +97,15 @@ GRANT ALL PRIVILEGES ON mygames.* TO 'mygames_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-Import initial data:
+Import initial data from a secure SQL dump kept outside the public web root:
 
 ```bash
-mysql -u mygames_user -p mygames < /var/www/mygames/install/game.sql
+mysql -u mygames_user -p mygames < /root/private-backups/mygames.sql
 ```
 
 Notes:
 
-- `install/game.sql` already contains tables and initial records.
+- Do not keep SQL dumps inside the live project web root.
 - After import, **immediately rotate secrets/passwords** in production.
 
 ---
