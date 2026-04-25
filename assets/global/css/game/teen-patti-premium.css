@@ -578,3 +578,183 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Final mobile fit guard, loaded after every Teen Patti skin */
+body.tp-game-page,
+body.tp-game-page section.py-100,
+body.tp-game-page section.py-100 > .container,
+body.tp-game-page .row.min-vh-100,
+body.tp-game-page [class*="col-"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow: hidden !important;
+}
+
+body.tp-game-page .tp-game-wrapper {
+  width: min(375px, 100%) !important;
+  max-width: min(375px, 100%) !important;
+  height: 100svh !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(180deg, rgba(8, 9, 7, 0.74) 0%, rgba(8, 9, 7, 0.94) 100%),
+    radial-gradient(ellipse at 50% 34%, rgba(13, 87, 56, 0.86) 0%, rgba(6, 46, 32, 0.76) 38%, rgba(5, 5, 5, 0.94) 78%),
+    linear-gradient(145deg, #1c0b08 0%, #052417 44%, #070707 100%) !important;
+}
+
+body.tp-game-page .tp-header,
+body.tp-game-page .tp-timer-section,
+body.tp-game-page .tp-history-bar,
+body.tp-game-page .tp-footer {
+  margin-left: 7px !important;
+  margin-right: 7px !important;
+}
+
+body.tp-game-page .tp-play-area {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 4px 6px 0 !important;
+  overflow: hidden !important;
+}
+
+body.tp-game-page .tp-columns {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  gap: 5px !important;
+  overflow: hidden !important;
+}
+
+body.tp-game-page .tp-col {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex: 0 1 auto !important;
+  padding: 5px 4px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+body.tp-game-page .tp-char-frame {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 16px !important;
+}
+
+body.tp-game-page .tp-cards-row {
+  min-height: 36px !important;
+  gap: 2px !important;
+}
+
+body.tp-game-page .tp-card-container,
+body.tp-game-page .tp-card-img {
+  width: 21px !important;
+  height: 31px !important;
+}
+
+body.tp-game-page .tp-hand-rank {
+  width: 84% !important;
+  min-width: 0 !important;
+  min-height: 21px !important;
+  margin: 2px 0 !important;
+}
+
+body.tp-game-page .tp-bet-slot {
+  min-height: 74px !important;
+}
+
+body.tp-game-page .tp-bet-info {
+  font-size: 8px !important;
+  line-height: 1.1 !important;
+}
+
+body.tp-game-page .tp-chips-row {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+body.tp-game-page .tp-bottom-actions {
+  grid-template-columns: minmax(0, 1fr) 58px 84px !important;
+}
+
+body.tp-game-page .tp-btn-repeat {
+  min-width: 0 !important;
+  width: 84px !important;
+  padding-inline: 8px !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 360px) {
+  body.tp-game-page .tp-game-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body.tp-game-page .tp-columns {
+    gap: 4px !important;
+  }
+
+  body.tp-game-page .tp-char-frame {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  body.tp-game-page .tp-card-container,
+  body.tp-game-page .tp-card-img {
+    width: 19px !important;
+    height: 29px !important;
+  }
+}
+
+.tp-wv-root .tp-game-wrapper {
+  width: min(375px, 100vw) !important;
+  max-width: min(375px, 100vw) !important;
+  min-height: 0 !important;
+  border-radius: 0 !important;
+}
+
+.tp-wv-root .tp-play-area {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 4px 6px 0 !important;
+  overflow: hidden !important;
+}
+
+.tp-wv-root .tp-columns {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  gap: 5px !important;
+  overflow: hidden !important;
+}
+
+.tp-wv-root .tp-col {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex: 0 1 auto !important;
+  padding: 5px 4px !important;
+  overflow: hidden !important;
+}
+
+.tp-wv-root .tp-char-frame {
+  width: 52px !important;
+  height: 52px !important;
+}
+
+.tp-wv-root .tp-card-container,
+.tp-wv-root .tp-card-img {
+  width: 21px !important;
+  height: 31px !important;
+}

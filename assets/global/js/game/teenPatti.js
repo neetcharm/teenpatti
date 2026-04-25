@@ -254,7 +254,7 @@ function updateUI(data) {
     syncCountdown(data.remaining);
     updateBalanceDisplay(data.balance);
     updateTotals(data);
-    updateHistory(data.history);
+    updateHistory(buildVisibleHistory(data));
 
     if (currentPhase === "hold") {
         lockBetting();
@@ -295,6 +295,38 @@ function normalizeSyncData(raw) {
         result: raw && raw.result ? raw.result : null,
         history: Array.isArray(raw && raw.history) ? raw.history : []
     };
+}
+
+function buildVisibleHistory(data) {
+    var history = Array.isArray(data.history) ? data.history.slice() : [];
+    var result = data.result && data.result.winner ? data.result : null;
+
+    if (!result) {
+        return history;
+    }
+
+    var resultRound = safeAmount(result.round || data.round);
+    var resultWinner = String(result.winner || "").toLowerCase();
+    if (!resultWinner) {
+        return history;
+    }
+
+    var alreadyPresent = history.some(function (item) {
+        if (typeof item !== "object" || item === null) {
+            return false;
+        }
+        return safeAmount(item.round) === resultRound;
+    });
+
+    if (!alreadyPresent) {
+        history.unshift({
+            round: resultRound,
+            winner: resultWinner,
+            totals: result.totals || data.bets || {}
+        });
+    }
+
+    return history;
 }
 
 /* ===== PHASE BADGE ===== */
@@ -1080,10 +1112,12 @@ function updateTotals(data) {
 
 function updateHistory(history) {
     var html = "";
-    history.forEach(function (item) {
-        // item can be an object {round, winner, ...} or a plain string
+    (Array.isArray(history) ? history : []).forEach(function (item) {
         var side = typeof item === "object" ? String(item.winner || "") : String(item || "");
         side = side.toLowerCase();
+        if (SIDES.indexOf(side) === -1) {
+            return;
+        }
         var char = side.charAt(0).toUpperCase();
         var cls = "dot-" + char.toLowerCase();
         html += '<div class="tp-hist-dot ' + cls + '" title="' + (typeof item === "object" ? "Round #" + item.round : "") + '">' + char + "</div>";

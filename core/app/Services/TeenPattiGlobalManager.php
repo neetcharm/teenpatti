@@ -107,8 +107,6 @@ class TeenPattiGlobalManager
                 'diamond' => (float) ($bets['diamond'] ?? 0),
             ];
 
-            // Winner by pool rule: the deck with lowest total pool wins.
-            // If all sides are tied, choose randomly so empty rounds do not always show Silver.
             $winner = $this->chooseWinnerFromTotals($totals);
 
             // Deal hands (rigged so winner gets best hand)
@@ -133,11 +131,7 @@ class TeenPattiGlobalManager
                     'gold'    => round((float) $totals['gold'], 2),
                     'diamond' => round((float) $totals['diamond'], 2),
                 ],
-                'reason' => sprintf(
-                    'Pool rule: %s had the lowest total bets (%.2f), so it wins this round.',
-                    ucfirst($winner),
-                    (float) ($totals[$winner] ?? 0)
-                ),
+                'reason' => $this->winnerReason($winner, $totals),
                 'user_payouts' => $this->processPayoutsSafe($round, $winner, $bets),
             ];
 
@@ -168,13 +162,37 @@ class TeenPattiGlobalManager
             'diamond' => (float) ($totals['diamond'] ?? 0),
         ];
 
+        if (array_sum($normalized) <= 0.00001) {
+            $sides = ['silver', 'gold', 'diamond'];
+            return $sides[random_int(0, count($sides) - 1)];
+        }
+
         $lowest = min($normalized);
         $candidates = array_keys(array_filter(
             $normalized,
             static fn(float $amount): bool => abs($amount - $lowest) < 0.00001
         ));
 
-        return $candidates[array_rand($candidates)];
+        return $candidates[random_int(0, count($candidates) - 1)];
+    }
+
+    private function winnerReason(string $winner, array $totals): string
+    {
+        $normalized = [
+            'silver' => (float) ($totals['silver'] ?? 0),
+            'gold' => (float) ($totals['gold'] ?? 0),
+            'diamond' => (float) ($totals['diamond'] ?? 0),
+        ];
+
+        if (array_sum($normalized) <= 0.00001) {
+            return sprintf('No bets were placed, so %s was selected randomly.', ucfirst($winner));
+        }
+
+        return sprintf(
+            'Pool rule: %s had the lowest total bets (%.2f), so it wins this round.',
+            ucfirst($winner),
+            (float) ($normalized[$winner] ?? 0)
+        );
     }
 
     /* ================================================================

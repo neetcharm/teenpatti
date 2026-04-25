@@ -204,7 +204,6 @@
 
 @push('script-lib')
     <script src="{{ asset('assets/global/js/soundControl.js') }}"></script>
-    <script src="{{ asset('assets/global/js/game/teenPatti.js') }}?v={{ $tpJsVersion }}"></script>
 @endpush
 
 @push('script')
@@ -221,4 +220,5 @@ let tpAudioAssetPath = "{{ asset('assets/audio') }}";
 let currentUserId = "{{ auth()->id() }}";
 let tpChipValues = @json(array_values($teenPattiChipValues ?? \App\Models\Tenant::DEFAULT_TEEN_PATTI_CHIPS));
 </script>
+<script src="{{ asset('assets/global/js/game/teenPatti.js') }}?v={{ $tpJsVersion }}"></script>
 @endpush
