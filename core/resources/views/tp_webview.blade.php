@@ -51,7 +51,7 @@
 
         .tp-wv-root .tp-game-wrapper {
             width: 100%;
-            max-width: 480px;
+            max-width: 100%;
             min-height: 100dvh;
             height: 100dvh;
             position: relative;
@@ -123,7 +123,7 @@
 
         .tp-wv-root .tp-game-wrapper {
             width: 100%;
-            max-width: 480px;
+            max-width: 100%;
             height: 100dvh;
             min-height: 0;
         }

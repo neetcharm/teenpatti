@@ -19,10 +19,9 @@ body {
 .tp-game-wrapper {
   background: linear-gradient(180deg, #6c0a0a 0%, #4a0404 100%);
   width: 100%;
-  width: min(100%, 500px);
-  max-width: 500px;
+  max-width: 100%;
   min-height: 100vh;
-  margin: 0 auto;
+  margin: 0;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2562,11 +2561,11 @@ body:has(.tp-game-wrapper) .col-12 {
 .tp-game-wrapper,
 .tp-wv-root .tp-game-wrapper {
   width: 100%;
-  max-width: 480px;
+  max-width: 100%;
   min-width: 0;
   height: 100svh;
   min-height: 0;
-  margin: 0 auto;
+  margin: 0;
   display: grid;
   grid-template-rows: auto auto minmax(84px, 0.46fr) minmax(180px, 1fr) auto auto;
   color: var(--tp-ink);
