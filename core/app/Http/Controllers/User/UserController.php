@@ -23,7 +23,7 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller {
     public function home() {
         $pageTitle                 = 'Dashboard';
-        $games                     = Game::active()->where('alias', 'teen_patti')->get();
+        $games                     = Game::active()->whereIn('alias', liveGameAliases())->get();
         $user                      = auth()->user();
         $widget['total_balance']   = $user->balance;
         $widget['total_deposit']   = Deposit::successful()->where('user_id', $user->id)->sum('amount');

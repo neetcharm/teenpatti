@@ -28,9 +28,9 @@ class UserController extends Controller
 
     public function dashboard()
     {
-        $games         = Game::active()->where('alias', 'teen_patti')->get();
-        $gamesTrending = Game::where('alias', 'teen_patti')->where('trending', Status::ENABLE)->active()->get();
-        $gamesFeatured = Game::where('alias', 'teen_patti')->where('featured', Status::ENABLE)->active()->get();
+        $games         = Game::active()->whereIn('alias', liveGameAliases())->get();
+        $gamesTrending = Game::whereIn('alias', liveGameAliases())->where('trending', Status::ENABLE)->active()->get();
+        $gamesFeatured = Game::whereIn('alias', liveGameAliases())->where('featured', Status::ENABLE)->active()->get();
 
         $user                    = Auth::user();
         $widget['total_balance'] = $user->balance;

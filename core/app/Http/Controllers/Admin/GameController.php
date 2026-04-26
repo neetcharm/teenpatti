@@ -15,13 +15,13 @@ class GameController extends Controller
     public function index()
     {
         $pageTitle = "Games";
-        $games     = Game::where('alias', 'teen_patti')->searchable(['name'])->orderBy('id', 'desc')->get();
+        $games     = Game::whereIn('alias', liveGameAliases())->searchable(['name'])->orderBy('id', 'desc')->get();
         return view('admin.game.index', compact('pageTitle', 'games'));
     }
 
     public function edit($id)
     {
-        $game      = Game::where('alias', 'teen_patti')->findOrFail($id);
+        $game      = Game::whereIn('alias', liveGameAliases())->findOrFail($id);
         $pageTitle = "Update " . $game->name;
         $bonuses   = null;
 
@@ -30,7 +30,7 @@ class GameController extends Controller
 
     public function update(Request $request, $id)
     {
-        $game = Game::where('alias', 'teen_patti')->findOrFail($id);
+        $game = Game::whereIn('alias', liveGameAliases())->findOrFail($id);
         $probabilityRules = [
             'probable'      => 'required|integer|min:0|max:100',
             'probable_demo' => 'required|integer|min:0|max:100',
@@ -114,7 +114,7 @@ class GameController extends Controller
 
     public function chanceCreate(Request $request, $alias = null)
     {
-        abort_unless($alias === 'teen_patti', 404);
+        abort_unless(in_array($alias, liveGameAliases(), true), 404);
 
         $notify[] = ['info', 'Chance bonus configuration is not applicable for Teen Patti.'];
         return back()->withNotify($notify);
@@ -122,7 +122,7 @@ class GameController extends Controller
 
     public function status($id)
     {
-        $game = Game::where('alias', 'teen_patti')->findOrFail($id);
+        $game = Game::whereIn('alias', liveGameAliases())->findOrFail($id);
 
         if ($game->status == Status::ENABLE) {
             $game->status = Status::DISABLE;

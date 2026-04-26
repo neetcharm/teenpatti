@@ -66,13 +66,14 @@ function activeTemplateName() {
 function liveGameAliases() {
     return [
         'teen_patti',
+        'greedy',
+        'amazing_fish',
+        'big_battle',
     ];
 }
 
 function liveAutoBetAliases() {
-    return [
-        'teen_patti',
-    ];
+    return liveGameAliases();
 }
 
 function gameMeta($game) {

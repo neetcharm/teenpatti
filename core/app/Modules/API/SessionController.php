@@ -29,7 +29,7 @@ class SessionController extends Controller
         $request->validate([
             'player_id'   => 'required|string|max:100',
             'player_name' => 'required|string|max:100',
-            'game_id'     => 'required|string|in:teen_patti',
+            'game_id'     => 'required|string|in:' . implode(',', liveGameAliases()),
             'currency'    => 'required|string|size:3',
         ]);
 

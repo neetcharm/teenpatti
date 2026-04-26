@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 class PlayController extends Controller {
     public function playGame($alias, $isDemo = null) {
-        abort_if($alias !== 'teen_patti', 404);
+        abort_if(!in_array($alias, liveGameAliases(), true), 404);
 
         $game      = Game::active()->where('alias', $alias)->firstOrFail();
         $pageTitle = "Play " . $game->name;
@@ -33,7 +33,7 @@ class PlayController extends Controller {
     }
 
     public function investGame(Request $request, $alias, $isDemo = null) {
-        abort_if($alias !== 'teen_patti', 404);
+        abort_if(!in_array($alias, liveGameAliases(), true), 404);
 
         $request->validate([
             'choose' => 'required|string|in:silver,gold,diamond',
@@ -65,7 +65,7 @@ class PlayController extends Controller {
     }
 
     public function gameEnd(Request $request, $alias, $isDemo = null) {
-        abort_if($alias !== 'teen_patti', 404);
+        abort_if(!in_array($alias, liveGameAliases(), true), 404);
 
         $gamePlayer = new GamePlayer($alias, $isDemo);
         return $gamePlayer->completeGame();

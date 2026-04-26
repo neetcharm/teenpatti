@@ -68,7 +68,7 @@ class ProvisionDemoAccess extends Command
             $tenant->db_password_enc = null;
             $tenant->save();
 
-            $activeAliases = Game::active()->where('alias', 'teen_patti')->pluck('alias')->toArray();
+            $activeAliases = Game::active()->whereIn('alias', liveGameAliases())->pluck('alias')->toArray();
             foreach ($activeAliases as $alias) {
                 TenantGame::updateOrCreate(
                     ['tenant_id' => $tenant->id, 'game_alias' => $alias],

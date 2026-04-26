@@ -1,6 +1,6 @@
 @php
     $content = getContent('game.content', true);
-    $games = \App\Models\Game::active()->where('alias', 'teen_patti')->get();
+    $games = \App\Models\Game::active()->whereIn('alias', liveGameAliases())->get();
 @endphp
 <section class="pt-120 pb-120 section--bg">
     <div class="container">

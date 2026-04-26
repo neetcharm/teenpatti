@@ -28,7 +28,7 @@ class AdminController extends Controller {
         $widget['email_unverified_users']  = User::emailUnverified()->count();
         $widget['mobile_unverified_users'] = User::mobileUnverified()->count();
 
-        $widget['total_games']         = Game::where('alias', 'teen_patti')->count();
+        $widget['total_games']         = Game::whereIn('alias', liveGameAliases())->count();
         $widget['total_played']        = GameLog::teenPatti()->sum('invest');
         $widget['total_invest_amount'] = GameLog::teenPatti()->sum('invest');
         $widget['total_win_amount']    = GameLog::teenPatti()->win()->sum('win_amo');

@@ -55,8 +55,8 @@ class GameLaunchController extends Controller
         if (!$tenant->hasGame($tenantSession->game_id)) {
             abort(403, 'This game is not available in your account. Please contact support.');
         }
-        if ($tenantSession->game_id !== 'teen_patti') {
-            abort(404, 'Only Teen Patti is available on this server.');
+        if (!in_array($tenantSession->game_id, liveGameAliases(), true)) {
+            abort(404, 'Game is not available on this server.');
         }
 
         // 2. Resolve the game
@@ -90,10 +90,10 @@ class GameLaunchController extends Controller
 
         // 6a. Teen Patti tenant launches use dedicated mobile-first WebView.
         $normalizedAlias = str_replace('-', '_', strtolower((string) $game->alias));
-        if ($normalizedAlias === 'teen_patti') {
+        if (in_array($normalizedAlias, liveGameAliases(), true)) {
             $syncUrl = route('user.play.teen_patti.global.sync');
-            $investUrl = route('user.play.invest', ['teen_patti']);
-            $gameEndUrl = route('user.play.end', ['teen_patti']);
+            $investUrl = route('user.play.invest', [$normalizedAlias]);
+            $gameEndUrl = route('user.play.end', [$normalizedAlias]);
             $historyUrl = route('user.play.teen_patti.history');
             $teenPattiChipValues = $tenant->teenPattiChipValues();
 

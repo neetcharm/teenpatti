@@ -27,7 +27,7 @@ class GameLog extends Model {
 
     public function scopeTeenPatti() {
         return $this->whereHas('game', function ($query) {
-            $query->where('alias', 'teen_patti');
+            $query->whereIn('alias', liveGameAliases());
         });
     }
 }
