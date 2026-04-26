@@ -52,7 +52,7 @@ class GameSessionController extends Controller
             'signature'   => 'required|string',
             'player_id'   => 'required|string|max:100',
             'player_name' => 'required|string|max:100',
-            'game_id'     => 'nullable|string|in:teen_patti',
+            'game_id'     => 'nullable|string|in:' . implode(',', liveGameAliases()),
             'currency'    => 'nullable|string|max:10',
             'lang'        => 'nullable|string|max:10',
         ]);

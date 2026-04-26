@@ -25,6 +25,7 @@ class PreventRequestsDuringMaintenance extends Middleware
         'user/play/teen-patti/global/sync*',
         'user/play/teen-patti/history*',
         'user/play/tenant/wallet/refresh',
-        'user/play/invest/teen_patti*',
+        'user/play/invest/*',
+        'user/play/end/*',
     ];
 }

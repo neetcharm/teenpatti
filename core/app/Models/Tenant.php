@@ -65,7 +65,7 @@ class Tenant extends Model
      */
     public function hasGame(string $alias): bool
     {
-        if ($alias !== 'teen_patti') {
+        if (!in_array($alias, liveGameAliases(), true)) {
             return false;
         }
 

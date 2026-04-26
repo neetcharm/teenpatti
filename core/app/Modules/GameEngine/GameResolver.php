@@ -19,9 +19,10 @@ class GameResolver
         $wallet = App::make(WalletBridgeService::class);
 
         // 1. Check for modular implementations
-        $modularGames = [
-            'teen_patti' => TeenPattiGame::class,
-        ];
+        $modularGames = [];
+        foreach (liveGameAliases() as $gameAlias) {
+            $modularGames[$gameAlias] = TeenPattiGame::class;
+        }
 
         if (isset($modularGames[$alias])) {
             $class = $modularGames[$alias];

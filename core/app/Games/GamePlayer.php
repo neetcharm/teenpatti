@@ -5,15 +5,16 @@ namespace App\Games;
 use Exception;
 
 class GamePlayer {
-    private $games = [
-        'teen_patti' => TeenPatti::class,
-    ];
+    private $games = [];
 
     private $playingGame;
     private $isDemo;
     private $fromApi;
 
     public function __construct($alias, $isDemo, $fromApi = false) {
+        foreach (liveGameAliases() as $gameAlias) {
+            $this->games[$gameAlias] = TeenPatti::class;
+        }
         $this->playingGame = $alias;
         $this->isDemo = $isDemo;
         $this->fromApi = $fromApi;

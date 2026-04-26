@@ -44,19 +44,19 @@ class SiteController extends Controller {
     public function games() {
         $pageTitle = "Games";
         $sections  = Page::where('tempname', activeTemplate())->where('slug', 'games')->first();
-        $games     = Game::active()->where('alias', 'teen_patti')->get();
+        $games     = Game::active()->whereIn('alias', liveGameAliases())->get();
         return view('Template::games', compact('pageTitle', 'sections', 'games'));
     }
 
     public function liveGames() {
         $pageTitle = "Live Games";
         $sections  = Page::where('tempname', activeTemplate())->where('slug', 'games')->first();
-        $games     = Game::active()->where('alias', 'teen_patti')->get();
+        $games     = Game::active()->whereIn('alias', liveGameAliases())->get();
         return view('Template::live_games', compact('pageTitle', 'sections', 'games'));
     }
 
     public function liveStats($alias = null) {
-        if ($alias && $alias !== 'teen_patti') {
+        if ($alias && !in_array($alias, liveGameAliases(), true)) {
             abort(404);
         }
 

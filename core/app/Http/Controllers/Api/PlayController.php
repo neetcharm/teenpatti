@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 
 class PlayController extends Controller {
     public function playGame($alias, $isDemo = null) {
-        if ($alias !== 'teen_patti') {
-            $notify[] = 'Only Teen Patti is available';
+        if (!in_array($alias, liveGameAliases(), true)) {
+            $notify[] = 'Game is not available';
             return responseError('not_found', $notify);
         }
 
@@ -42,8 +42,8 @@ class PlayController extends Controller {
     }
 
     public function investGame(Request $request, $alias, $isDemo = null) {
-        if ($alias !== 'teen_patti') {
-            $notify[] = 'Only Teen Patti is available';
+        if (!in_array($alias, liveGameAliases(), true)) {
+            $notify[] = 'Game is not available';
             return responseError('not_found', $notify);
         }
 
@@ -52,8 +52,8 @@ class PlayController extends Controller {
     }
 
     public function gameEnd(Request $request, $alias, $isDemo = null) {
-        if ($alias !== 'teen_patti') {
-            $notify[] = 'Only Teen Patti is available';
+        if (!in_array($alias, liveGameAliases(), true)) {
+            $notify[] = 'Game is not available';
             return responseError('not_found', $notify);
         }
 

@@ -262,7 +262,7 @@ class TenantController extends Controller
         $pageTitle = 'Game Access — ' . $tenant->name;
 
         // All active games from the platform
-        $allGames  = Game::active()->where('alias', 'teen_patti')->orderBy('name')->get();
+        $allGames  = Game::active()->whereIn('alias', liveGameAliases())->orderBy('name')->get();
 
         // Build a quick lookup: alias => enabled bool
         $assigned  = $tenant->games->keyBy('game_alias');
@@ -276,7 +276,7 @@ class TenantController extends Controller
     public function updateGames(Request $request, int $id)
     {
         $tenant   = Tenant::findOrFail($id);
-        $allGames = Game::active()->where('alias', 'teen_patti')->pluck('alias')->toArray();
+        $allGames = Game::active()->whereIn('alias', liveGameAliases())->pluck('alias')->toArray();
         $enabled  = (array) $request->input('enabled', []); // array of aliases that are ON
 
         foreach ($allGames as $alias) {
