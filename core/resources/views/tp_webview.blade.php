@@ -122,8 +122,8 @@
         @keyframes wvSpin { to { transform: rotate(360deg); } }
 
         .tp-wv-root .tp-game-wrapper {
-            width: min(100vw, 390px);
-            max-width: 100vw;
+            width: 100%;
+            max-width: 480px;
             height: 100dvh;
             min-height: 0;
         }
