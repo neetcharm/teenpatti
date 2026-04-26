@@ -27,6 +27,7 @@ Route::prefix('tenant')->name('tenant.')->namespace('Tenant')->group(function ()
         Route::get('sessions',                          'SessionController@index')->name('sessions.index');
         Route::get('transactions',                      'TransactionController@index')->name('transactions.index');
         Route::get('settings',                          'SettingsController@index')->name('settings');
+        Route::get('settings/manual-override-insights', 'SettingsController@manualOverrideInsights')->name('settings.manual_override_insights');
         Route::post('settings',                         'SettingsController@update')->name('settings.update');
         Route::post('launch/teen-patti',               'SettingsController@launchTeenPatti')->name('launch.teen_patti');
     });

@@ -15,6 +15,7 @@ class Tenant extends Model
         'wallet_topup_url',
         'currency', 'commission_percent', 'min_bet', 'max_bet',
         'silver_profit_x', 'gold_profit_x', 'diamond_profit_x',
+        'result_mode', 'manual_result_side',
         'teen_patti_chips',
         'session_ttl_minutes', 'allowed_ips', 'status', 'balance_mode',
         // Separate DB
@@ -31,6 +32,8 @@ class Tenant extends Model
         'silver_profit_x' => 'float',
         'gold_profit_x'   => 'float',
         'diamond_profit_x'=> 'float',
+        'result_mode'     => 'string',
+        'manual_result_side' => 'string',
         'teen_patti_chips'=> 'array',
         'use_separate_db' => 'boolean',
         'db_port'         => 'integer',

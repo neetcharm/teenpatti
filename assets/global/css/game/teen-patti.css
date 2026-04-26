@@ -951,6 +951,17 @@ body {
   transform: rotateY(180deg);
   z-index: 2;
   background: #fff;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.tp-card-front-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
 }
 
 /* Winner glow on revealed card */
@@ -1535,7 +1546,7 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: stretch;
   padding: 4px;
   overflow: hidden;
   transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
@@ -1552,11 +1563,13 @@ body {
 }
 
 .tp-chips-pile {
-  position: relative;
-  width: 100%;
-  min-height: 50px;
+  position: absolute;
+  inset: 4px 4px 28px 4px;
   border-radius: 8px;
   overflow: hidden;
+  min-height: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .silver-bg { background: rgba(192, 192, 192, 0.1); }
@@ -1573,6 +1586,9 @@ body {
   overflow-wrap: break-word;
   word-break: break-all;
   width: 100%;
+  position: relative;
+  z-index: 3;
+  margin-top: auto;
 }
 
 .gold-text { color: var(--tp-gold); }
@@ -3183,7 +3199,8 @@ body:has(.tp-game-wrapper) .col-12 {
   }
 
   .tp-chips-pile {
-    min-height: 30px;
+    inset: 2px 2px 22px 2px;
+    min-height: 0;
   }
 
   .tp-history-bar {

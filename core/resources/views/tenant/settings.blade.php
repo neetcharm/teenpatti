@@ -156,6 +156,25 @@
                                    name="session_ttl_minutes"
                                    value="{{ old('session_ttl_minutes', (int) $authTenant->session_ttl_minutes) }}">
                         </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Result Mode</label>
+                            <select class="form-select" name="result_mode" id="resultModeSelect">
+                                @php($resultMode = old('result_mode', $authTenant->result_mode ?: 'random'))
+                                <option value="random" {{ $resultMode === 'random' ? 'selected' : '' }}>Fair Random</option>
+                                <option value="manual" {{ $resultMode === 'manual' ? 'selected' : '' }}>Manual Override</option>
+                            </select>
+                            <small class="text-muted">Fair Random chooses winners randomly. Manual Override lets you force the winner side.</small>
+                        </div>
+                        <div class="col-6" id="manualSideFieldWrap">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Manual Winner Side</label>
+                            <select class="form-select" name="manual_result_side" id="manualResultSideSelect">
+                                @php($manualResultSide = old('manual_result_side', $authTenant->manual_result_side))
+                                <option value="">Select side</option>
+                                <option value="silver" {{ $manualResultSide === 'silver' ? 'selected' : '' }}>Silver</option>
+                                <option value="gold" {{ $manualResultSide === 'gold' ? 'selected' : '' }}>Gold</option>
+                                <option value="diamond" {{ $manualResultSide === 'diamond' ? 'selected' : '' }}>Diamond</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="alert alert-info mt-3 mb-3 small">
@@ -219,6 +238,31 @@
                             Gross Multiplier: <strong id="previewGross">0.00x</strong> |
                             Net Multiplier: <strong id="previewNet">0.00x</strong> |
                             Estimated Payout: <strong id="previewPayout">0.00</strong>
+                        </div>
+                    </div>
+
+                    <div class="border rounded p-2 mb-3 d-none" id="manualOverrideInsightsCard">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="small fw-semibold">Manual Override Decision Helper</div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="manualOverrideRefreshBtn">
+                                <i class="las la-sync"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="small text-muted mb-2" id="manualOverrideMeta">Loading current round data...</div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Side</th>
+                                        <th class="text-end">Total Bet</th>
+                                        <th class="text-end">Projected Payout</th>
+                                        <th class="text-end">Company Net</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="manualOverrideInsightsBody">
+                                    <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -343,6 +387,9 @@ sig = hmac.new(
 
 @push('script')
 <script>
+const manualOverrideInsightsUrl = @json(route('tenant.settings.manual_override_insights'));
+let manualOverrideInsightsInterval = null;
+
 function copyField(id) {
     var el = document.getElementById(id);
     el.select(); el.setSelectionRange(0, 9999);
@@ -396,6 +443,118 @@ function updatePayoutPreview() {
     document.getElementById('previewPayout').innerText = payout.toFixed(2);
 }
 
+function toggleManualOverrideFields() {
+    const modeSelect = document.getElementById('resultModeSelect');
+    const sideWrap = document.getElementById('manualSideFieldWrap');
+    const sideSelect = document.getElementById('manualResultSideSelect');
+    const insightsCard = document.getElementById('manualOverrideInsightsCard');
+    if (!modeSelect || !sideWrap || !sideSelect || !insightsCard) {
+        return;
+    }
+
+    const manualMode = modeSelect.value === 'manual';
+    sideWrap.classList.toggle('d-none', !manualMode);
+    insightsCard.classList.toggle('d-none', !manualMode);
+    sideSelect.required = manualMode;
+
+    if (!manualMode) {
+        sideSelect.value = '';
+        stopManualOverrideAutoRefresh();
+    } else {
+        loadManualOverrideInsights();
+        startManualOverrideAutoRefresh();
+    }
+}
+
+function formatDecisionAmount(value) {
+    const amount = Number(value || 0);
+    return amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderManualOverrideInsights(payload) {
+    const meta = document.getElementById('manualOverrideMeta');
+    const tbody = document.getElementById('manualOverrideInsightsBody');
+    const sideSelect = document.getElementById('manualResultSideSelect');
+    if (!meta || !tbody) {
+        return;
+    }
+
+    const sideLabels = { silver: 'Silver', gold: 'Gold', diamond: 'Diamond' };
+    const phase = String(payload.phase || 'betting');
+    const remaining = Number(payload.remaining || 0);
+    const round = Number(payload.round || 0);
+    const activePlayers = Number(payload.active_players || 0);
+    const selectedManualSide = String(payload.manual_result_side || '');
+
+    meta.textContent = 'Round #' + round + ' • Phase: ' + phase + ' • ' + remaining + 's left • Active players: ' + activePlayers;
+
+    const rows = ['silver', 'gold', 'diamond'].map(function (side) {
+        const totals = payload.totals || {};
+        const projection = payload.projection || {};
+        const totalBet = Number(totals[side] || 0);
+        const projectedPayout = Number((projection[side] || {}).projected_payout || 0);
+        const companyNet = Number((projection[side] || {}).projected_company_net || 0);
+        const isSelected = selectedManualSide === side;
+
+        const netClass = companyNet >= 0 ? 'text-success fw-semibold' : 'text-danger fw-semibold';
+        const selectedBadge = isSelected ? ' <span class="badge bg-primary ms-1">Selected</span>' : '';
+
+        return '<tr>' +
+            '<td>' + sideLabels[side] + selectedBadge + '</td>' +
+            '<td class="text-end">' + formatDecisionAmount(totalBet) + '</td>' +
+            '<td class="text-end">' + formatDecisionAmount(projectedPayout) + '</td>' +
+            '<td class="text-end ' + netClass + '">' + formatDecisionAmount(companyNet) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    tbody.innerHTML = rows;
+
+    if (sideSelect && !sideSelect.value && selectedManualSide) {
+        sideSelect.value = selectedManualSide;
+    }
+}
+
+function loadManualOverrideInsights() {
+    const modeSelect = document.getElementById('resultModeSelect');
+    if (!modeSelect || modeSelect.value !== 'manual') {
+        return;
+    }
+
+    fetch(manualOverrideInsightsUrl, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error('Failed to fetch override insights');
+            }
+            return response.json();
+        })
+        .then(renderManualOverrideInsights)
+        .catch(function () {
+            const tbody = document.getElementById('manualOverrideInsightsBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Unable to load current round totals.</td></tr>';
+            }
+        });
+}
+
+function startManualOverrideAutoRefresh() {
+    stopManualOverrideAutoRefresh();
+    manualOverrideInsightsInterval = setInterval(loadManualOverrideInsights, 5000);
+}
+
+function stopManualOverrideAutoRefresh() {
+    if (manualOverrideInsightsInterval) {
+        clearInterval(manualOverrideInsightsInterval);
+        manualOverrideInsightsInterval = null;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     ['previewWinnerSide', 'previewPool', 'previewWinnerPool', 'previewBet'].forEach(function (id) {
         const el = document.getElementById(id);
@@ -413,6 +572,18 @@ document.addEventListener('DOMContentLoaded', function () {
             el.addEventListener('input', updatePayoutPreview);
         }
     });
+
+    const resultModeSelect = document.getElementById('resultModeSelect');
+    if (resultModeSelect) {
+        resultModeSelect.addEventListener('change', toggleManualOverrideFields);
+    }
+
+    const manualRefreshBtn = document.getElementById('manualOverrideRefreshBtn');
+    if (manualRefreshBtn) {
+        manualRefreshBtn.addEventListener('click', loadManualOverrideInsights);
+    }
+
+    toggleManualOverrideFields();
     updatePayoutPreview();
 });
 </script>

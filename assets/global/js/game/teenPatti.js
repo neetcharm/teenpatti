@@ -26,6 +26,9 @@ let countdownTargetTime = 0;
 let lastTotals = { silver: 0, gold: 0, diamond: 0 };
 let latestMyBets = { silver: 0, gold: 0, diamond: 0 };
 let lastResultData = null;
+let localHistoryMap = {};
+
+const MAX_VISIBLE_HISTORY = 20;
 
 const SIDES = ["silver", "gold", "diamond"];
 const SIDE_LABELS = { silver: "Silver", gold: "Gold", diamond: "Diamond" };
@@ -309,35 +312,80 @@ function normalizeSyncData(raw) {
 }
 
 function buildVisibleHistory(data) {
-    var history = Array.isArray(data.history) ? data.history.slice() : [];
-    var result = data.result && data.result.winner ? data.result : null;
-
-    if (!result) {
-        return history;
-    }
-
-    var resultRound = safeAmount(result.round || data.round);
-    var resultWinner = String(result.winner || "").toLowerCase();
-    if (!resultWinner) {
-        return history;
-    }
-
-    var alreadyPresent = history.some(function (item) {
-        if (typeof item !== "object" || item === null) {
-            return false;
+    var merged = {};
+    var rawHistory = Array.isArray(data.history) ? data.history : [];
+    rawHistory.forEach(function (item) {
+        var normalized = normalizeHistoryEntry(item);
+        if (!normalized) {
+            return;
         }
-        return safeAmount(item.round) === resultRound;
+        merged[normalized.round] = normalized;
     });
 
-    if (!alreadyPresent) {
-        history.unshift({
-            round: resultRound,
-            winner: resultWinner,
+    Object.keys(localHistoryMap).forEach(function (roundKey) {
+        if (!merged[roundKey]) {
+            merged[roundKey] = localHistoryMap[roundKey];
+        }
+    });
+
+    var result = data.result && data.result.winner ? data.result : null;
+    if (result) {
+        var resultEntry = normalizeHistoryEntry({
+            round: result.round || data.round,
+            winner: result.winner,
             totals: result.totals || data.bets || {}
         });
+        if (resultEntry) {
+            merged[resultEntry.round] = resultEntry;
+        }
     }
 
-    return history;
+    var rounds = Object.keys(merged)
+        .map(function (round) { return safeAmount(round); })
+        .filter(function (round) { return round > 0; })
+        .sort(function (a, b) { return b - a; })
+        .slice(0, MAX_VISIBLE_HISTORY);
+
+    localHistoryMap = {};
+    rounds.forEach(function (round) {
+        localHistoryMap[round] = merged[round];
+    });
+
+    return rounds.map(function (round) {
+        return localHistoryMap[round];
+    });
+}
+
+function normalizeHistoryEntry(item) {
+    if (!item || typeof item !== "object") {
+        return null;
+    }
+
+    var round = safeAmount(item.round);
+    var winner = String(item.winner || "").toLowerCase();
+    if (round <= 0 || SIDES.indexOf(winner) === -1) {
+        return null;
+    }
+    if (currentRound && round > currentRound) {
+        return null;
+    }
+
+    var totalsRaw = (item.totals && typeof item.totals === "object") ? item.totals : {};
+    var totals = {
+        silver: safeAmount(totalsRaw.silver),
+        gold: safeAmount(totalsRaw.gold),
+        diamond: safeAmount(totalsRaw.diamond)
+    };
+
+    return {
+        round: round,
+        winner: winner,
+        totals: totals,
+        pool: safeAmount(typeof item.pool !== "undefined" ? item.pool : (totals.silver + totals.gold + totals.diamond)),
+        players: Math.max(0, safeAmount(item.players)),
+        time: item.time || "",
+        ranks: item.ranks && typeof item.ranks === "object" ? item.ranks : {}
+    };
 }
 
 /* ===== PHASE BADGE ===== */
@@ -545,9 +593,7 @@ function handleResult(result) {
                     if (cardInners.length > capturedIdx) {
                         var cardInner = $(cardInners[capturedIdx]);
                         var code = normalizeCardCode(capturedCard);
-                        cardInner.find(".tp-card-front").html(
-                            code ? createCardFaceHTML(code) : '<div class="tp-cf blk"></div>'
-                        );
+                        renderCardFront(cardInner.find(".tp-card-front"), code);
                         cardInner.addClass("is-flipped");
                     }
                 };
@@ -743,6 +789,30 @@ function create3DCard(cardCode) {
            '</div>';
 }
 
+function renderCardFront(frontElement, code) {
+    var front = (frontElement && frontElement.jquery) ? frontElement : $(frontElement);
+    if (!front.length) {
+        return;
+    }
+
+    if (!code) {
+        front.html('<div class="tp-cf blk"></div>');
+        return;
+    }
+
+    front.empty();
+    var img = createCardImg(code, function (normalizedCode) {
+        front.html(createCardFaceHTML(normalizedCode || code));
+    });
+
+    img.removeClass("anime-flip")
+        .addClass("tp-card-front-img")
+        .attr("alt", getCardDisplayName(code))
+        .attr("title", code);
+
+    front.append(img);
+}
+
 function revealRankWithPause(sideCapName, rank, delay, winner) {
     setTimeout(function () {
         var rankEl = $("#tpRank" + sideCapName);
@@ -836,7 +906,7 @@ function normalizeCardCode(card) {
     return match[1] + "-" + match[2];
 }
 
-function createCardImg(card) {
+function createCardImg(card, onFallback) {
     var code = normalizeCardCode(card);
     var img = $('<img class="tp-card-img anime-flip" alt="card">');
 
@@ -855,8 +925,12 @@ function createCardImg(card) {
     var applyNext = function () {
         if (idx >= candidates.length) {
             img.off("error", applyNext);
-            img.attr("src", cardBackImage);
-            img.attr("title", code);
+            if (typeof onFallback === "function") {
+                onFallback(code);
+            } else {
+                img.attr("src", cardBackImage);
+                img.attr("title", code);
+            }
             return;
         }
         img.attr("src", candidates[idx]);
@@ -1121,16 +1195,19 @@ function updateTotals(data) {
 }
 
 function updateHistory(history) {
+    var rows = Array.isArray(history) ? history : [];
+    var normalizedRows = rows
+        .map(function (item) { return normalizeHistoryEntry(item); })
+        .filter(function (item) { return !!item; })
+        .sort(function (a, b) { return b.round - a.round; })
+        .slice(0, MAX_VISIBLE_HISTORY);
+
     var html = "";
-    (Array.isArray(history) ? history : []).forEach(function (item) {
-        var side = typeof item === "object" ? String(item.winner || "") : String(item || "");
-        side = side.toLowerCase();
-        if (SIDES.indexOf(side) === -1) {
-            return;
-        }
+    normalizedRows.forEach(function (item) {
+        var side = String(item.winner || "").toLowerCase();
         var char = side.charAt(0).toUpperCase();
-        var cls = "dot-" + char.toLowerCase();
-        html += '<div class="tp-hist-dot ' + cls + '" title="' + (typeof item === "object" ? "Round #" + item.round : "") + '">' + char + "</div>";
+        var cls = "dot-" + side;
+        html += '<div class="tp-hist-dot ' + cls + '" data-round="' + item.round + '" title="Round #' + item.round + '">' + char + "</div>";
     });
     $("#tpHistory").html(html);
 }
@@ -1159,14 +1236,13 @@ function animateIncomingBets(side, delta) {
 function startAmbientRain() {
     if (ambientRainInterval) clearInterval(ambientRainInterval);
 
-    // Dense multi-chip rain: 3 tiers of intervals for layered effect
+    // Keep ambient rain subtle so active bets stay clearly visible.
     var configuredAmounts = normalizeChipValues();
-    var amounts = configuredAmounts.concat(configuredAmounts, configuredAmounts.slice(0, 3));
+    var amounts = configuredAmounts.slice();
 
     function rainTick() {
         if (!isBettingEnabled) return;
-        var rnd = Math.random();
-        var count = rnd < 0.55 ? 1 : (rnd < 0.82 ? 2 : 3); // 55% single, 27% double, 18% triple
+        var count = Math.random() < 0.75 ? 1 : 2;
 
         for (var i = 0; i < count; i++) {
             var side = SIDES[Math.floor(Math.random() * SIDES.length)];
@@ -1181,8 +1257,8 @@ function startAmbientRain() {
         }
     }
 
-    rainTick(); // fire immediately
-    ambientRainInterval = setInterval(rainTick, 220);
+    rainTick();
+    ambientRainInterval = setInterval(rainTick, 800);
 }
 
 function stopAmbientRain() {
@@ -1249,7 +1325,7 @@ function dropChip(choose, amount, options) {
     var ambient   = !!(options && options.ambient);
 
     var chip = $('<div class="tp-small-chip"></div>');
-    var targetTop = (Math.random() * 52 + 12).toFixed(2) + "%";
+    var targetTop = (Math.random() * 34 + 6).toFixed(2) + "%";
 
     // Randomised physics CSS variables — give each chip unique rotation / speed
     var rotSign   = Math.random() > 0.5 ? 1 : -1;
@@ -1262,7 +1338,7 @@ function dropChip(choose, amount, options) {
     chip.addClass(chipClassByAmount(amount));
     chip.text(chipLabel(amount));
     chip.css({
-        left: (Math.random() * 68 + 16) + "%",
+        left: (Math.random() * 72 + 14) + "%",
         top: "-18%",
         "--tp-target-top": targetTop,
         "--rot-start": rotStart,
@@ -1369,11 +1445,9 @@ function triggerFantasyWin() {
 /* ============================================================
    HISTORY PANEL
    ============================================================ */
-var histPanelLoaded = false;
-
 function openHistoryPanel() {
     $("#tpHistBackdrop, #tpHistPanel").addClass("open");
-    if (!histPanelLoaded) loadHistoryPanel();
+    loadHistoryPanel();
 }
 
 function closeHistoryPanel() {
@@ -1399,8 +1473,21 @@ function loadHistoryPanel() {
         type: "GET",
         cache: false,
         success: function (data) {
-            histPanelLoaded = true;
-            var rows = Array.isArray(data && data.history) ? data.history : [];
+            var rawRows = Array.isArray(data && data.history) ? data.history : [];
+            var rowsMap = {};
+            rawRows.forEach(function (item) {
+                var normalized = normalizeHistoryEntry(item);
+                if (!normalized) {
+                    return;
+                }
+                rowsMap[normalized.round] = normalized;
+            });
+
+            var rows = Object.keys(rowsMap)
+                .map(function (round) { return rowsMap[round]; })
+                .sort(function (a, b) { return b.round - a.round; })
+                .slice(0, MAX_VISIBLE_HISTORY);
+
             if (!rows.length) {
                 $("#tpHistBody").html('<div class="tp-hist-empty">No rounds recorded yet.</div>');
                 return;
@@ -1429,7 +1516,6 @@ function loadHistoryPanel() {
             $("#tpHistBody").html(html);
         },
         error: function () {
-            histPanelLoaded = false;
             $("#tpHistBody").html('<div class="tp-hist-empty">Failed to load history.</div>');
         }
     });

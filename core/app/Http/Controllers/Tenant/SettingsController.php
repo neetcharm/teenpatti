@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Modules\SessionManager\SessionService;
+use App\Services\TeenPattiGlobalManager;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -37,6 +39,8 @@ class SettingsController extends Controller
             'silver_profit_x'    => 'nullable|numeric|min:0|max:100',
             'gold_profit_x'      => 'nullable|numeric|min:0|max:100',
             'diamond_profit_x'   => 'nullable|numeric|min:0|max:100',
+            'result_mode'        => 'required|string|in:random,manual',
+            'manual_result_side' => 'nullable|required_if:result_mode,manual|string|in:silver,gold,diamond',
             'teen_patti_chips'   => 'nullable|string|max:120',
         ]);
 
@@ -49,6 +53,10 @@ class SettingsController extends Controller
         $tenant->silver_profit_x = $this->nullableFloat($data['silver_profit_x'] ?? null);
         $tenant->gold_profit_x = $this->nullableFloat($data['gold_profit_x'] ?? null);
         $tenant->diamond_profit_x = $this->nullableFloat($data['diamond_profit_x'] ?? null);
+        $tenant->result_mode = $data['result_mode'];
+        $tenant->manual_result_side = $data['result_mode'] === 'manual'
+            ? ($data['manual_result_side'] ?? null)
+            : null;
         $tenant->teen_patti_chips = $chipValues;
         $tenant->save();
 
@@ -148,5 +156,13 @@ class SettingsController extends Controller
         );
 
         return redirect()->to(url('/play?token=' . $session->session_token));
+    }
+
+    public function manualOverrideInsights(Request $request): JsonResponse
+    {
+        $tenant = view()->shared('authTenant');
+        $manager = new TeenPattiGlobalManager(false, (int) $tenant->id);
+
+        return response()->json($manager->getManualOverrideInsights());
     }
 }

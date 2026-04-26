@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use App\Models\Game as GameModel;
+use App\Models\Tenant;
 use App\Models\TenantSession;
 use App\Models\User;
 use App\Models\Transaction;
@@ -16,7 +17,7 @@ use App\Models\Transaction;
  * TeenPattiGlobalManager
  *
  * Manages the global betting round with 20s betting and 15s result/hold phase.
- * Winner logic: lowest total bet placeholder wins (transparent pool rule).
+ * Winner logic: fair random selection by default, with optional tenant manual override.
  *
  * Design notes:
  *  - Avoid Cache::lock() because file driver locks may be unreliable on shared hosts.
@@ -36,6 +37,7 @@ class TeenPattiGlobalManager
 
     private bool $demoMode;
     private int $tenantId;
+    private ?Tenant $tenantConfig = null;
     private bool $roundBetTableReady = false;
     private static ?bool $roundBetTableAvailable = null;
 
@@ -156,28 +158,24 @@ class TeenPattiGlobalManager
 
     private function chooseWinnerFromTotals(array $totals): string
     {
-        $normalized = [
-            'silver'  => (float) ($totals['silver'] ?? 0),
-            'gold'    => (float) ($totals['gold'] ?? 0),
-            'diamond' => (float) ($totals['diamond'] ?? 0),
-        ];
-
-        if (array_sum($normalized) <= 0.00001) {
-            $sides = ['silver', 'gold', 'diamond'];
-            return $sides[random_int(0, count($sides) - 1)];
+        $manualSide = $this->manualOverrideWinnerSide();
+        if ($manualSide !== null) {
+            return $manualSide;
         }
 
-        $lowest = min($normalized);
-        $candidates = array_keys(array_filter(
-            $normalized,
-            static fn(float $amount): bool => abs($amount - $lowest) < 0.00001
-        ));
-
-        return $candidates[random_int(0, count($candidates) - 1)];
+        return $this->nextFairRandomWinner();
     }
 
     private function winnerReason(string $winner, array $totals): string
     {
+        $manualSide = $this->manualOverrideWinnerSide();
+        if ($manualSide !== null) {
+            return sprintf(
+                'Manual override is active for this tenant, so %s was selected from the tenant panel.',
+                ucfirst($winner)
+            );
+        }
+
         $normalized = [
             'silver' => (float) ($totals['silver'] ?? 0),
             'gold' => (float) ($totals['gold'] ?? 0),
@@ -188,11 +186,73 @@ class TeenPattiGlobalManager
             return sprintf('No bets were placed, so %s was selected randomly.', ucfirst($winner));
         }
 
-        return sprintf(
-            'Pool rule: %s had the lowest total bets (%.2f), so it wins this round.',
-            ucfirst($winner),
-            (float) ($normalized[$winner] ?? 0)
-        );
+        return sprintf('Fair random mode selected %s for this round.', ucfirst($winner));
+    }
+
+    public function getManualOverrideInsights(?int $round = null): array
+    {
+        $round = $round && $round > 0 ? $round : $this->currentRound();
+        $snapshot = $this->getRoundBetSnapshot($round, true);
+
+        $totals = [
+            'silver'  => round((float) ($snapshot['silver'] ?? 0), 2),
+            'gold'    => round((float) ($snapshot['gold'] ?? 0), 2),
+            'diamond' => round((float) ($snapshot['diamond'] ?? 0), 2),
+        ];
+
+        $totalPool = round((float) array_sum($totals), 2);
+        $tenant = $this->scopedTenantConfig();
+        $commissionPercent = max(0.0, min(95.0, (float) ($tenant?->commission_percent ?? 10.0)));
+
+        $projection = [];
+        foreach (['silver', 'gold', 'diamond'] as $side) {
+            $sidePool = (float) ($totals[$side] ?? 0);
+            $fixedPayoutMultiplierX = $this->tenantFixedPayoutMultiplierX($tenant, $side);
+
+            if ($fixedPayoutMultiplierX !== null) {
+                $fixedPayoutMultiplierX = max(0.0, $fixedPayoutMultiplierX);
+                $netMultiplier = $fixedPayoutMultiplierX * ((100.0 - $commissionPercent) / 100.0);
+                $mode = 'fixed_payout_x';
+            } else {
+                $netMultiplier = $sidePool > 0 ? (($totalPool / $sidePool) * ((100.0 - $commissionPercent) / 100.0)) : 0.0;
+                $mode = 'dynamic_pool';
+            }
+
+            $payoutIfWinner = $this->floorPayoutAmount($sidePool * $netMultiplier);
+            $companyNet = round($totalPool - $payoutIfWinner, 2);
+
+            $projection[$side] = [
+                'winner_pool' => round($sidePool, 2),
+                'projected_payout' => $payoutIfWinner,
+                'projected_company_net' => $companyNet,
+                'net_multiplier' => round($netMultiplier, 4),
+                'payout_multiplier_x' => $fixedPayoutMultiplierX !== null ? round($fixedPayoutMultiplierX, 4) : null,
+                'mode' => $mode,
+            ];
+        }
+
+        $mode = $tenant ? strtolower((string) ($tenant->result_mode ?? 'random')) : 'random';
+        if (!in_array($mode, ['random', 'manual'], true)) {
+            $mode = 'random';
+        }
+
+        $manualSide = $tenant ? strtolower((string) ($tenant->manual_result_side ?? '')) : '';
+        if (!in_array($manualSide, ['silver', 'gold', 'diamond'], true)) {
+            $manualSide = null;
+        }
+
+        return [
+            'round' => $round,
+            'phase' => $this->currentPhase(),
+            'remaining' => $this->secondsRemaining(),
+            'mode' => $mode,
+            'manual_result_side' => $manualSide,
+            'totals' => $totals,
+            'total_pool' => $totalPool,
+            'commission_percent' => round($commissionPercent, 2),
+            'active_players' => count($snapshot['users'] ?? []),
+            'projection' => $projection,
+        ];
     }
 
     /* ================================================================
@@ -409,7 +469,9 @@ class TeenPattiGlobalManager
                 return $this->getHistoryFromCache($limit);
             }
 
+            $currentRound = $this->currentRound();
             $rows = $historyQuery
+                ->where('round_number', '<=', $currentRound)
                 ->orderByDesc('round_number')
                 ->limit($limit)
                 ->get(['round_number', 'winner', 'silver_total', 'gold_total', 'diamond_total',
@@ -497,7 +559,7 @@ class TeenPattiGlobalManager
                     } else {
                         $netMultiplier = $grossMultiplier * ((100.0 - $commissionPercent) / 100.0);
                     }
-                    $payout = round($userWinBet * $netMultiplier, 2);
+                    $payout = $this->floorPayoutAmount($userWinBet * $netMultiplier);
 
                     $payouts[$uid] = [
                         'bet'    => $userWinBet,
@@ -596,7 +658,65 @@ class TeenPattiGlobalManager
             ->exists();
     }
 
-    private function tenantFixedPayoutMultiplierX(?\App\Models\Tenant $tenant, string $winner): ?float
+    private function floorPayoutAmount(float $amount): float
+    {
+        return (float) max(0, (int) floor($amount));
+    }
+
+    private function nextFairRandomWinner(): string
+    {
+        $bagKey = 'tp_fair_winner_bag_' . ($this->demoMode ? 'd_' : 'l_') . $this->tenantScopeId();
+        $bag = Cache::get($bagKey);
+
+        if (!is_array($bag) || empty($bag)) {
+            $bag = ['silver', 'gold', 'diamond'];
+            for ($i = count($bag) - 1; $i > 0; $i--) {
+                $j = random_int(0, $i);
+                [$bag[$i], $bag[$j]] = [$bag[$j], $bag[$i]];
+            }
+        }
+
+        $winner = array_shift($bag);
+        if (!in_array($winner, ['silver', 'gold', 'diamond'], true)) {
+            $winner = 'gold';
+            $bag = [];
+        }
+
+        Cache::put($bagKey, array_values($bag), now()->addHours(6));
+        return $winner;
+    }
+
+    private function scopedTenantConfig(): ?Tenant
+    {
+        if ($this->demoMode || $this->tenantScopeId() <= 0) {
+            return null;
+        }
+
+        if ($this->tenantConfig && $this->tenantConfig->id === $this->tenantScopeId()) {
+            return $this->tenantConfig;
+        }
+
+        $this->tenantConfig = Tenant::find($this->tenantScopeId());
+        return $this->tenantConfig;
+    }
+
+    private function manualOverrideWinnerSide(): ?string
+    {
+        $tenant = $this->scopedTenantConfig();
+        if (!$tenant) {
+            return null;
+        }
+
+        $mode = strtolower((string) ($tenant->result_mode ?? 'random'));
+        if ($mode !== 'manual') {
+            return null;
+        }
+
+        $manualSide = strtolower((string) ($tenant->manual_result_side ?? ''));
+        return in_array($manualSide, ['silver', 'gold', 'diamond'], true) ? $manualSide : null;
+    }
+
+    private function tenantFixedPayoutMultiplierX(?Tenant $tenant, string $winner): ?float
     {
         if (!$tenant) {
             return null;

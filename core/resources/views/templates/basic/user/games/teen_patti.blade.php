@@ -137,7 +137,6 @@ document.body.classList.add('tp-game-page');
             <div class="tp-history-bar">
                 <span class="tp-hist-label">Result</span>
                 <div class="tp-hist-items" id="tpHistory"></div>
-                <button class="tp-btn-chart"><i class="fas fa-chart-line"></i></button>
             </div>
 
             <div class="tp-footer">
