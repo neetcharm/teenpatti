@@ -22,4 +22,16 @@ return [
     |
     */
     'wallet_win_credit_async' => filter_var(env('WALLET_WIN_CREDIT_ASYNC', false), FILTER_VALIDATE_BOOLEAN),
+
+    /*
+    |----------------------------------------------------------------------
+    | Tenant Legacy API Signature Mode
+    |----------------------------------------------------------------------
+    |
+    | Keep disabled so tenant API requests must include X-Timestamp and
+    | X-Nonce with the canonical HMAC signature. Enable temporarily only
+    | while migrating an old client that still signs the raw body only.
+    |
+    */
+    'tenant_allow_legacy_signatures' => filter_var(env('TENANT_ALLOW_LEGACY_SIGNATURES', false), FILTER_VALIDATE_BOOLEAN),
 ];

@@ -74,7 +74,7 @@ class LoginController extends Controller {
         } catch (\Throwable $e) {
             \Log::error('LOGIN_ERROR: ' . $e->getMessage());
             \Log::error($e->getTraceAsString());
-            $notify[] = ['error', 'Internal Error: ' . $e->getMessage()];
+            $notify[] = ['error', 'Unable to process login right now.'];
             return back()->withNotify($notify);
         }
     }

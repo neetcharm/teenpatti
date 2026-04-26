@@ -13,7 +13,7 @@ Route::middleware('admin')->get('admin/docs/integration', function () {
 Route::prefix('tenant')->name('tenant.')->namespace('Tenant')->group(function () {
     // Guest
     Route::get('login',  'AuthController@showLogin')->name('login');
-    Route::post('login', 'AuthController@login')->name('login.submit');
+    Route::post('login', 'AuthController@login')->middleware('throttle:5,1')->name('login.submit');
 
     // Authenticated
     Route::middleware('tenant.auth')->group(function () {
@@ -51,10 +51,10 @@ Route::get('/launch/{sessionToken}', function (string $sessionToken) {
 Route::controller('TicketController')->prefix('ticket')->name('ticket.')->group(function () {
     Route::get('/', 'supportTicket')->name('index');
     Route::get('new', 'openSupportTicket')->name('open');
-    Route::post('create', 'storeSupportTicket')->name('store');
+    Route::post('create', 'storeSupportTicket')->middleware('throttle:5,1')->name('store');
     Route::get('view/{ticket}', 'viewTicket')->name('view');
-    Route::post('reply/{id}', 'replyTicket')->name('reply');
-    Route::post('close/{id}', 'closeTicket')->name('close');
+    Route::post('reply/{id}', 'replyTicket')->middleware('throttle:10,1')->name('reply');
+    Route::post('close/{id}', 'closeTicket')->middleware('throttle:10,1')->name('close');
     Route::get('download/{attachment_id}', 'ticketDownload')->name('download');
 });
 
@@ -63,9 +63,9 @@ Route::controller('TicketController')->prefix('ticket')->name('ticket.')->group(
 Route::controller('SiteController')->group(function () {
     Route::get('/pwa/configuration', 'pwaConfiguration')->name('pwa.configuration');
     Route::get('/contact', 'contact')->name('contact');
-    Route::post('/contact', 'contactSubmit');
+    Route::post('/contact', 'contactSubmit')->middleware('throttle:5,1');
     Route::get('/change/{lang?}', 'changeLanguage')->name('lang');
-    Route::post('/subscribe', 'subscribe')->name('subscribe.post');
+    Route::post('/subscribe', 'subscribe')->middleware('throttle:5,1')->name('subscribe.post');
     Route::get('cookie-policy', 'cookiePolicy')->name('cookie.policy');
     Route::get('/cookie/accept', 'cookieAccept')->name('cookie.accept');
     Route::get('games', 'games')->name('games');

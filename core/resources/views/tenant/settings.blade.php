@@ -241,9 +241,12 @@
                         </div>
                     </div>
 
-                    <div class="border rounded p-2 mb-3 d-none" id="manualOverrideInsightsCard">
+                    <div class="border rounded p-2 mb-3" id="manualOverrideInsightsCard">
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <div class="small fw-semibold">Manual Override Decision Helper</div>
+                            <div>
+                                <div class="small fw-semibold">Live Teen Patti Result Control</div>
+                                <div class="small text-muted">Use the live totals and company net projection before enabling manual override.</div>
+                            </div>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="manualOverrideRefreshBtn">
                                 <i class="las la-sync"></i> Refresh
                             </button>
@@ -447,23 +450,21 @@ function toggleManualOverrideFields() {
     const modeSelect = document.getElementById('resultModeSelect');
     const sideWrap = document.getElementById('manualSideFieldWrap');
     const sideSelect = document.getElementById('manualResultSideSelect');
-    const insightsCard = document.getElementById('manualOverrideInsightsCard');
-    if (!modeSelect || !sideWrap || !sideSelect || !insightsCard) {
+    if (!modeSelect || !sideWrap || !sideSelect) {
         return;
     }
 
     const manualMode = modeSelect.value === 'manual';
-    sideWrap.classList.toggle('d-none', !manualMode);
-    insightsCard.classList.toggle('d-none', !manualMode);
+    sideWrap.classList.remove('d-none');
+    sideSelect.disabled = !manualMode;
     sideSelect.required = manualMode;
 
     if (!manualMode) {
         sideSelect.value = '';
-        stopManualOverrideAutoRefresh();
-    } else {
-        loadManualOverrideInsights();
-        startManualOverrideAutoRefresh();
     }
+
+    loadManualOverrideInsights();
+    startManualOverrideAutoRefresh();
 }
 
 function formatDecisionAmount(value) {
@@ -484,9 +485,10 @@ function renderManualOverrideInsights(payload) {
     const remaining = Number(payload.remaining || 0);
     const round = Number(payload.round || 0);
     const activePlayers = Number(payload.active_players || 0);
+    const mode = String(payload.mode || 'random');
     const selectedManualSide = String(payload.manual_result_side || '');
 
-    meta.textContent = 'Round #' + round + ' • Phase: ' + phase + ' • ' + remaining + 's left • Active players: ' + activePlayers;
+    meta.textContent = 'Round #' + round + ' • Mode: ' + (mode === 'manual' ? 'Manual Override' : 'Fair Random') + ' • Phase: ' + phase + ' • ' + remaining + 's left • Active players: ' + activePlayers;
 
     const rows = ['silver', 'gold', 'diamond'].map(function (side) {
         const totals = payload.totals || {};
@@ -516,7 +518,7 @@ function renderManualOverrideInsights(payload) {
 
 function loadManualOverrideInsights() {
     const modeSelect = document.getElementById('resultModeSelect');
-    if (!modeSelect || modeSelect.value !== 'manual') {
+    if (!modeSelect) {
         return;
     }
 

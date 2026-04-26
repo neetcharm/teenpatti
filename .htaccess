@@ -8,6 +8,7 @@
     # Block direct access to sensitive app internals and setup files
     RewriteRule ^core(?:/|$) - [F,L,NC]
     RewriteRule ^install(?:/|$) - [F,L,NC]
+    RewriteRule ^backups(?:/|$) - [F,L,NC]
     RewriteRule ^tools/(?!github_deploy\.php$|game1_deploy\.php$) - [F,L,NC]
     RewriteRule ^(composer\.(json|lock)|package\.json|phpunit\.xml|artisan)$ - [F,L,NC]
     RewriteRule "(^|/)\.(?!well-known/)" - [F,L,NC]
@@ -38,7 +39,7 @@
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
-<FilesMatch "(composer\.(json|lock)|package\.json|phpunit\.xml|artisan)$">
+<FilesMatch "(composer\.(json|lock)|package\.json|phpunit\.xml|artisan|.*\.(sql|bak|zip|tar|gz|7z))$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

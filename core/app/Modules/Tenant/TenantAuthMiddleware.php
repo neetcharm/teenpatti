@@ -33,16 +33,12 @@ class TenantAuthMiddleware
         $signingSecret = $tenant->getApiSigningSecret();
         $legacyExpected = hash_hmac('sha256', $payload, $signingSecret);
         $signatureValid = hash_equals($legacyExpected, $signature);
+        $usesLegacySignature = $signatureValid;
 
         // Docs-compatible canonical signing support.
         if (!$signatureValid && $timestamp && $nonce) {
             if (!ctype_digit((string) $timestamp) || abs(time() - (int) $timestamp) > 300) {
                 return response()->json(['error' => 'Expired or invalid timestamp'], 401);
-            }
-
-            $nonceCacheKey = 'tenant_nonce:' . $tenant->id . ':' . $nonce;
-            if (!Cache::add($nonceCacheKey, 1, now()->addMinutes(5))) {
-                return response()->json(['error' => 'Replay request detected'], 401);
             }
 
             $method = strtoupper($request->method());
@@ -51,10 +47,22 @@ class TenantAuthMiddleware
             $canonical = implode('|', [$method, $path, $apiKey, $timestamp, $nonce, $bodyHash]);
             $canonicalExpected = hash_hmac('sha256', $canonical, $signingSecret);
             $signatureValid = hash_equals($canonicalExpected, $signature);
+            $usesLegacySignature = false;
+
+            if ($signatureValid) {
+                $nonceCacheKey = 'tenant_nonce:' . $tenant->id . ':' . $nonce;
+                if (!Cache::add($nonceCacheKey, 1, now()->addMinutes(5))) {
+                    return response()->json(['error' => 'Replay request detected'], 401);
+                }
+            }
         }
 
         if (!$signatureValid) {
             return response()->json(['error' => 'Invalid Signature'], 401);
+        }
+
+        if ($usesLegacySignature && !config('game.tenant_allow_legacy_signatures', false)) {
+            return response()->json(['error' => 'Timestamp and nonce are required'], 401);
         }
 
         // Inject tenant into request for later use

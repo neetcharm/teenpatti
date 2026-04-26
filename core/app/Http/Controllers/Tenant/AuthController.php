@@ -30,6 +30,7 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'Invalid email or password.'])->withInput();
         }
 
+        $request->session()->regenerate();
         session(['tenant_panel_id' => $tenant->id]);
 
         return redirect()->route('tenant.dashboard');
@@ -38,6 +39,8 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         session()->forget('tenant_panel_id');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
         return redirect()->route('tenant.login');
     }
 }

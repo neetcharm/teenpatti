@@ -130,14 +130,14 @@ Route::namespace('Api')->name('api.')->group(function () {
                 Route::controller('PlayController')->prefix('play')->group(function () {
                     Route::get('{alias}/{demo?}', 'playGame');
                     Route::post('invest/{alias}/{demo?}', 'investGame')
-                        ->middleware('game.validate');
-                    Route::post('end/{alias}/{demo?}', 'gameEnd');
+                        ->middleware(['throttle:60,1', 'game.validate']);
+                    Route::post('end/{alias}/{demo?}', 'gameEnd')->middleware('throttle:30,1');
                 });
 
 
             });
         });
 
-        Route::get('logout', 'Auth\LoginController@logout');
+        Route::match(['GET', 'POST'], 'logout', 'Auth\LoginController@logout');
     });
 });

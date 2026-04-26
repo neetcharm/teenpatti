@@ -1,16 +1,9 @@
 <?php
 /**
  * Server-side cache clearing + diagnostics
- * Usage: /tools/clear_cache.php?token=G1DEPLOY_2026_LIVE
+ * Configure CACHE_CLEAR_TOKEN in core/.env and call with ?token=...
  */
 header('Content-Type: text/plain; charset=UTF-8');
-
-$token = $_GET['token'] ?? $_POST['token'] ?? '';
-if ($token !== 'G1DEPLOY_2026_LIVE') {
-    http_response_code(403);
-    echo "Access denied.\n";
-    exit;
-}
 
 $projectRoot = realpath(__DIR__);
 // On the live server, .env is in core/ subfolder of the project root
@@ -38,6 +31,39 @@ if (!$coreDir) {
 }
 
 $envFile = $coreDir . DIRECTORY_SEPARATOR . '.env';
+
+function cacheClearEnvValue(string $envFile, string $key): string
+{
+    if (!is_file($envFile)) {
+        return '';
+    }
+
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+            continue;
+        }
+
+        [$envKey, $envValue] = explode('=', $line, 2);
+        if (trim($envKey) === $key) {
+            return trim($envValue, " \t\n\r\0\x0B\"'");
+        }
+    }
+
+    return '';
+}
+
+if (PHP_SAPI !== 'cli') {
+    $configuredToken = cacheClearEnvValue($envFile, 'CACHE_CLEAR_TOKEN');
+    $requestToken = (string) ($_GET['token'] ?? $_POST['token'] ?? '');
+
+    if ($configuredToken === '' || $requestToken === '' || !hash_equals($configuredToken, $requestToken)) {
+        http_response_code(403);
+        echo "Access denied.\n";
+        exit;
+    }
+}
 
 echo "=== GAME CACHE CLEAR + DIAGNOSTICS ===\n\n";
 
