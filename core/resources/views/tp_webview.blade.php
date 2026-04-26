@@ -66,11 +66,12 @@
             overflow: hidden;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: stretch;
         }
 
         .tp-stage {
             width: 100%;
+            min-height: 100%;
             transform-origin: top center;
             transform: scale(1);
             will-change: transform;
@@ -427,6 +428,8 @@ function tpFitStageToViewport() {
     }
 
     stage.style.transform = 'scale(1)';
+    stage.style.minHeight = '0';
+    stage.style.height = 'auto';
     stageShell.style.height = 'auto';
 
     var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -436,6 +439,13 @@ function tpFitStageToViewport() {
     var naturalHeight = Math.ceil(stage.scrollHeight || stage.offsetHeight || 0);
 
     if (!naturalHeight || !availableHeight) {
+        return;
+    }
+
+    if (naturalHeight < availableHeight) {
+        stageShell.style.height = Math.ceil(availableHeight) + 'px';
+        stage.style.minHeight = Math.ceil(availableHeight) + 'px';
+        stage.style.height = Math.ceil(availableHeight) + 'px';
         return;
     }
 
