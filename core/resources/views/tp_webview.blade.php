@@ -639,6 +639,12 @@ $.ajaxSetup({
 
 // Game config variables (read by teenPatti.js)
 var imagePath        = "{{ asset(activeTemplate(true) . 'images/cards/') }}";
+var tpCardDeckPaths  = @json([
+    asset(activeTemplate(true) . 'images/cards/'),
+    asset('assets/templates/parimatch/images/cards/'),
+    asset('assets/templates/sunfyre/images/cards/'),
+    asset('assets/templates/basic/images/cards/'),
+]);
 var avatarPath       = "{{ asset('assets/templates/parimatch/images/') }}";
 var cardBackImage    = "{{ asset(activeTemplate(true) . 'images/cards/BACK.png') }}";
 var investUrl        = "{{ $investUrl }}";

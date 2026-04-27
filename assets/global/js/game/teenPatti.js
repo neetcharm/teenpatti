@@ -886,6 +886,19 @@ function deckBaseFromImagePath() {
     return raw.charAt(raw.length - 1) === "/" ? raw : (raw + "/");
 }
 
+function sameOriginDeckBase(url) {
+    var raw = String(url || "").trim();
+    if (!raw) {
+        return "";
+    }
+    try {
+        var parsed = new URL(raw, window.location.href);
+        return parsed.pathname.replace(/\/+$/, "") + "/";
+    } catch (e) {
+        return "";
+    }
+}
+
 function addCandidateUrl(target, seen, url) {
     var value = String(url || "").trim();
     if (!value || seen[value]) {
@@ -904,17 +917,47 @@ function buildCardAssetCandidates(code) {
         code.replace("-", "_") + ".png",
     ];
 
+    var deckBases = [];
+    var pushDeckBase = function (base) {
+        var normalized = String(base || "").trim();
+        if (!normalized) {
+            return;
+        }
+        normalized = normalized.replace(/\/+$/, "") + "/";
+        if (deckBases.indexOf(normalized) === -1) {
+            deckBases.push(normalized);
+        }
+    };
+
+    if (typeof tpCardDeckPaths !== "undefined" && Array.isArray(tpCardDeckPaths)) {
+        tpCardDeckPaths.forEach(function (base) {
+            pushDeckBase(base);
+            pushDeckBase(sameOriginDeckBase(base));
+        });
+    }
+
     var primaryBase = deckBaseFromImagePath();
-    names.forEach(function (name) {
-        addCandidateUrl(candidates, seen, cardAssetUrl(name));
+    pushDeckBase(primaryBase);
+    pushDeckBase(sameOriginDeckBase(primaryBase));
+
+    var backBase = String((typeof cardBackImage === "string" ? cardBackImage : "") || "").replace(/BACK\.png(?:\?.*)?$/i, "");
+    pushDeckBase(backBase);
+    pushDeckBase(sameOriginDeckBase(backBase));
+
+    deckBases.forEach(function (base) {
+        names.forEach(function (name) {
+            addCandidateUrl(candidates, seen, base + name);
+        });
     });
 
     // Extra hard fallback: try known template decks too.
     if (primaryBase) {
         ["parimatch", "sunfyre", "basic"].forEach(function (template) {
             var fallbackBase = primaryBase.replace(/assets\/templates\/[^/]+\/images\/cards\/?$/i, "assets/templates/" + template + "/images/cards/");
+            var fallbackBaseRelative = sameOriginDeckBase(fallbackBase);
             names.forEach(function (name) {
                 addCandidateUrl(candidates, seen, fallbackBase + name);
+                addCandidateUrl(candidates, seen, fallbackBaseRelative + name);
             });
         });
     }
