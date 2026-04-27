@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d027ed3d249ef80276f18b8ca0d91956",
+    "content-hash": "743267f895ef587020813fdc1c66bf02",
     "packages": [
         {
             "name": "authorizenet/authorizenet",
@@ -1683,16 +1683,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v11.48.0",
+            "version": "v11.51.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "5b23ab29087dbcb13077e5c049c431ec4b82f236"
+                "reference": "c8f9a04594b7044a189a3194cfb3594251eb74e5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/5b23ab29087dbcb13077e5c049c431ec4b82f236",
-                "reference": "5b23ab29087dbcb13077e5c049c431ec4b82f236",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/c8f9a04594b7044a189a3194cfb3594251eb74e5",
+                "reference": "c8f9a04594b7044a189a3194cfb3594251eb74e5",
                 "shasum": ""
             },
             "require": {
@@ -1800,10 +1800,10 @@
                 "league/flysystem-read-only": "^3.25.1",
                 "league/flysystem-sftp-v3": "^3.25.1",
                 "mockery/mockery": "^1.6.10",
-                "orchestra/testbench-core": "^9.16.1",
+                "orchestra/testbench-core": "^9.18.0",
                 "pda/pheanstalk": "^5.0.6",
                 "php-http/discovery": "^1.15",
-                "phpstan/phpstan": "^2.0",
+                "phpstan/phpstan": "2.1.41",
                 "phpunit/phpunit": "^10.5.35|^11.3.6|^12.0.1",
                 "predis/predis": "^2.3",
                 "resend/resend-php": "^0.10.0",
@@ -1894,7 +1894,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2026-01-20T15:26:20+00:00"
+            "time": "2026-03-26T14:54:53+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -11056,12 +11056,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.3"
+        "php": "^8.2"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
 }

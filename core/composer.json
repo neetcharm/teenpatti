@@ -25,6 +25,7 @@
         "messagebird/php-rest-api": "^3.1",
         "mollie/laravel-mollie": "^3.0",
         "phpmailer/phpmailer": "^6.9",
+        "psr/log": "^3.0",
         "razorpay/razorpay": "^2.9",
         "sendgrid/sendgrid": "^8.1",
         "stripe/stripe-php": "^13.13",
