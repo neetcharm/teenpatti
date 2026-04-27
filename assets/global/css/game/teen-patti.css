@@ -2951,6 +2951,9 @@ body:has(.tp-game-wrapper) .col-12 {
   gap: 2px;
   margin: 4px 0 2px;
   width: 100%;
+  justify-content: center;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .tp-card-container,
@@ -2958,9 +2961,15 @@ body:has(.tp-game-wrapper) .col-12 {
   width: clamp(30px, 31%, 48px);
   height: auto;
   aspect-ratio: 44 / 64;
-  flex: 0 0 auto;
-  flex-shrink: 1;
+  flex: 0 0 clamp(30px, 31%, 48px);
+  flex-shrink: 0;
+  max-width: 32%;
   min-width: 0;
+}
+
+.tp-cards-row > .tp-card-container,
+.tp-cards-row > .tp-card-img {
+  flex-shrink: 0 !important;
 }
 
 .tp-hand-rank {

@@ -269,11 +269,17 @@
             min-height: 26px !important;
             gap: 2px !important;
             margin: 1px 0 !important;
+            justify-content: center !important;
+            flex-wrap: nowrap !important;
+            overflow: hidden !important;
         }
 
         body.tp-split-view .tp-card-container,
         body.tp-split-view .tp-card-img {
             width: clamp(14px, 30%, 20px) !important;
+            flex: 0 0 clamp(14px, 30%, 20px) !important;
+            flex-shrink: 0 !important;
+            max-width: 32% !important;
         }
 
         body.tp-split-view .tp-hand-rank {
