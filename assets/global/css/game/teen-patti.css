@@ -2506,18 +2506,22 @@ body {
   }
 }
 
-/* Compact light glass skin for the live Teen Patti screen */
+/* Low-glare casino skin for night play */
 :root {
-  --tp-glass-bg: rgba(255, 255, 255, 0.48);
-  --tp-glass-strong: rgba(255, 255, 255, 0.66);
-  --tp-glass-border: rgba(255, 255, 255, 0.78);
-  --tp-ink: #18313d;
-  --tp-ink-soft: #38525e;
-  --tp-teal: #19bfa7;
-  --tp-mint: #4ee8c4;
-  --tp-sun: #ffc94f;
-  --tp-rose: #ff72aa;
-  --tp-sky: #38c7ff;
+  --tp-app-height: 100dvh;
+  --tp-app-width: 100vw;
+  --tp-glass-bg: rgba(10, 25, 38, 0.72);
+  --tp-glass-strong: rgba(14, 39, 57, 0.9);
+  --tp-glass-border: rgba(102, 220, 255, 0.24);
+  --tp-ink: #f4fbff;
+  --tp-ink-soft: #b7d0da;
+  --tp-teal: #23d7b7;
+  --tp-mint: #69ffd8;
+  --tp-sun: #f6c85f;
+  --tp-rose: #ff6d97;
+  --tp-sky: #54ceff;
+  --tp-night: #06111d;
+  --tp-felt: #082e29;
 }
 
 .tp-game-wrapper,
@@ -2528,9 +2532,11 @@ body {
 body.tp-game-page,
 body:has(.tp-game-wrapper) {
   background:
-    radial-gradient(circle at 12% 4%, rgba(56, 199, 255, 0.34), transparent 32%),
-    radial-gradient(circle at 90% 8%, rgba(255, 114, 170, 0.26), transparent 35%),
-    linear-gradient(150deg, #e8fbff 0%, #f7f0ff 47%, #fff7df 100%) !important;
+    radial-gradient(circle at 12% 4%, rgba(36, 214, 255, 0.18), transparent 32%),
+    radial-gradient(circle at 90% 8%, rgba(255, 95, 145, 0.14), transparent 35%),
+    radial-gradient(circle at 50% 102%, rgba(246, 200, 95, 0.12), transparent 38%),
+    linear-gradient(150deg, #050816 0%, #071a25 47%, #100f19 100%) !important;
+  min-height: var(--tp-app-height, 100dvh);
   overflow: hidden;
 }
 
@@ -2560,7 +2566,7 @@ body:has(.tp-game-wrapper) .col-12 {
   width: 100% !important;
   max-width: 100% !important;
   min-height: 0 !important;
-  height: 100svh !important;
+  height: var(--tp-app-height, 100svh) !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
@@ -2568,10 +2574,10 @@ body:has(.tp-game-wrapper) .col-12 {
 
 .tp-wv-root {
   background:
-    radial-gradient(circle at 10% 0%, rgba(40, 180, 255, 0.38), transparent 30%),
-    radial-gradient(circle at 92% 7%, rgba(255, 100, 160, 0.3), transparent 32%),
-    radial-gradient(circle at 50% 90%, rgba(255, 200, 60, 0.18), transparent 40%),
-    linear-gradient(150deg, #ddf5ff 0%, #f0e8ff 45%, #fff4d6 100%);
+    radial-gradient(circle at 10% 0%, rgba(40, 180, 255, 0.18), transparent 30%),
+    radial-gradient(circle at 92% 7%, rgba(255, 100, 160, 0.14), transparent 32%),
+    radial-gradient(circle at 50% 90%, rgba(255, 200, 60, 0.12), transparent 40%),
+    linear-gradient(150deg, #050816 0%, #071b25 45%, #10101a 100%);
 }
 
 .tp-game-wrapper,
@@ -2579,7 +2585,7 @@ body:has(.tp-game-wrapper) .col-12 {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  height: 100svh;
+  height: var(--tp-app-height, 100svh);
   min-height: 0;
   margin: 0;
   display: grid;
@@ -2587,13 +2593,14 @@ body:has(.tp-game-wrapper) .col-12 {
   color: var(--tp-ink);
   overflow: hidden;
   border-radius: 0;
-  border: 1px solid rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(102, 220, 255, 0.22);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(222, 249, 255, 0.48) 42%, rgba(255, 235, 247, 0.52)),
-    radial-gradient(circle at 50% 17%, rgba(255, 213, 82, 0.28), transparent 34%);
-  box-shadow: 0 24px 60px rgba(70, 102, 136, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(22px) saturate(150%);
-  -webkit-backdrop-filter: blur(22px) saturate(150%);
+    linear-gradient(145deg, rgba(8, 18, 31, 0.96), rgba(8, 46, 41, 0.9) 43%, rgba(17, 17, 31, 0.96)),
+    radial-gradient(circle at 50% 17%, rgba(246, 200, 95, 0.16), transparent 34%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(128, 235, 255, 0.16);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  transform-origin: top center;
 }
 
 /* Force all direct grid children to not expand grid */
@@ -2605,8 +2612,8 @@ body:has(.tp-game-wrapper) .col-12 {
 
 .tp-game-wrapper::before {
   background:
-    linear-gradient(120deg, rgba(255, 255, 255, 0.36), transparent 32%),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 18px);
+    linear-gradient(120deg, rgba(102, 220, 255, 0.08), transparent 32%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 18px);
 }
 
 .tp-game-wrapper::after {
@@ -2624,9 +2631,9 @@ body:has(.tp-game-wrapper) .col-12 {
 .tp-hand-rank {
   background: var(--tp-glass-bg);
   border-color: var(--tp-glass-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 12px 26px rgba(72, 104, 132, 0.14);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(128, 235, 255, 0.12), 0 12px 26px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px) saturate(145%);
+  -webkit-backdrop-filter: blur(14px) saturate(145%);
 }
 
 .tp-header {
@@ -2635,31 +2642,33 @@ body:has(.tp-game-wrapper) .col-12 {
   padding: 6px 8px;
   border: 1px solid var(--tp-glass-border);
   border-radius: 16px;
+  background: linear-gradient(180deg, rgba(13, 34, 50, 0.88), rgba(8, 23, 36, 0.72));
 }
 
 .tp-btn-icon {
   width: 34px;
   height: 34px;
   color: var(--tp-ink);
-  border: 1px solid rgba(255, 205, 78, 0.8);
+  border: 1px solid rgba(246, 200, 95, 0.56);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(255, 241, 181, 0.46));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 8px 18px rgba(81, 106, 132, 0.16);
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.16), transparent 38%),
+    linear-gradient(180deg, rgba(33, 66, 84, 0.92), rgba(8, 26, 39, 0.94));
+  box-shadow: inset 0 1px 0 rgba(128, 235, 255, 0.16), 0 8px 18px rgba(0, 0, 0, 0.22);
 }
 
 .tp-logo-icon {
   width: 32px;
   height: 32px;
-  color: #6a4200;
-  background: linear-gradient(145deg, #fff6bd 0%, #ffd35b 50%, #ffb23a 100%);
+  color: #2b1b00;
+  background: linear-gradient(145deg, #fff0a6 0%, #f6c85f 50%, #d68c29 100%);
   border-radius: 9px;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.75), 0 0 22px rgba(255, 201, 79, 0.44);
+  box-shadow: 0 0 0 1px rgba(255, 231, 150, 0.58), 0 0 22px rgba(246, 200, 95, 0.28);
 }
 
 .tp-logo-text {
   color: var(--tp-ink);
   font-size: 15px;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.86);
+  text-shadow: 0 1px 8px rgba(84, 206, 255, 0.24);
 }
 
 .tp-timer-section {
@@ -2668,16 +2677,17 @@ body:has(.tp-game-wrapper) .col-12 {
   padding: 6px 8px;
   border: 1px solid var(--tp-glass-border);
   border-radius: 16px;
+  background: linear-gradient(180deg, rgba(15, 42, 56, 0.82), rgba(7, 24, 38, 0.72));
 }
 
 .tp-phase-badge {
   min-width: 150px;
   padding: 6px 12px;
-  color: #ffffff;
+  color: #05281f;
   text-align: center;
-  background: linear-gradient(180deg, rgba(46, 214, 177, 0.9), rgba(19, 161, 141, 0.92));
-  border: 1px solid rgba(255, 255, 255, 0.74);
-  box-shadow: 0 10px 20px rgba(25, 191, 167, 0.18);
+  background: linear-gradient(180deg, #8cffd7, #25d5ad);
+  border: 1px solid rgba(132, 255, 219, 0.64);
+  box-shadow: 0 10px 20px rgba(35, 215, 183, 0.14);
 }
 
 .tp-phase-badge.phase-shuffling {
@@ -2698,14 +2708,14 @@ body:has(.tp-game-wrapper) .col-12 {
   min-width: 76px;
   padding: 5px 11px;
   color: var(--tp-ink);
-  border-color: rgba(255, 205, 78, 0.86);
-  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(246, 200, 95, 0.72);
+  background: rgba(7, 22, 34, 0.72);
 }
 
 .tp-timer-num {
-  color: #835400;
+  color: var(--tp-sun);
   font-size: 20px;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  text-shadow: 0 0 12px rgba(246, 200, 95, 0.28);
 }
 
 .tp-dealer-section {
@@ -2722,16 +2732,16 @@ body:has(.tp-game-wrapper) .col-12 {
   width: min(68%, 280px);
   height: 52px;
   transform: translateX(-50%);
-  border: 1px solid rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(102, 220, 255, 0.22);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.28);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  background: linear-gradient(180deg, rgba(18, 52, 67, 0.56), rgba(6, 23, 35, 0.46));
+  box-shadow: inset 0 1px 0 rgba(128, 235, 255, 0.1);
 }
 
 .tp-dealer-avatar {
   width: 82px;
   height: 102px;
-  filter: drop-shadow(0 12px 16px rgba(74, 92, 120, 0.22));
+  filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.35));
 }
 
 .tp-dealer-avatar-body {
@@ -2742,17 +2752,17 @@ body:has(.tp-game-wrapper) .col-12 {
 .dealer-glow-ring {
   width: 100px;
   height: 100px;
-  border-color: rgba(255, 201, 79, 0.44);
-  box-shadow: 0 0 28px rgba(255, 201, 79, 0.22), inset 0 0 18px rgba(56, 199, 255, 0.16);
+  border-color: rgba(246, 200, 95, 0.38);
+  box-shadow: 0 0 28px rgba(246, 200, 95, 0.16), inset 0 0 18px rgba(84, 206, 255, 0.12);
 }
 
 .tp-dealer-name {
   bottom: -1px;
   color: var(--tp-ink);
   font-size: 9px;
-  border-color: rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: 0 8px 18px rgba(74, 92, 120, 0.14);
+  border-color: rgba(102, 220, 255, 0.28);
+  background: rgba(8, 25, 38, 0.82);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
 }
 
 .tp-dealer-status,
@@ -2794,33 +2804,36 @@ body:has(.tp-game-wrapper) .col-12 {
 
 /* ===== PREMIUM GAMING TABLE COLORS ===== */
 .tp-col[data-choose="silver"] {
-  border: 2px solid rgba(160, 185, 210, 0.95);
+  border: 2px solid rgba(154, 190, 222, 0.62);
   background:
-    linear-gradient(170deg, #dce8f2 0%, #b8cfe0 35%, #d5e3ef 60%, #c0d4e4 100%);
+    radial-gradient(circle at 50% 10%, rgba(232, 245, 255, 0.2), transparent 34%),
+    linear-gradient(170deg, #34495c 0%, #1d3448 38%, #223c52 66%, #172635 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 1),
-    inset 0 -3px 8px rgba(100, 140, 180, 0.12),
-    0 6px 18px rgba(80, 120, 160, 0.2);
+    inset 0 1px 0 rgba(230, 246, 255, 0.28),
+    inset 0 -3px 8px rgba(6, 17, 29, 0.28),
+    0 6px 18px rgba(0, 0, 0, 0.24);
 }
 
 .tp-col[data-choose="gold"] {
-  border: 2px solid rgba(240, 190, 50, 0.95);
+  border: 2px solid rgba(246, 200, 95, 0.72);
   background:
-    linear-gradient(170deg, #fff5d4 0%, #ffd96a 35%, #ffebb0 60%, #ffc940 100%);
+    radial-gradient(circle at 50% 10%, rgba(255, 230, 138, 0.28), transparent 34%),
+    linear-gradient(170deg, #5d4214 0%, #7b5317 36%, #4c3515 66%, #251808 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 1),
-    inset 0 -3px 8px rgba(200, 150, 20, 0.12),
-    0 6px 18px rgba(200, 160, 30, 0.25);
+    inset 0 1px 0 rgba(255, 230, 150, 0.28),
+    inset 0 -3px 8px rgba(36, 22, 4, 0.32),
+    0 6px 18px rgba(0, 0, 0, 0.26);
 }
 
 .tp-col[data-choose="diamond"] {
-  border: 2px solid rgba(50, 190, 240, 0.95);
+  border: 2px solid rgba(84, 206, 255, 0.72);
   background:
-    linear-gradient(170deg, #d4f4ff 0%, #72d8ff 35%, #b8ecff 60%, #5ad0ff 100%);
+    radial-gradient(circle at 50% 10%, rgba(118, 232, 255, 0.24), transparent 34%),
+    linear-gradient(170deg, #0f5062 0%, #0a7483 36%, #0b4f61 66%, #092636 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 1),
-    inset 0 -3px 8px rgba(30, 140, 200, 0.12),
-    0 6px 18px rgba(40, 160, 220, 0.25);
+    inset 0 1px 0 rgba(166, 244, 255, 0.25),
+    inset 0 -3px 8px rgba(4, 28, 38, 0.3),
+    0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
 .tp-col.round-winner {
@@ -2832,8 +2845,8 @@ body:has(.tp-game-wrapper) .col-12 {
   width: clamp(36px, 38%, 48px);
   height: clamp(36px, 38%, 48px);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 12px rgba(66, 91, 120, 0.18);
+  background: rgba(3, 14, 24, 0.42);
+  box-shadow: inset 0 1px 0 rgba(128, 235, 255, 0.18), 0 4px 12px rgba(0, 0, 0, 0.28);
 }
 
 .tp-char-label {
@@ -2841,29 +2854,29 @@ body:has(.tp-game-wrapper) .col-12 {
   height: 18px;
   color: #3b2a00;
   font-size: 9px;
-  background: linear-gradient(180deg, #ffed8a, #ffc94f);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: linear-gradient(180deg, #ffe88c, #f6c85f);
+  border: 1px solid rgba(255, 226, 130, 0.72);
 }
 
 .tp-side-name,
 .tp-hist-label {
   color: var(--tp-ink);
   font-size: 8px;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.38);
   letter-spacing: 0.5px;
 }
 
 /* Per-side name colors */
 .tp-col[data-choose="silver"] .tp-side-name {
-  color: #3d5570;
+  color: #dceeff;
   font-weight: 900;
 }
 .tp-col[data-choose="gold"] .tp-side-name {
-  color: #7a5800;
+  color: #ffe08a;
   font-weight: 900;
 }
 .tp-col[data-choose="diamond"] .tp-side-name {
-  color: #0b6080;
+  color: #a6f4ff;
   font-weight: 900;
 }
 
@@ -2888,9 +2901,10 @@ body:has(.tp-game-wrapper) .col-12 {
   min-width: 0;
   min-height: 18px;
   margin: 1px 0;
-  color: var(--tp-ink-soft);
+  color: #eaf7ff;
   border-radius: 999px;
   font-size: 7px;
+  background: rgba(4, 17, 27, 0.58);
 }
 
 .tp-bet-slot {
@@ -2902,13 +2916,13 @@ body:has(.tp-game-wrapper) .col-12 {
 }
 
 .silver-bg {
-  background: rgba(160, 190, 220, 0.25);
+  background: rgba(125, 165, 205, 0.18);
 }
 .gold-bg {
-  background: rgba(255, 210, 80, 0.2);
+  background: rgba(246, 200, 95, 0.18);
 }
 .diamond-bg {
-  background: rgba(80, 200, 250, 0.2);
+  background: rgba(84, 206, 255, 0.18);
 }
 
 .tp-bet-info {
@@ -2920,8 +2934,8 @@ body:has(.tp-game-wrapper) .col-12 {
   font-size: 7px;
   line-height: 1.1;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: rgba(3, 15, 25, 0.72);
+  box-shadow: inset 0 1px 0 rgba(128, 235, 255, 0.12);
   word-break: break-all;
   overflow-wrap: break-word;
   overflow: hidden;
@@ -2930,7 +2944,7 @@ body:has(.tp-game-wrapper) .col-12 {
 .gold-text,
 .tp-bal-val,
 .tp-win-val {
-  color: #008c76 !important;
+  color: var(--tp-mint) !important;
   text-shadow: none !important;
 }
 
@@ -2969,8 +2983,8 @@ body:has(.tp-game-wrapper) .col-12 {
   height: 27px;
   flex: 0 0 27px;
   color: var(--tp-sky);
-  border-color: rgba(56, 199, 255, 0.54);
-  background: rgba(255, 255, 255, 0.56);
+  border-color: rgba(84, 206, 255, 0.44);
+  background: rgba(7, 25, 39, 0.68);
 }
 
 .tp-footer {
@@ -2998,7 +3012,7 @@ body:has(.tp-game-wrapper) .col-12 {
   justify-self: center;
   font-size: 11px;
   border-width: 2px;
-  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.18), 0 9px 16px rgba(63, 92, 122, 0.2);
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.12), 0 9px 16px rgba(0, 0, 0, 0.26);
 }
 
 .chip-color-0 { background: radial-gradient(circle at 35% 35%, #3ee080, #1a9d4a); color: #fff; }
@@ -3009,7 +3023,7 @@ body:has(.tp-game-wrapper) .col-12 {
 
 .tp-chip-btn.selected {
   transform: translateY(-5px) scale(1.08);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 16px rgba(255, 220, 80, 0.4);
+  box-shadow: 0 0 0 3px rgba(246, 200, 95, 0.78), 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(246, 200, 95, 0.32);
 }
 
 .tp-bottom-actions {
@@ -3042,7 +3056,7 @@ body:has(.tp-game-wrapper) .col-12 {
 }
 
 .tp-win-label {
-  color: #9c7a00;
+  color: var(--tp-sun);
   font-size: 8px;
 }
 
@@ -3053,18 +3067,18 @@ body:has(.tp-game-wrapper) .col-12 {
 .tp-btn-repeat,
 .tp-btn-topup {
   padding: 0 10px;
-  color: #3c2700;
+  color: #2c1b00;
   font-size: 13px;
   line-height: 1;
   white-space: nowrap;
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  background: linear-gradient(180deg, #ffe589 0%, #ffc241 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68), 0 10px 18px rgba(255, 187, 55, 0.2);
+  border: 1px solid rgba(246, 200, 95, 0.62);
+  background: linear-gradient(180deg, #ffe188 0%, #d99b35 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 235, 165, 0.48), 0 10px 18px rgba(0, 0, 0, 0.22);
 }
 
 .tp-btn-topup {
-  color: #06382f;
-  background: linear-gradient(180deg, #78f5d5 0%, #20c8aa 100%);
+  color: #03281f;
+  background: linear-gradient(180deg, #7effd8 0%, #21c4a3 100%);
 }
 
 .tp-round-summary,
@@ -3303,5 +3317,254 @@ body:has(.tp-game-wrapper) .col-12 {
     width: 30px;
     height: 30px;
     font-size: 9px;
+  }
+}
+
+/* Browser game route: match WebView compact behavior in 40% split height. */
+@media (max-height: 430px) {
+  body.tp-game-page .tp-game-wrapper {
+    grid-template-rows: auto auto auto minmax(88px, 1fr) auto auto !important;
+  }
+
+  body.tp-game-page .tp-header {
+    min-height: 30px !important;
+    margin: 2px 4px 0 !important;
+    padding: 2px 5px !important;
+    border-radius: 10px !important;
+  }
+
+  body.tp-game-page .tp-btn-icon {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 10px !important;
+  }
+
+  body.tp-game-page .tp-logo-icon {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 15px !important;
+  }
+
+  body.tp-game-page .tp-logo-text {
+    font-size: 11px !important;
+    line-height: .9 !important;
+  }
+
+  body.tp-game-page .tp-header-right {
+    gap: 4px !important;
+  }
+
+  body.tp-game-page .tp-timer-section {
+    min-height: 28px !important;
+    margin: 2px 4px 1px !important;
+    padding: 2px 5px !important;
+    gap: 6px !important;
+    border-radius: 10px !important;
+  }
+
+  body.tp-game-page .tp-phase-badge {
+    min-width: 106px !important;
+    padding: 3px 7px !important;
+    font-size: 7px !important;
+  }
+
+  body.tp-game-page .tp-timer-p {
+    min-width: 48px !important;
+    padding: 2px 6px !important;
+    gap: 4px !important;
+  }
+
+  body.tp-game-page .tp-timer-num {
+    font-size: 14px !important;
+  }
+
+  body.tp-game-page .tp-dealer-section {
+    display: flex !important;
+    min-height: 30px !important;
+    height: 30px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+
+  body.tp-game-page .tp-dealer-section::before {
+    display: block !important;
+    width: 112px !important;
+    height: 18px !important;
+    bottom: 5px !important;
+    border-radius: 9px !important;
+  }
+
+  body.tp-game-page .tp-dealer-avatar {
+    width: 28px !important;
+    height: 30px !important;
+  }
+
+  body.tp-game-page .tp-dealer-avatar-body {
+    width: 24px !important;
+    height: 30px !important;
+  }
+
+  body.tp-game-page .dealer-glow-ring,
+  body.tp-game-page .tp-dealer-name,
+  body.tp-game-page .tp-dealer-status,
+  body.tp-game-page .tp-shuffle-deck {
+    display: none !important;
+  }
+
+  body.tp-game-page .tp-play-area {
+    min-height: 88px !important;
+    padding: 1px 3px 0 !important;
+  }
+
+  body.tp-game-page .tp-columns {
+    height: 100% !important;
+    gap: 2px !important;
+  }
+
+  body.tp-game-page .tp-col {
+    height: 100% !important;
+    gap: 1px !important;
+    padding: 2px 1px !important;
+    border-radius: 8px !important;
+    border-width: 1px !important;
+  }
+
+  body.tp-game-page .tp-char-frame {
+    width: clamp(20px, 30%, 28px) !important;
+    height: clamp(20px, 30%, 28px) !important;
+  }
+
+  body.tp-game-page .tp-char-label {
+    width: 12px !important;
+    height: 12px !important;
+    font-size: 6px !important;
+  }
+
+  body.tp-game-page .tp-side-name {
+    font-size: 6px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+  }
+
+  body.tp-game-page .tp-cards-row {
+    min-height: 18px !important;
+    gap: 1px !important;
+    margin: 0 !important;
+  }
+
+  body.tp-game-page .tp-card-container,
+  body.tp-game-page .tp-card-img {
+    width: clamp(10px, 28%, 14px) !important;
+  }
+
+  body.tp-game-page .tp-hand-rank {
+    min-height: 11px !important;
+    margin: 0 !important;
+    padding: 0 3px !important;
+    font-size: 5px !important;
+    line-height: 11px !important;
+  }
+
+  body.tp-game-page .tp-bet-slot {
+    min-height: 28px !important;
+    border-radius: 6px !important;
+  }
+
+  body.tp-game-page .tp-chips-pile {
+    inset: 1px 1px 17px 1px !important;
+  }
+
+  body.tp-game-page .tp-bet-info {
+    left: 1px !important;
+    right: 1px !important;
+    bottom: 1px !important;
+    padding: 0 1px !important;
+    font-size: 5px !important;
+    line-height: 1.05 !important;
+    border-radius: 4px !important;
+  }
+
+  body.tp-game-page .tp-history-bar {
+    min-height: 20px !important;
+    margin: 1px 4px !important;
+    padding: 2px 4px !important;
+    gap: 3px !important;
+    border-radius: 8px !important;
+  }
+
+  body.tp-game-page .tp-hist-label {
+    font-size: 7px !important;
+  }
+
+  body.tp-game-page .tp-hist-items {
+    gap: 2px !important;
+  }
+
+  body.tp-game-page .tp-hist-dot {
+    width: 10px !important;
+    height: 14px !important;
+    flex-basis: 10px !important;
+    font-size: 7px !important;
+  }
+
+  body.tp-game-page .tp-footer {
+    margin: 0 4px !important;
+    padding: 0 4px env(safe-area-inset-bottom) !important;
+    border-radius: 9px 9px 0 0 !important;
+  }
+
+  body.tp-game-page .tp-chips-row {
+    gap: 2px !important;
+    margin-bottom: 1px !important;
+  }
+
+  body.tp-game-page .tp-chip-btn {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 8px !important;
+    border-width: 1px !important;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18), 0 4px 8px rgba(63, 92, 122, 0.18) !important;
+  }
+
+  body.tp-game-page .tp-chip-btn.selected {
+    transform: translateY(-1px) scale(1.04) !important;
+  }
+
+  body.tp-game-page .tp-bottom-actions {
+    grid-template-columns: minmax(0, 1fr) 42px 58px !important;
+    gap: 3px !important;
+  }
+
+  body.tp-game-page .tp-bal-p,
+  body.tp-game-page .tp-win-p,
+  body.tp-game-page .tp-btn-repeat,
+  body.tp-game-page .tp-btn-topup {
+    height: 18px !important;
+    border-radius: 8px !important;
+  }
+
+  body.tp-game-page .tp-bal-p {
+    padding: 0 5px !important;
+  }
+
+  body.tp-game-page .tp-bal-val {
+    font-size: 10px !important;
+  }
+
+  body.tp-game-page .tp-win-label {
+    font-size: 6px !important;
+  }
+
+  body.tp-game-page .tp-win-val {
+    font-size: 12px !important;
+  }
+
+  body.tp-game-page .tp-btn-repeat,
+  body.tp-game-page .tp-btn-topup {
+    padding: 0 4px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
   }
 }

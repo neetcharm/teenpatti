@@ -22,6 +22,9 @@ let dealingStartedAt = 0;       // Timestamp when dealing began (for watchdog)
 let dealingForRound = null;     // Which round the current animation is for
 let animationTimers = [];       // Track all setTimeout IDs for abort
 let countdownTargetTime = 0;
+let tpAutoLayoutStarted = false;
+let tpAutoLayoutTimer = null;
+let tpAutoLayoutObserver = null;
 
 let lastTotals = { silver: 0, gold: 0, diamond: 0 };
 let latestMyBets = { silver: 0, gold: 0, diamond: 0 };
@@ -141,6 +144,7 @@ function bootTeenPattiGame() {
         selectedChip = initialChip;
     }
 
+    initTeenPattiAutoLayout();
     setCountdownRemaining(countdownSeconds);
     syncGlobalState();
     syncInterval = setInterval(syncGlobalState, 1000);
@@ -230,6 +234,140 @@ function bootTeenPattiGame() {
     });
 }
 
+function getTeenPattiViewportSize() {
+    var viewport = window.visualViewport || null;
+    var width = Math.floor((viewport && viewport.width) || window.innerWidth || document.documentElement.clientWidth || 0);
+    var height = Math.floor((viewport && viewport.height) || window.innerHeight || document.documentElement.clientHeight || 0);
+
+    return {
+        width: Math.max(1, width),
+        height: Math.max(1, height)
+    };
+}
+
+function scheduleTeenPattiAutoLayout(delay) {
+    window.clearTimeout(tpAutoLayoutTimer);
+    tpAutoLayoutTimer = window.setTimeout(applyTeenPattiAutoLayout, typeof delay === "number" ? delay : 60);
+}
+
+function initTeenPattiAutoLayout() {
+    if (tpAutoLayoutStarted) {
+        scheduleTeenPattiAutoLayout(0);
+        return;
+    }
+
+    tpAutoLayoutStarted = true;
+
+    var refresh = function () {
+        scheduleTeenPattiAutoLayout(35);
+    };
+
+    window.addEventListener("resize", refresh, { passive: true });
+    window.addEventListener("orientationchange", refresh, { passive: true });
+    window.addEventListener("load", refresh, { passive: true });
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", refresh, { passive: true });
+        window.visualViewport.addEventListener("scroll", refresh, { passive: true });
+    }
+
+    if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === "function") {
+        document.fonts.ready.then(refresh);
+    }
+
+    var wrapper = document.getElementById("tpGameWrapper") || document.querySelector(".tp-game-wrapper");
+    if (wrapper && window.MutationObserver) {
+        tpAutoLayoutObserver = new MutationObserver(function () {
+            scheduleTeenPattiAutoLayout(80);
+        });
+        tpAutoLayoutObserver.observe(wrapper, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: ["class", "src"]
+        });
+    }
+
+    scheduleTeenPattiAutoLayout(0);
+    window.setTimeout(refresh, 180);
+    window.setTimeout(refresh, 650);
+}
+
+function applyTeenPattiAutoLayout() {
+    var wrapper = document.getElementById("tpGameWrapper") || document.querySelector(".tp-game-wrapper");
+    var size = getTeenPattiViewportSize();
+    var doc = document.documentElement;
+
+    doc.style.setProperty("--tp-app-height", size.height + "px");
+    doc.style.setProperty("--tp-app-width", size.width + "px");
+
+    if (document.body) {
+        document.body.classList.toggle("tp-compact-viewport", size.height <= 430 || size.width <= 340);
+        document.body.classList.toggle("tp-ultra-compact-viewport", size.height <= 340 || size.width <= 300);
+    }
+
+    if (!wrapper) {
+        return;
+    }
+
+    // WebView uses a stage shell; keep that precise stage-fit path as source of truth.
+    if (wrapper.closest(".tp-wv-root") && typeof window.tpRefreshWebViewLayout === "function") {
+        window.tpRefreshWebViewLayout();
+        return;
+    }
+
+    wrapper.style.height = size.height + "px";
+    wrapper.style.maxHeight = size.height + "px";
+    wrapper.style.minHeight = "0";
+    wrapper.style.transform = "scale(1)";
+    wrapper.style.transformOrigin = "top center";
+
+    var wrapperRect = wrapper.getBoundingClientRect();
+    var selectors = [
+        ".tp-header",
+        ".tp-timer-section",
+        ".tp-dealer-section",
+        ".tp-play-area",
+        ".tp-history-bar",
+        ".tp-footer",
+        ".tp-chips-row",
+        ".tp-bottom-actions"
+    ];
+    var maxBottom = wrapperRect.top + Math.max(wrapper.scrollHeight, wrapper.offsetHeight, wrapper.clientHeight);
+    var maxRight = wrapperRect.left + Math.max(wrapper.scrollWidth, wrapper.offsetWidth, wrapper.clientWidth);
+
+    selectors.forEach(function (selector) {
+        var element = wrapper.querySelector(selector);
+        if (!element) {
+            return;
+        }
+        var style = window.getComputedStyle(element);
+        if (style.display === "none" || style.visibility === "hidden") {
+            return;
+        }
+        var rect = element.getBoundingClientRect();
+        maxBottom = Math.max(maxBottom, rect.bottom);
+        maxRight = Math.max(maxRight, rect.right);
+    });
+
+    var visualHeight = Math.max(1, maxBottom - wrapperRect.top);
+    var visualWidth = Math.max(1, maxRight - wrapperRect.left);
+    var heightScale = visualHeight > size.height ? size.height / visualHeight : 1;
+    var widthScale = visualWidth > size.width ? size.width / visualWidth : 1;
+    var scale = Math.min(1, heightScale, widthScale);
+
+    if (scale < 0.998) {
+        scale = Math.max(0.72, Math.floor(scale * 1000) / 1000);
+        wrapper.style.transform = "scale(" + scale + ")";
+        if (document.body) {
+            document.body.classList.add("tp-autofit-active");
+        }
+    } else if (document.body) {
+        document.body.classList.remove("tp-autofit-active");
+    }
+}
+
 bootTeenPattiGame();
 
 /* ===== SYNC & UI UPDATE ===== */
@@ -284,6 +422,8 @@ function updateUI(data) {
             }
         }
     }
+
+    scheduleTeenPattiAutoLayout(40);
 }
 
 
@@ -719,7 +859,16 @@ function createCardSrc(card) {
     if (!card || card === "BACK") return cardBackImage;
     var code = normalizeCardCode(card);
     if (!code) return cardBackImage;
-    return imagePath + code + ".png";
+    return cardAssetUrl(code + ".png");
+}
+
+function cardAssetUrl(filename) {
+    var base = (typeof imagePath === "string" ? imagePath : "");
+    if (!base) return filename;
+    if (base.charAt(base.length - 1) !== "/") {
+        base += "/";
+    }
+    return base + filename;
 }
 
 /* ============================================================
@@ -916,9 +1065,9 @@ function createCardImg(card, onFallback) {
     }
 
     var candidates = [
-        imagePath + code + ".png",
-        imagePath + code.replace("-", "") + ".png",
-        imagePath + code.replace("-", "_") + ".png"
+        cardAssetUrl(code + ".png"),
+        cardAssetUrl(code.replace("-", "") + ".png"),
+        cardAssetUrl(code.replace("-", "_") + ".png")
     ];
     var idx = 0;
 
