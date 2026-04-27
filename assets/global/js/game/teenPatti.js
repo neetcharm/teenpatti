@@ -216,7 +216,7 @@ function bootTeenPattiGame() {
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden) {
             if (typeof refreshTenantWalletBalance === "function") {
-                refreshTenantWalletBalance();
+                refreshTenantWalletBalance({ minInterval: 5000 });
             }
             syncGlobalState();
         }
@@ -224,7 +224,7 @@ function bootTeenPattiGame() {
 
     $(window).on("focus", function () {
         if (typeof refreshTenantWalletBalance === "function") {
-            refreshTenantWalletBalance();
+            refreshTenantWalletBalance({ minInterval: 5000 });
         }
     });
     });
@@ -973,7 +973,7 @@ function showWinnerModal(result) {
 
         if (typeof refreshTenantWalletBalance === "function") {
             setTimeout(function () {
-                refreshTenantWalletBalance();
+                refreshTenantWalletBalance({ force: true, minInterval: 1500 });
             }, 350);
         }
     } else if (hasOwnBet) {

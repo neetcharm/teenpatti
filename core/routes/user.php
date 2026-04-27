@@ -127,7 +127,7 @@ Route::middleware('auth')->name('user.')->group(function () {
                 ->name('transfer.validate.username');
 
             Route::controller('PlayController')->prefix('play')->name('play.')->group(function () {
-                Route::get('tenant/wallet/refresh', 'tenantWalletRefresh')->middleware('throttle:60,1')->name('tenant.wallet.refresh');
+                Route::get('tenant/wallet/refresh', 'tenantWalletRefresh')->middleware('throttle:120,1')->name('tenant.wallet.refresh');
                 Route::get('teen-patti/global/sync/{demo?}', 'teenPattiGlobalSync')->middleware('throttle:180,1')->name('teen_patti.global.sync');
                 Route::get('teen-patti/history/{demo?}', 'teenPattiHistory')->middleware('throttle:60,1')->name('teen_patti.history');
                 Route::get('{alias}/{demo?}', 'playGame')->name('game');

@@ -656,6 +656,9 @@ var tpChipValues     = @json(array_values($teenPattiChipValues ?? \App\Models\Te
 var tpWvLoaderHidden = false;
 var walletRefreshInFlight = false;
 var walletRefreshBurst = null;
+var walletRefreshLastAt = 0;
+var walletRefreshBurstLastAt = 0;
+var walletRefreshRetryAfter = 0;
 function tpWvHideLoader() {
     if (!tpWvLoaderHidden) {
         tpWvLoaderHidden = true;
@@ -760,18 +763,25 @@ function startWalletRefreshBurst() {
         return;
     }
 
+    var now = Date.now();
+    if (walletRefreshBurst || (walletRefreshBurstLastAt > 0 && now - walletRefreshBurstLastAt < 15000)) {
+        refreshTenantWalletBalance({ minInterval: 5000 });
+        return;
+    }
+
+    walletRefreshBurstLastAt = now;
     stopWalletRefreshBurst();
-    refreshTenantWalletBalance();
+    refreshTenantWalletBalance({ force: true, minInterval: 0 });
 
     var attempts = 0;
     walletRefreshBurst = window.setInterval(function () {
         attempts += 1;
-        refreshTenantWalletBalance();
+        refreshTenantWalletBalance({ force: true, minInterval: 4500 });
 
-        if (attempts >= 8) {
+        if (attempts >= 4) {
             stopWalletRefreshBurst();
         }
-    }, 2500);
+    }, 5000);
 }
 
 // Android WebView bridge: allow app to close the WebView
@@ -807,15 +817,39 @@ function openWalletTopup() {
     window.location.href = targetUrl;
 }
 
-function refreshTenantWalletBalance() {
+function refreshTenantWalletBalance(options) {
     if (!walletRefreshUrl || walletRefreshInFlight) {
         return;
     }
 
+    var opts = options || {};
+    var now = Date.now();
+    var minInterval = typeof opts.minInterval === 'number' ? opts.minInterval : 5000;
+
+    if (now < walletRefreshRetryAfter) {
+        return;
+    }
+
+    if (walletRefreshLastAt > 0 && now - walletRefreshLastAt < minInterval) {
+        return;
+    }
+
     walletRefreshInFlight = true;
+    walletRefreshLastAt = now;
+
+    var refreshTarget = walletRefreshUrl;
+    if (opts.force) {
+        try {
+            var targetUrl = new URL(walletRefreshUrl, window.location.origin);
+            targetUrl.searchParams.set('force', '1');
+            refreshTarget = targetUrl.toString();
+        } catch (error) {
+            refreshTarget = walletRefreshUrl + (walletRefreshUrl.indexOf('?') === -1 ? '?' : '&') + 'force=1';
+        }
+    }
 
     $.ajax({
-        url: walletRefreshUrl,
+        url: refreshTarget,
         type: 'GET',
         cache: false,
         timeout: 5000,
@@ -826,6 +860,13 @@ function refreshTenantWalletBalance() {
                 } else {
                     $('.bal').text(data.balance);
                 }
+            }
+        },
+        error: function (xhr) {
+            if (xhr && xhr.status === 429) {
+                var retryAfter = parseInt(xhr.getResponseHeader('Retry-After') || '30', 10);
+                walletRefreshRetryAfter = Date.now() + (Math.max(10, retryAfter) * 1000);
+                stopWalletRefreshBurst();
             }
         },
         complete: function () {

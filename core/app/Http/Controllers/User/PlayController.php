@@ -131,7 +131,7 @@ class PlayController extends Controller {
 
         $this->touchTenantSessionActivity($tenantSession);
 
-        $balance = $this->resolveTenantWalletBalance($tenantSession, forceRefresh: true);
+        $balance = $this->resolveTenantWalletBalance($tenantSession, forceRefresh: $request->boolean('force'));
 
         return response()->json([
             'success' => true,
