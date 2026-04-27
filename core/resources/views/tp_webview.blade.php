@@ -43,8 +43,8 @@
             display: flex;
             align-items: stretch;
             justify-content: center;
-            min-height: 100svh;
-            height: 100svh;
+            min-height: var(--tp-wv-height, 100svh);
+            height: var(--tp-wv-height, 100svh);
             padding: 0;
             overflow: hidden;
         }
@@ -52,8 +52,8 @@
         .tp-wv-root .tp-game-wrapper {
             width: 100%;
             max-width: 100%;
-            min-height: 100svh;
-            height: 100svh;
+            min-height: var(--tp-wv-height, 100svh);
+            height: var(--tp-wv-height, 100svh);
             position: relative;
             overflow: hidden;
             display: flex;
@@ -125,7 +125,7 @@
         .tp-wv-root .tp-game-wrapper {
             width: 100%;
             max-width: 100%;
-            height: 100svh;
+            height: var(--tp-wv-height, 100svh);
             min-height: 0;
         }
 
@@ -136,24 +136,253 @@
             grid-template-rows: auto auto minmax(88px, .44fr) minmax(212px, 1fr) auto auto;
         }
 
-        body.tp-split-view .tp-dealer-section {
-            display: block !important;
-            min-height: 0 !important;
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
+        body.tp-split-view .tp-stage {
+            grid-template-rows: auto auto auto minmax(88px, 1fr) auto auto;
         }
 
-        body.tp-split-view .tp-dealer-section::before,
-        body.tp-split-view .tp-dealer-section > * {
+        body.tp-split-view .tp-header {
+            min-height: 30px !important;
+            margin: 2px 4px 0 !important;
+            padding: 2px 5px !important;
+            border-radius: 10px !important;
+        }
+
+        body.tp-split-view .tp-btn-icon {
+            width: 24px !important;
+            height: 24px !important;
+            font-size: 10px !important;
+        }
+
+        body.tp-split-view .tp-logo-icon {
+            width: 24px !important;
+            height: 24px !important;
+            font-size: 15px !important;
+        }
+
+        body.tp-split-view .tp-logo-text {
+            font-size: 11px !important;
+            line-height: .9 !important;
+        }
+
+        body.tp-split-view .tp-header-right {
+            gap: 4px !important;
+        }
+
+        body.tp-split-view .tp-timer-section {
+            min-height: 28px !important;
+            margin: 2px 4px 1px !important;
+            padding: 2px 5px !important;
+            gap: 6px !important;
+            border-radius: 10px !important;
+        }
+
+        body.tp-split-view .tp-phase-badge {
+            min-width: 106px !important;
+            padding: 3px 7px !important;
+            font-size: 7px !important;
+        }
+
+        body.tp-split-view .tp-timer-p {
+            min-width: 48px !important;
+            padding: 2px 6px !important;
+            gap: 4px !important;
+        }
+
+        body.tp-split-view .tp-timer-num {
+            font-size: 14px !important;
+        }
+
+        body.tp-split-view .tp-dealer-section {
+            display: flex !important;
+            min-height: 30px !important;
+            height: 30px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            align-items: center !important;
+            overflow: hidden !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        body.tp-split-view .tp-dealer-section::before {
+            display: block !important;
+            width: 112px !important;
+            height: 18px !important;
+            bottom: 5px !important;
+            border-radius: 9px !important;
+        }
+
+        body.tp-split-view .tp-dealer-avatar {
+            display: flex !important;
+            width: 28px !important;
+            height: 30px !important;
+        }
+
+        body.tp-split-view .tp-dealer-avatar-body {
+            width: 24px !important;
+            height: 30px !important;
+        }
+
+        body.tp-split-view .dealer-glow-ring,
+        body.tp-split-view .tp-dealer-name,
+        body.tp-split-view .tp-dealer-status,
+        body.tp-split-view .tp-shuffle-deck {
             display: none !important;
         }
 
-        body.tp-split-view .tp-stage {
-            grid-template-rows: auto auto minmax(0, 0fr) minmax(212px, 1fr) auto auto;
+        body.tp-split-view .tp-play-area {
+            min-height: 88px !important;
+            padding: 1px 3px 0 !important;
+        }
+
+        body.tp-split-view .tp-columns {
+            height: 100% !important;
+            gap: 2px !important;
+        }
+
+        body.tp-split-view .tp-col {
+            height: 100% !important;
+            gap: 1px !important;
+            padding: 2px 1px !important;
+            border-radius: 8px !important;
+            border-width: 1px !important;
+        }
+
+        body.tp-split-view .tp-char-frame {
+            width: clamp(20px, 30%, 28px) !important;
+            height: clamp(20px, 30%, 28px) !important;
+        }
+
+        body.tp-split-view .tp-char-label {
+            width: 12px !important;
+            height: 12px !important;
+            font-size: 6px !important;
+        }
+
+        body.tp-split-view .tp-side-name {
+            font-size: 6px !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+        }
+
+        body.tp-split-view .tp-cards-row {
+            min-height: 18px !important;
+            gap: 1px !important;
+            margin: 0 !important;
+        }
+
+        body.tp-split-view .tp-card-container,
+        body.tp-split-view .tp-card-img {
+            width: clamp(10px, 28%, 14px) !important;
+        }
+
+        body.tp-split-view .tp-hand-rank {
+            min-height: 11px !important;
+            margin: 0 !important;
+            padding: 0 3px !important;
+            font-size: 5px !important;
+            line-height: 11px !important;
+        }
+
+        body.tp-split-view .tp-bet-slot {
+            min-height: 28px !important;
+            border-radius: 6px !important;
+        }
+
+        body.tp-split-view .tp-chips-pile {
+            inset: 1px 1px 17px 1px !important;
+        }
+
+        body.tp-split-view .tp-bet-info {
+            left: 1px !important;
+            right: 1px !important;
+            bottom: 1px !important;
+            padding: 0 1px !important;
+            font-size: 5px !important;
+            line-height: 1.05 !important;
+            border-radius: 4px !important;
+        }
+
+        body.tp-split-view .tp-history-bar {
+            min-height: 20px !important;
+            margin: 1px 4px !important;
+            padding: 2px 4px !important;
+            gap: 3px !important;
+            border-radius: 8px !important;
+        }
+
+        body.tp-split-view .tp-hist-label {
+            font-size: 7px !important;
+        }
+
+        body.tp-split-view .tp-hist-items {
+            gap: 2px !important;
+        }
+
+        body.tp-split-view .tp-hist-dot {
+            width: 10px !important;
+            height: 14px !important;
+            flex-basis: 10px !important;
+            font-size: 7px !important;
+        }
+
+        body.tp-split-view .tp-footer {
+            margin: 0 4px 2px !important;
+            padding: 2px 4px calc(2px + env(safe-area-inset-bottom)) !important;
+            border-radius: 9px 9px 0 0 !important;
+        }
+
+        body.tp-split-view .tp-chips-row {
+            gap: 2px !important;
+            margin-bottom: 2px !important;
+        }
+
+        body.tp-split-view .tp-chip-btn {
+            width: 27px !important;
+            height: 27px !important;
+            font-size: 8px !important;
+            border-width: 1px !important;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18), 0 4px 8px rgba(63, 92, 122, 0.18) !important;
+        }
+
+        body.tp-split-view .tp-chip-btn.selected {
+            transform: translateY(-1px) scale(1.04) !important;
+        }
+
+        body.tp-split-view .tp-bottom-actions {
+            grid-template-columns: minmax(0, 1fr) 42px 58px !important;
+            gap: 3px !important;
+        }
+
+        body.tp-split-view .tp-bal-p,
+        body.tp-split-view .tp-win-p,
+        body.tp-split-view .tp-btn-repeat,
+        body.tp-split-view .tp-btn-topup {
+            height: 23px !important;
+            border-radius: 8px !important;
+        }
+
+        body.tp-split-view .tp-bal-p {
+            padding: 0 5px !important;
+        }
+
+        body.tp-split-view .tp-bal-val {
+            font-size: 10px !important;
+        }
+
+        body.tp-split-view .tp-win-label {
+            font-size: 6px !important;
+        }
+
+        body.tp-split-view .tp-win-val {
+            font-size: 12px !important;
+        }
+
+        body.tp-split-view .tp-btn-repeat,
+        body.tp-split-view .tp-btn-topup {
+            padding: 0 4px !important;
+            font-size: 9px !important;
+            line-height: 1 !important;
         }
 
         .tp-wv-topbar {
@@ -476,13 +705,22 @@ function tpFitStageToViewport() {
 
 function tpApplySplitViewMode() {
     var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    var splitThreshold = 760;
+    var splitThreshold = 430;
+
+    if (viewportHeight > 0) {
+        document.documentElement.style.setProperty('--tp-wv-height', Math.ceil(viewportHeight) + 'px');
+    }
 
     if (viewportHeight > 0 && viewportHeight <= splitThreshold) {
         document.body.classList.add('tp-split-view');
     } else {
         document.body.classList.remove('tp-split-view');
     }
+}
+
+function tpRefreshWebViewLayout() {
+    tpApplySplitViewMode();
+    tpFitStageToViewport();
 }
 
 function buildWalletTopupUrl() {
@@ -599,8 +837,7 @@ function refreshTenantWalletBalance() {
 // Balance refresh helper (called by teenPatti.js after win/loss)
 // The existing game JS updates .bal elements; this also syncs the topbar.
 $(document).ready(function () {
-    tpApplySplitViewMode();
-    tpFitStageToViewport();
+    tpRefreshWebViewLayout();
 
     // Observe .bal changes so the top-bar balance stays in sync
     var observer = new MutationObserver(function () {
@@ -630,30 +867,23 @@ $(document).ready(function () {
         }
     });
 
-    window.addEventListener('load', tpFitStageToViewport);
-    window.addEventListener('focus', startWalletRefreshBurst);
-    window.addEventListener('resize', function () {
-        tpApplySplitViewMode();
-        tpFitStageToViewport();
+    window.addEventListener('load', tpRefreshWebViewLayout);
+    window.addEventListener('focus', function () {
+        startWalletRefreshBurst();
+        tpRefreshWebViewLayout();
     });
-    window.addEventListener('orientationchange', function () {
-        tpApplySplitViewMode();
-        tpFitStageToViewport();
-    });
+    window.addEventListener('resize', tpRefreshWebViewLayout);
+    window.addEventListener('orientationchange', tpRefreshWebViewLayout);
 
     if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', function () {
-            tpApplySplitViewMode();
-            tpFitStageToViewport();
-        });
+        window.visualViewport.addEventListener('resize', tpRefreshWebViewLayout);
     }
 
-    window.setTimeout(tpApplySplitViewMode, 120);
-    window.setTimeout(tpFitStageToViewport, 150);
-    window.setTimeout(tpFitStageToViewport, 450);
+    window.setTimeout(tpRefreshWebViewLayout, 120);
+    window.setTimeout(tpRefreshWebViewLayout, 450);
 
     if (document.fonts && typeof document.fonts.ready === 'object') {
-        document.fonts.ready.then(tpFitStageToViewport);
+        document.fonts.ready.then(tpRefreshWebViewLayout);
     }
 });
 </script>
