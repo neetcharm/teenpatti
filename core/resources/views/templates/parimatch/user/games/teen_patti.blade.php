@@ -163,7 +163,9 @@ document.body.classList.add('tp-game-page');
                         <span class="tp-win-label">WIN</span>
                         <span class="tp-win-val" id="tpWinVal">0</span>
                     </div>
-                    <button class="tp-btn-repeat" id="tpBtnRepeat">@lang('Repeat')</button>
+                    <button class="tp-btn-repeat tp-btn-repeat--icon" id="tpBtnRepeat" type="button" title="@lang('Repeat last bet')" aria-label="@lang('Repeat last bet')">
+                        <i class="fas fa-redo-alt" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
 

@@ -29,8 +29,38 @@ let winnerPartyTimer = null;
 
 let lastTotals = { silver: 0, gold: 0, diamond: 0 };
 let latestMyBets = { silver: 0, gold: 0, diamond: 0 };
+let lastRoundBets = { silver: 0, gold: 0, diamond: 0 };
+let lastRoundBetsRound = null;
 let lastResultData = null;
 let localHistoryMap = {};
+
+function tpLastRoundStorageKey() {
+    var uid = (typeof currentUserId !== "undefined" && currentUserId) ? currentUserId : "guest";
+    return "tp_last_round_bets_" + uid;
+}
+
+function loadLastRoundBetsFromStorage() {
+    try {
+        var raw = window.localStorage && window.localStorage.getItem(tpLastRoundStorageKey());
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (data && typeof data === "object") {
+            lastRoundBets = {
+                silver: safeAmount(data.silver),
+                gold: safeAmount(data.gold),
+                diamond: safeAmount(data.diamond)
+            };
+        }
+    } catch (e) { /* ignore */ }
+}
+
+function persistLastRoundBets() {
+    try {
+        if (window.localStorage) {
+            window.localStorage.setItem(tpLastRoundStorageKey(), JSON.stringify(lastRoundBets));
+        }
+    } catch (e) { /* ignore */ }
+}
 
 const MAX_VISIBLE_HISTORY = 20;
 
@@ -151,6 +181,7 @@ function bootTeenPattiGame() {
 
     initTeenPattiAutoLayout();
     setCountdownRemaining(countdownSeconds);
+    loadLastRoundBetsFromStorage();
     syncGlobalState();
     syncInterval = setInterval(syncGlobalState, 1000);
     startLocalCountdown();
@@ -204,15 +235,17 @@ function bootTeenPattiGame() {
             return;
         }
 
-        let placed = 0;
+        var hasLast = SIDES.some(function (side) { return safeAmount(lastRoundBets[side]) > 0; });
+        if (!hasLast) {
+            tpNotify("error", "No previous bets to repeat");
+            return;
+        }
+
+        var placed = 0;
         SIDES.forEach(function (side) {
-            const amount = safeAmount(latestMyBets[side]);
+            var amount = safeAmount(lastRoundBets[side]);
             if (amount > 0) {
-                const unit = selectedChip > 0 ? selectedChip : (normalizeChipValues()[0] || 400);
-                const clicks = Math.max(1, Math.round(amount / unit));
-                for (let i = 0; i < clicks; i++) {
-                    placeGlobalBet(side);
-                }
+                placeGlobalBet(side, amount);
                 placed += amount;
             }
         });
@@ -406,6 +439,21 @@ function updateUI(data) {
 
     currentRound = data.round;
     currentPhase = data.phase;
+
+    // Capture the bets from the previous round as "last round bets" when the round changes.
+    if (prevRound !== null && prevRound !== currentRound) {
+        var prevHasBets = SIDES.some(function (s) { return safeAmount(latestMyBets[s]) > 0; });
+        if (prevHasBets) {
+            lastRoundBets = {
+                silver: safeAmount(latestMyBets.silver),
+                gold: safeAmount(latestMyBets.gold),
+                diamond: safeAmount(latestMyBets.diamond)
+            };
+            lastRoundBetsRound = prevRound;
+            persistLastRoundBets();
+        }
+    }
+
     latestMyBets = data.my_bets;
 
     syncCountdown(data.remaining);
@@ -1288,8 +1336,8 @@ function resetRoundUI() {
     setDealerStatus("", false);
 }
 
-function placeGlobalBet(choose) {
-    var amount = safeAmount(selectedChip);
+function placeGlobalBet(choose, overrideAmount) {
+    var amount = safeAmount(typeof overrideAmount !== "undefined" ? overrideAmount : selectedChip);
     if (amount <= 0) return;
 
     dropChip(choose, amount, { transient: false, ambient: false });
