@@ -3759,17 +3759,36 @@ body:has(.tp-game-wrapper) {
     padding: 0 !important;
 }
 
-/* 5-row grid (no dealer section). The invisible deal anchor
-   is absolutely positioned so it doesn't consume a row. */
+/* 5-row proportional grid (no dealer section). The invisible deal
+   anchor is absolutely positioned so it doesn't consume a row.
+   Rows are sized in dvh + clamp() so EVERYTHING fits and no row
+   stretches awkwardly. */
 .tp-game-wrapper,
 .tp-wv-root .tp-game-wrapper {
     height: 100dvh !important;
     min-height: 100dvh !important;
     max-height: 100dvh !important;
-    grid-template-rows: auto auto minmax(0, 1fr) auto auto !important;
+    display: grid !important;
+    grid-template-columns: 100% !important;
+    grid-template-rows:
+        clamp(40px, 7dvh, 56px)              /* header */
+        clamp(34px, 5.5dvh, 44px)            /* timer */
+        minmax(0, 1fr)                       /* play area */
+        clamp(22px, 3.5dvh, 30px)            /* history */
+        clamp(118px, 22dvh, 170px) !important; /* footer */
+    gap: clamp(2px, 0.6dvh, 6px) !important;
+    padding: clamp(3px, 0.8dvh, 8px) clamp(3px, 0.8vw, 8px) !important;
     border-radius: 0 !important;
     border: none !important;
     position: relative;
+    overflow: hidden !important;
+}
+
+/* Direct grid children must respect their tracks */
+.tp-game-wrapper > * {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
 }
 
 /* Kill the old dealer section / extra spacing completely.
@@ -3839,151 +3858,203 @@ body.tp-split-view .tp-dealer-name,
     opacity: 0;
 }
 
-/* Header: compact, safe on tiny screens */
-.tp-header,
-body.tp-game-page .tp-header {
-    min-height: 38px;
-    padding: 4px 8px;
-    margin: 4px 6px 0;
+/* Header: row 1, fills its grid track exactly */
+.tp-game-wrapper > .tp-header,
+body.tp-game-page .tp-game-wrapper > .tp-header {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 4px clamp(6px, 2vw, 12px) !important;
+    margin: 0 !important;
+    border-radius: clamp(8px, 1.4vw, 14px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
 }
 
-/* Timer / phase badge: tighter */
-.tp-timer-section,
-body.tp-game-page .tp-timer-section {
-    min-height: 34px;
-    padding: 3px 8px;
-    margin: 3px 6px 0;
+/* Timer / phase badge: row 2 */
+.tp-game-wrapper > .tp-timer-section,
+body.tp-game-page .tp-game-wrapper > .tp-timer-section {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 3px clamp(6px, 2vw, 12px) !important;
+    margin: 0 !important;
+    border-radius: clamp(8px, 1.4vw, 14px) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
 }
 
-/* Play area takes all remaining vertical space */
-.tp-play-area,
-body.tp-game-page .tp-play-area {
-    flex: 1 1 auto;
-    min-height: 0;
-    padding: 4px 5px 0;
-    display: flex;
-    align-items: stretch;
-    justify-content: stretch;
+/* Play area: row 3 (takes all flexible space) */
+.tp-game-wrapper > .tp-play-area,
+body.tp-game-page .tp-game-wrapper > .tp-play-area {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
 }
 
 .tp-columns,
 body.tp-game-page .tp-columns {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 4px;
-    width: 100%;
-    height: 100%;
-    align-items: stretch;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: clamp(3px, 1vw, 8px) !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    align-items: stretch !important;
 }
 
 .tp-col,
 body.tp-game-page .tp-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    min-width: 0;
-    height: 100%;
-    padding: 4px 3px;
-    gap: 3px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    padding: clamp(3px, 1vw, 8px) clamp(2px, 0.8vw, 6px) !important;
+    gap: clamp(2px, 0.6dvh, 5px) !important;
+    overflow: hidden !important;
 }
 
-/* Character frame scales with column width */
+/* Character frame scales with column dimensions */
 .tp-col .tp-char-frame {
-    width: clamp(34px, 12vw, 62px);
-    height: clamp(34px, 12vw, 62px);
-    flex: 0 0 auto;
+    width: clamp(34px, 9vw, 60px) !important;
+    height: clamp(34px, 9vw, 60px) !important;
+    flex: 0 0 auto !important;
 }
 
 .tp-col .tp-side-name {
-    font-size: clamp(8px, 2.2vw, 11px);
-    margin: 1px 0;
-    flex: 0 0 auto;
+    font-size: clamp(8px, 2vw, 11px) !important;
+    margin: 1px 0 !important;
+    flex: 0 0 auto !important;
 }
 
 .tp-cards-row {
-    gap: 2px;
-    flex: 0 0 auto;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: clamp(1px, 0.4vw, 3px) !important;
+    flex: 0 0 auto !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    margin: 1px 0 !important;
 }
 .tp-cards-row .tp-card-img,
-.tp-cards-row .tp-card-inner {
-    width: clamp(20px, 6vw, 36px);
-    height: clamp(28px, 8vw, 50px);
+.tp-cards-row .tp-card-inner,
+.tp-cards-row .tp-card-container {
+    width: clamp(20px, 7vw, 36px) !important;
+    aspect-ratio: 5 / 7 !important;
+    height: auto !important;
+    flex: 0 1 clamp(20px, 7vw, 36px) !important;
+    max-width: 32% !important;
 }
 
 .tp-hand-rank {
-    font-size: clamp(8px, 2vw, 10px);
-    padding: 1px 4px;
-    flex: 0 0 auto;
+    font-size: clamp(7px, 1.8vw, 10px) !important;
+    padding: 1px 4px !important;
+    flex: 0 0 auto !important;
+    min-height: 14px !important;
 }
 
 /* Bet slot grows to fill remaining column space */
 .tp-bet-slot {
-    flex: 1 1 auto;
-    min-height: 48px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    flex: 1 1 auto !important;
+    min-height: 32px !important;
+    width: 100% !important;
+    position: relative !important;
 }
 
 .tp-bet-info {
-    font-size: clamp(8px, 2vw, 10px);
+    font-size: clamp(7px, 1.7vw, 9px) !important;
 }
 
-/* History bar: single line, compact */
-.tp-history-bar,
-body.tp-game-page .tp-history-bar {
-    min-height: 28px;
-    padding: 3px 8px;
-    margin: 3px 6px;
-    font-size: clamp(9px, 2.2vw, 11px);
+/* History bar: row 4 — fills its track */
+.tp-game-wrapper > .tp-history-bar,
+body.tp-game-page .tp-game-wrapper > .tp-history-bar {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 2px clamp(6px, 2vw, 12px) !important;
+    margin: 0 !important;
+    border-radius: clamp(8px, 1.4vw, 14px) !important;
+    font-size: clamp(8px, 2vw, 11px) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: clamp(3px, 0.8vw, 6px) !important;
 }
 
-/* Footer compact, chips row wraps on small screens */
-.tp-footer,
-body.tp-game-page .tp-footer {
-    padding: 4px 6px 6px;
-    margin: 0 6px 4px;
-    gap: 4px;
+/* Footer: row 5 — fills its track, holds chips + actions */
+.tp-game-wrapper > .tp-footer,
+body.tp-game-page .tp-game-wrapper > .tp-footer {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: clamp(4px, 1dvh, 8px) clamp(5px, 1.5vw, 10px)
+            calc(clamp(4px, 1dvh, 8px) + env(safe-area-inset-bottom)) !important;
+    margin: 0 !important;
+    border-radius: clamp(10px, 2vw, 16px) clamp(10px, 2vw, 16px) 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: clamp(3px, 0.8dvh, 6px) !important;
+    overflow: hidden !important;
 }
 
 .tp-chips-row,
 body.tp-game-page .tp-chips-row {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: clamp(3px, 1.2vw, 8px);
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 2px 0;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: clamp(3px, 1vw, 6px) !important;
+    width: 100% !important;
+    flex: 0 1 auto !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 .tp-chips-row::-webkit-scrollbar { display: none; }
 
 .tp-chip-btn,
 body.tp-game-page .tp-chip-btn {
-    flex: 1 1 0;
-    min-width: clamp(36px, 14vw, 52px);
-    height: clamp(36px, 11vw, 48px);
-    font-size: clamp(9px, 2.4vw, 12px);
+    flex: 1 1 0 !important;
+    width: clamp(34px, 9.5vw, 52px) !important;
+    height: clamp(34px, 9.5vw, 52px) !important;
+    min-width: clamp(34px, 9.5vw, 52px) !important;
+    font-size: clamp(9px, 2.4vw, 13px) !important;
 }
 
 .tp-bottom-actions,
 body.tp-game-page .tp-bottom-actions {
-    display: flex;
-    align-items: center;
-    gap: clamp(4px, 1.5vw, 10px);
-    flex-wrap: nowrap;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto auto !important;
+    align-items: center !important;
+    gap: clamp(4px, 1.4vw, 8px) !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+}
+
+/* If a Top Up button is present (webview only), use 4 columns */
+.tp-bottom-actions:has(.tp-btn-topup) {
+    grid-template-columns: minmax(0, 1fr) auto auto auto !important;
 }
 
 .tp-bal-p,
 body.tp-game-page .tp-bal-p {
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 4px 10px;
-    font-size: clamp(10px, 2.6vw, 13px);
+    min-width: 0 !important;
+    height: clamp(28px, 5dvh, 36px) !important;
+    padding: 0 clamp(6px, 2vw, 10px) !important;
+    border-radius: clamp(8px, 1.4vw, 12px) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    font-size: clamp(10px, 2.6vw, 13px) !important;
 }
 .tp-bal-val,
 body.tp-game-page .tp-bal-val {

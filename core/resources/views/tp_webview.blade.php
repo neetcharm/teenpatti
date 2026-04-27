@@ -23,85 +23,26 @@
     <link rel="stylesheet" href="{{ asset('assets/global/css/game/teen-patti.css') }}?v={{ $tpCssV }}">
 
     <style>
-        /* WebView reset – no site chrome */
+        /* ============================================================
+           ROYAL TEEN PATTI — FLUID WEBVIEW LAYOUT v3
+           Pure CSS, zero JS scaling. Works on any screen size and
+           any aspect ratio. No wasted space. No hidden buttons.
+           ============================================================ */
+
         *, *::before, *::after { box-sizing: border-box; }
 
         html, body {
             margin: 0; padding: 0;
-            width: 100%; height: 100%;
+            width: 100%; height: 100dvh;
             background: #0a0a1a;
             overflow: hidden;
-            /* Disable pull-to-refresh on Android WebView */
             overscroll-behavior: none;
             -webkit-tap-highlight-color: transparent;
             -webkit-user-select: none;
             user-select: none;
         }
 
-        /* Full-height single-column layout */
-        .tp-wv-root {
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
-            min-height: var(--tp-wv-height, 100svh);
-            height: var(--tp-wv-height, 100svh);
-            padding: 0;
-            overflow: hidden;
-        }
-
-        .tp-wv-root .tp-game-wrapper {
-            width: 100%;
-            max-width: 100%;
-            min-height: var(--tp-wv-height, 100svh);
-            height: var(--tp-wv-height, 100svh);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tp-stage-shell {
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: stretch;
-        }
-
-        .tp-stage {
-            width: 100%;
-            min-height: 100%;
-            transform-origin: top center;
-            transform: scale(1);
-            will-change: transform;
-        }
-
-        /* Balance / Win bar at the very top */
-        .tp-wv-topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0,0,0,.55);
-            padding: 6px 14px;
-            font-size: 12px;
-            color: #ccc;
-            border-bottom: 1px solid rgba(255,255,255,.08);
-        }
-        .tp-wv-topbar .player-name {
-            font-weight: 600;
-            color: #f0c040;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .tp-wv-topbar .player-bal {
-            color: #7fffd4;
-            font-weight: 700;
-        }
-
-        /* Spinner shown while first sync loads */
+        /* ----- Loader ----- */
         #tpWvLoader {
             position: fixed;
             inset: 0;
@@ -122,302 +63,425 @@
         }
         @keyframes wvSpin { to { transform: rotate(360deg); } }
 
+        /* ----- Root + Wrapper: occupy full viewport, no scaling ----- */
+        .tp-wv-root {
+            width: 100vw;
+            height: 100dvh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
         .tp-wv-root .tp-game-wrapper {
             width: 100%;
-            max-width: 100%;
-            height: var(--tp-wv-height, 100svh);
-            min-height: 0;
-        }
-
-        .tp-stage {
-            min-width: 0;
-            overflow: hidden;
-            display: grid;
+            height: 100dvh;
+            min-height: 100dvh;
+            max-height: 100dvh;
             position: relative;
-            /* 5 rows: header / timer / play (1fr) / history / footer  — dealer row removed */
-            grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        body.tp-split-view .tp-stage {
-            grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+        /* The shell holds the stage and lets it stretch fully */
+        .tp-stage-shell {
+            flex: 1 1 auto;
+            min-height: 0;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Dealer + narration are completely removed from the layout in the webview */
+        /* ============================================================
+           THE STAGE — proportional grid using dynamic viewport units.
+           Rows scale automatically with the available height, so no
+           gaps, no overflow, on ANY screen height between 360px-1200px.
+           ============================================================ */
+        .tp-stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-rows:
+                clamp(40px, 7dvh, 56px)              /* header */
+                clamp(34px, 5.5dvh, 44px)            /* timer */
+                minmax(0, 1fr)                       /* play area */
+                clamp(22px, 3.5dvh, 30px)            /* history */
+                clamp(118px, 22dvh, 170px);          /* footer */
+            grid-template-columns: 100%;
+            gap: clamp(2px, 0.6dvh, 6px);
+            padding: clamp(3px, 0.8dvh, 8px) clamp(3px, 0.8vw, 8px);
+            transform: none !important;     /* no JS scaling */
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* All direct grid children must respect their grid track */
+        .tp-stage > * {
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* ============================================================
+           DEALER + NARRATION: completely removed (zero footprint)
+           ============================================================ */
         .tp-dealer-section,
         .tp-dealer-avatar,
         .tp-dealer-avatar-body,
         .tp-dealer-hand-layer,
+        .tp-dealer-hand-right,
         .tp-dealer-name,
         .tp-dealer-status,
+        .tp-dealer-avatar-img,
         .dealer-glow-ring,
         .tp-narration-bar,
+        body .tp-dealer-section,
+        body .tp-dealer-avatar,
+        body .tp-dealer-name,
         body.tp-split-view .tp-dealer-section,
         body.tp-split-view .tp-dealer-avatar,
-        body.tp-split-view .tp-dealer-avatar-body,
-        body.tp-split-view .dealer-glow-ring,
         body.tp-split-view .tp-dealer-name,
-        body.tp-split-view .tp-dealer-status,
-        body.tp-split-view .tp-narration-bar {
+        .tp-game-wrapper .tp-dealer-section,
+        .tp-game-wrapper .tp-dealer-name,
+        .tp-stage .tp-dealer-section,
+        .tp-stage .tp-dealer-name,
+        .tp-stage .tp-dealer-avatar {
             display: none !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            max-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            left: -9999px !important;
         }
 
-        /* Invisible deal anchor for flying-card animation only */
+        /* Invisible deal anchor (origin for flying card animation) */
         .tp-deal-anchor {
             position: absolute;
-            top: 8%;
+            top: 18%;
             left: 50%;
             transform: translateX(-50%);
             width: 1px;
             height: 1px;
             pointer-events: none;
             opacity: 0;
-            z-index: 1;
+            z-index: 0;
         }
         .tp-deal-anchor .tp-shuffle-deck {
             position: absolute;
-            left: 50%;
-            top: 0;
-            transform: translate(-50%, -50%);
+            inset: 0;
             opacity: 0;
+            pointer-events: none;
         }
 
-        body.tp-split-view .tp-header {
-            min-height: 30px !important;
-            margin: 2px 4px 0 !important;
-            padding: 2px 5px !important;
-            border-radius: 10px !important;
-        }
-
-        body.tp-split-view .tp-btn-icon {
-            width: 24px !important;
-            height: 24px !important;
-            font-size: 10px !important;
-        }
-
-        body.tp-split-view .tp-logo-icon {
-            width: 24px !important;
-            height: 24px !important;
-            font-size: 15px !important;
-        }
-
-        body.tp-split-view .tp-logo-text {
-            font-size: 11px !important;
-            line-height: .9 !important;
-        }
-
-        body.tp-split-view .tp-header-right {
-            gap: 4px !important;
-        }
-
-        body.tp-split-view .tp-timer-section {
-            min-height: 28px !important;
-            margin: 2px 4px 1px !important;
-            padding: 2px 5px !important;
-            gap: 6px !important;
-            border-radius: 10px !important;
-        }
-
-        body.tp-split-view .tp-phase-badge {
-            min-width: 106px !important;
-            padding: 3px 7px !important;
-            font-size: 7px !important;
-        }
-
-        body.tp-split-view .tp-timer-p {
-            min-width: 48px !important;
-            padding: 2px 6px !important;
-            gap: 4px !important;
-        }
-
-        body.tp-split-view .tp-timer-num {
-            font-size: 14px !important;
-        }
-
-        body.tp-split-view .tp-play-area {
-            min-height: 88px !important;
-            padding: 1px 3px 0 !important;
-        }
-
-        body.tp-split-view .tp-columns {
+        /* ============================================================
+           HEADER (row 1)
+           ============================================================ */
+        .tp-stage > .tp-header {
+            min-height: 0 !important;
             height: 100% !important;
-            gap: 2px !important;
-        }
-
-        body.tp-split-view .tp-col {
-            height: 100% !important;
-            gap: 1px !important;
-            padding: 2px 1px !important;
-            border-radius: 8px !important;
-            border-width: 1px !important;
-        }
-
-        body.tp-split-view .tp-char-frame {
-            width: clamp(20px, 30%, 28px) !important;
-            height: clamp(20px, 30%, 28px) !important;
-        }
-
-        body.tp-split-view .tp-char-label {
-            width: 12px !important;
-            height: 12px !important;
-            font-size: 6px !important;
-        }
-
-        body.tp-split-view .tp-side-name {
-            font-size: 6px !important;
-            line-height: 1 !important;
             margin: 0 !important;
+            padding: 4px clamp(6px, 2vw, 12px) !important;
+            border-radius: clamp(8px, 1.4vw, 14px) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 6px !important;
+        }
+        .tp-stage .tp-btn-icon {
+            width: clamp(26px, 5vw, 34px) !important;
+            height: clamp(26px, 5vw, 34px) !important;
+            font-size: clamp(11px, 2.6vw, 14px) !important;
+        }
+        .tp-stage .tp-logo { gap: 6px !important; }
+        .tp-stage .tp-logo-icon {
+            width: clamp(24px, 5vw, 32px) !important;
+            height: clamp(24px, 5vw, 32px) !important;
+            font-size: clamp(14px, 3.5vw, 20px) !important;
+        }
+        .tp-stage .tp-logo-text {
+            font-size: clamp(10px, 2.6vw, 14px) !important;
+            line-height: 1 !important;
+        }
+        .tp-stage .tp-header-right { gap: 4px !important; }
+
+        /* ============================================================
+           TIMER / PHASE BADGE (row 2)
+           ============================================================ */
+        .tp-stage > .tp-timer-section {
+            min-height: 0 !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 3px clamp(6px, 2vw, 12px) !important;
+            border-radius: clamp(8px, 1.4vw, 14px) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+        .tp-stage .tp-phase-badge {
+            min-width: clamp(110px, 36%, 200px) !important;
+            padding: 4px 8px !important;
+            font-size: clamp(8px, 2.2vw, 11px) !important;
+        }
+        .tp-stage .tp-timer-p {
+            min-width: clamp(48px, 14%, 68px) !important;
+            padding: 3px 8px !important;
+            gap: 4px !important;
+        }
+        .tp-stage .tp-timer-num {
+            font-size: clamp(13px, 3.8vw, 18px) !important;
         }
 
-        body.tp-split-view .tp-cards-row {
-            min-height: 26px !important;
-            gap: 2px !important;
-            margin: 1px 0 !important;
-            justify-content: center !important;
-            flex-wrap: nowrap !important;
+        /* ============================================================
+           PLAY AREA (row 3) — 3 equal columns, fluid card sizing
+           ============================================================ */
+        .tp-stage > .tp-play-area {
+            min-height: 0 !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: stretch !important;
+            justify-content: stretch !important;
+        }
+        .tp-stage .tp-columns {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: clamp(3px, 1vw, 8px) !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 0 !important;
+        }
+        .tp-stage .tp-col {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            padding: clamp(3px, 1vw, 8px) clamp(2px, 0.8vw, 6px) !important;
+            gap: clamp(2px, 0.6dvh, 5px) !important;
+            border-radius: clamp(8px, 1.4vw, 14px) !important;
+            border-width: 1.5px !important;
             overflow: hidden !important;
         }
-
-        body.tp-split-view .tp-card-container,
-        body.tp-split-view .tp-card-img {
-            width: clamp(14px, 30%, 20px) !important;
-            flex: 0 0 clamp(14px, 30%, 20px) !important;
-            flex-shrink: 0 !important;
+        .tp-stage .tp-char-frame {
+            width: clamp(34px, 9vw, 60px) !important;
+            height: clamp(34px, 9vw, 60px) !important;
+            flex: 0 0 auto !important;
+        }
+        .tp-stage .tp-char-label {
+            width: clamp(14px, 3.5vw, 18px) !important;
+            height: clamp(14px, 3.5vw, 18px) !important;
+            font-size: clamp(7px, 1.8vw, 9px) !important;
+        }
+        .tp-stage .tp-side-name {
+            font-size: clamp(8px, 2vw, 11px) !important;
+            line-height: 1 !important;
+            margin: 1px 0 !important;
+            flex: 0 0 auto !important;
+        }
+        .tp-stage .tp-cards-row {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: clamp(1px, 0.4vw, 3px) !important;
+            margin: 1px 0 !important;
+            flex-wrap: nowrap !important;
+            overflow: hidden !important;
+            min-height: 0 !important;
+            flex: 0 0 auto !important;
+            width: 100% !important;
+        }
+        .tp-stage .tp-card-container,
+        .tp-stage .tp-card-img,
+        .tp-stage .tp-card-inner {
+            width: clamp(20px, 7vw, 36px) !important;
+            aspect-ratio: 5 / 7 !important;
+            height: auto !important;
+            flex: 0 1 clamp(20px, 7vw, 36px) !important;
             max-width: 32% !important;
         }
-
-        body.tp-split-view .tp-hand-rank {
-            min-height: 11px !important;
+        .tp-stage .tp-hand-rank {
+            min-height: 14px !important;
+            padding: 1px 4px !important;
             margin: 0 !important;
-            padding: 0 3px !important;
-            font-size: 5px !important;
-            line-height: 11px !important;
+            font-size: clamp(7px, 1.8vw, 10px) !important;
+            line-height: 1.2 !important;
+            flex: 0 0 auto !important;
         }
-
-        body.tp-split-view .tp-bet-slot {
-            min-height: 28px !important;
-            border-radius: 6px !important;
+        .tp-stage .tp-bet-slot {
+            flex: 1 1 auto !important;
+            width: 100% !important;
+            min-height: 32px !important;
+            border-radius: clamp(5px, 1vw, 8px) !important;
+            position: relative !important;
         }
-
-        body.tp-split-view .tp-chips-pile {
-            inset: 1px 1px 17px 1px !important;
+        .tp-stage .tp-chips-pile {
+            inset: 2px 2px clamp(16px, 3.5dvh, 22px) 2px !important;
         }
-
-        body.tp-split-view .tp-bet-info {
-            left: 1px !important;
-            right: 1px !important;
-            bottom: 1px !important;
-            padding: 0 1px !important;
-            font-size: 5px !important;
-            line-height: 1.05 !important;
+        .tp-stage .tp-bet-info {
+            position: absolute !important;
+            left: 2px !important;
+            right: 2px !important;
+            bottom: 2px !important;
+            padding: 1px 3px !important;
+            font-size: clamp(7px, 1.7vw, 9px) !important;
+            line-height: 1.15 !important;
             border-radius: 4px !important;
         }
 
-        body.tp-split-view .tp-history-bar {
-            min-height: 20px !important;
-            margin: 1px 4px !important;
-            padding: 2px 4px !important;
-            gap: 3px !important;
-            border-radius: 8px !important;
+        /* ============================================================
+           HISTORY (row 4)
+           ============================================================ */
+        .tp-stage > .tp-history-bar {
+            min-height: 0 !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 2px clamp(6px, 2vw, 12px) !important;
+            border-radius: clamp(8px, 1.4vw, 14px) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: clamp(3px, 0.8vw, 6px) !important;
+            overflow: hidden !important;
         }
-
-        body.tp-split-view .tp-hist-label {
-            font-size: 7px !important;
+        .tp-stage .tp-hist-label {
+            font-size: clamp(8px, 2vw, 11px) !important;
+            flex: 0 0 auto !important;
         }
-
-        body.tp-split-view .tp-hist-items {
-            gap: 2px !important;
-        }
-
-        body.tp-split-view .tp-hist-dot {
-            width: 12px !important;
-            height: 12px !important;
-            flex-basis: 12px !important;
-            font-size: 7px !important;
-        }
-
-        body.tp-split-view .tp-footer {
-            margin: 0 4px 2px !important;
-            padding: 2px 4px calc(2px + env(safe-area-inset-bottom)) !important;
-            border-radius: 9px 9px 0 0 !important;
-        }
-
-        body.tp-split-view .tp-chips-row {
-            gap: 2px !important;
-            margin-bottom: 2px !important;
-        }
-
-        body.tp-split-view .tp-chip-btn {
-            width: 27px !important;
-            height: 27px !important;
-            font-size: 8px !important;
-            border-width: 1px !important;
-            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18), 0 4px 8px rgba(63, 92, 122, 0.18) !important;
-        }
-
-        body.tp-split-view .tp-chip-btn.selected {
-            transform: translateY(-1px) scale(1.04) !important;
-        }
-
-        body.tp-split-view .tp-bottom-actions {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1fr) auto auto auto !important;
-            gap: 4px !important;
+        .tp-stage .tp-hist-items {
+            gap: clamp(2px, 0.6vw, 4px) !important;
+            min-width: 0 !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            scrollbar-width: none !important;
+            flex: 1 1 auto !important;
+            display: flex !important;
             align-items: center !important;
         }
-
-        body.tp-split-view .tp-bal-p,
-        body.tp-split-view .tp-win-p,
-        body.tp-split-view .tp-btn-repeat,
-        body.tp-split-view .tp-btn-topup {
-            height: 26px !important;
-            border-radius: 8px !important;
+        .tp-stage .tp-hist-items::-webkit-scrollbar { display: none; }
+        .tp-stage .tp-hist-dot {
+            width: clamp(14px, 3vw, 18px) !important;
+            height: clamp(14px, 3vw, 18px) !important;
+            flex: 0 0 auto !important;
+            font-size: clamp(8px, 2vw, 10px) !important;
         }
 
-        body.tp-split-view .tp-bal-p {
-            padding: 0 6px !important;
+        /* ============================================================
+           FOOTER (row 5) — chips + bottom actions stacked
+           ============================================================ */
+        .tp-stage > .tp-footer {
+            min-height: 0 !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: clamp(4px, 1dvh, 8px) clamp(5px, 1.5vw, 10px) calc(clamp(4px, 1dvh, 8px) + env(safe-area-inset-bottom)) !important;
+            border-radius: clamp(10px, 2vw, 16px) clamp(10px, 2vw, 16px) 0 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: clamp(3px, 0.8dvh, 6px) !important;
+            overflow: hidden !important;
+        }
+        .tp-stage .tp-chips-row {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: clamp(3px, 1vw, 6px) !important;
+            width: 100% !important;
+            flex: 0 1 auto !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            scrollbar-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .tp-stage .tp-chips-row::-webkit-scrollbar { display: none; }
+        .tp-stage .tp-chip-btn {
+            flex: 1 1 0 !important;
+            width: clamp(34px, 9.5vw, 52px) !important;
+            height: clamp(34px, 9.5vw, 52px) !important;
+            min-width: clamp(34px, 9.5vw, 52px) !important;
+            font-size: clamp(9px, 2.4vw, 13px) !important;
+            border-width: 2px !important;
+        }
+        .tp-stage .tp-bottom-actions {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto auto auto !important;
+            gap: clamp(4px, 1.4vw, 8px) !important;
+            align-items: center !important;
+            width: 100% !important;
+            flex: 0 0 auto !important;
+        }
+        .tp-stage .tp-bal-p {
             min-width: 0 !important;
+            height: clamp(28px, 5dvh, 36px) !important;
+            padding: 0 clamp(6px, 2vw, 10px) !important;
+            border-radius: clamp(8px, 1.4vw, 12px) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 5px !important;
         }
-
-        body.tp-split-view .tp-bal-val {
-            font-size: 10px !important;
+        .tp-stage .tp-bal-icon {
+            font-size: clamp(11px, 2.4vw, 14px) !important;
+        }
+        .tp-stage .tp-bal-val {
+            font-size: clamp(10px, 2.6vw, 13px) !important;
             min-width: 0 !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
         }
-
-        body.tp-split-view .tp-win-p {
-            padding: 1px 6px !important;
-            min-width: 38px !important;
+        .tp-stage .tp-win-p {
+            min-width: clamp(40px, 11vw, 60px) !important;
+            height: clamp(28px, 5dvh, 36px) !important;
+            padding: 1px clamp(4px, 1.5vw, 8px) !important;
+            border-radius: clamp(8px, 1.4vw, 12px) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
         }
-
-        body.tp-split-view .tp-win-label {
-            font-size: 6px !important;
-        }
-
-        body.tp-split-view .tp-win-val {
-            font-size: 11px !important;
-        }
-
-        body.tp-split-view .tp-btn-topup {
-            padding: 0 6px !important;
-            font-size: 9px !important;
+        .tp-stage .tp-win-label {
+            font-size: clamp(7px, 1.6vw, 9px) !important;
             line-height: 1 !important;
-            min-width: 38px !important;
         }
-
-        body.tp-split-view .tp-btn-repeat.tp-btn-repeat--icon {
-            width: 26px !important;
-            height: 26px !important;
-            min-width: 26px !important;
+        .tp-stage .tp-win-val {
+            font-size: clamp(11px, 2.8vw, 14px) !important;
+            line-height: 1.1 !important;
+        }
+        .tp-stage .tp-btn-topup {
+            height: clamp(28px, 5dvh, 36px) !important;
+            min-width: clamp(46px, 12vw, 64px) !important;
+            padding: 0 clamp(6px, 1.6vw, 10px) !important;
+            font-size: clamp(9px, 2.2vw, 12px) !important;
+            border-radius: clamp(8px, 1.4vw, 12px) !important;
+            line-height: 1 !important;
+        }
+        .tp-stage .tp-btn-repeat.tp-btn-repeat--icon {
+            width: clamp(28px, 5dvh, 36px) !important;
+            height: clamp(28px, 5dvh, 36px) !important;
+            min-width: clamp(28px, 5dvh, 36px) !important;
             padding: 0 !important;
-            font-size: 12px !important;
+            font-size: clamp(12px, 3vw, 15px) !important;
             border-radius: 50% !important;
         }
 
-        .tp-wv-topbar {
-            display: none !important;
-        }
+        /* ============================================================
+           Hide legacy site chrome / topbar
+           ============================================================ */
+        .tp-wv-topbar { display: none !important; }
     </style>
 </head>
 <body>
@@ -692,54 +756,30 @@ function tpWvHideLoader() {
 }
 
 function tpFitStageToViewport() {
-    var wrapper = document.getElementById('tpGameWrapper');
-    var stageShell = document.getElementById('tpStageShell');
+    /* Pure CSS handles all sizing. No JS scaling. */
     var stage = document.getElementById('tpGameStage');
-
-    if (!wrapper || !stageShell || !stage) {
-        return;
+    var stageShell = document.getElementById('tpStageShell');
+    if (stage) {
+        stage.style.transform = '';
+        stage.style.minHeight = '';
+        stage.style.height = '';
     }
-
-    stage.style.transform = 'scale(1)';
-    stage.style.minHeight = '0';
-    stage.style.height = 'auto';
-    stageShell.style.height = 'auto';
-
-    var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    var wrapperHeight = wrapper.clientHeight || viewportHeight;
-    var availableHeight = Math.max(0, Math.min(viewportHeight, wrapperHeight));
-
-    var naturalHeight = Math.ceil(stage.scrollHeight || stage.offsetHeight || 0);
-
-    if (!naturalHeight || !availableHeight) {
-        return;
+    if (stageShell) {
+        stageShell.style.height = '';
     }
-
-    if (naturalHeight < availableHeight) {
-        stageShell.style.height = Math.ceil(availableHeight) + 'px';
-        stage.style.minHeight = Math.ceil(availableHeight) + 'px';
-        stage.style.height = Math.ceil(availableHeight) + 'px';
-        return;
-    }
-
-    var scale = Math.min(1, availableHeight / naturalHeight);
-    stage.style.transform = 'scale(' + scale + ')';
-    stageShell.style.height = Math.ceil(naturalHeight * scale) + 'px';
 }
 
 function tpApplySplitViewMode() {
+    /* Pure CSS handles all responsive sizing via dvh + clamp().
+       Just expose the viewport height as a CSS var for legacy code. */
     var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    var splitThreshold = 430;
-
     if (viewportHeight > 0) {
         document.documentElement.style.setProperty('--tp-wv-height', Math.ceil(viewportHeight) + 'px');
     }
-
-    if (viewportHeight > 0 && viewportHeight <= splitThreshold) {
-        document.body.classList.add('tp-split-view');
-    } else {
-        document.body.classList.remove('tp-split-view');
-    }
+    /* Always remove the legacy split-view class — the new layout
+       does not depend on it and keeping it would re-introduce
+       the dealer/positioning hacks. */
+    document.body.classList.remove('tp-split-view');
 }
 
 function tpRefreshWebViewLayout() {

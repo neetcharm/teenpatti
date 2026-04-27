@@ -39,17 +39,46 @@ function tpLastRoundStorageKey() {
     return "tp_last_round_bets_" + uid;
 }
 
+function tpCurrentRoundStorageKey() {
+    var uid = (typeof currentUserId !== "undefined" && currentUserId) ? currentUserId : "guest";
+    return "tp_current_round_bets_" + uid;
+}
+
 function loadLastRoundBetsFromStorage() {
     try {
-        var raw = window.localStorage && window.localStorage.getItem(tpLastRoundStorageKey());
-        if (!raw) return;
-        var data = JSON.parse(raw);
-        if (data && typeof data === "object") {
-            lastRoundBets = {
-                silver: safeAmount(data.silver),
-                gold: safeAmount(data.gold),
-                diamond: safeAmount(data.diamond)
-            };
+        if (!window.localStorage) return;
+        var rawLast = window.localStorage.getItem(tpLastRoundStorageKey());
+        if (rawLast) {
+            var data = JSON.parse(rawLast);
+            if (data && typeof data === "object") {
+                lastRoundBets = {
+                    silver: safeAmount(data.silver),
+                    gold: safeAmount(data.gold),
+                    diamond: safeAmount(data.diamond)
+                };
+                if (data.round) lastRoundBetsRound = data.round;
+            }
+        }
+        // Also try to recover an in-flight current-round snapshot.
+        // If the snapshot's round differs from the current round we
+        // promote it to lastRoundBets (handles refresh between rounds).
+        var rawCur = window.localStorage.getItem(tpCurrentRoundStorageKey());
+        if (rawCur) {
+            var cur = JSON.parse(rawCur);
+            if (cur && typeof cur === "object") {
+                var hasBets = SIDES.some(function (s) { return safeAmount(cur[s]) > 0; });
+                if (hasBets && (!lastRoundBets ||
+                    (safeAmount(lastRoundBets.silver) +
+                     safeAmount(lastRoundBets.gold) +
+                     safeAmount(lastRoundBets.diamond)) === 0)) {
+                    lastRoundBets = {
+                        silver: safeAmount(cur.silver),
+                        gold: safeAmount(cur.gold),
+                        diamond: safeAmount(cur.diamond)
+                    };
+                    if (cur.round) lastRoundBetsRound = cur.round;
+                }
+            }
         }
     } catch (e) { /* ignore */ }
 }
@@ -57,8 +86,31 @@ function loadLastRoundBetsFromStorage() {
 function persistLastRoundBets() {
     try {
         if (window.localStorage) {
-            window.localStorage.setItem(tpLastRoundStorageKey(), JSON.stringify(lastRoundBets));
+            var payload = {
+                silver: safeAmount(lastRoundBets.silver),
+                gold: safeAmount(lastRoundBets.gold),
+                diamond: safeAmount(lastRoundBets.diamond),
+                round: lastRoundBetsRound
+            };
+            window.localStorage.setItem(tpLastRoundStorageKey(), JSON.stringify(payload));
         }
+    } catch (e) { /* ignore */ }
+}
+
+function persistCurrentRoundSnapshot() {
+    /* Belt-and-suspenders: every successful bet placement is mirrored
+       to localStorage tagged with the current round. If sync misses
+       the round-transition tick, this snapshot is promoted to
+       lastRoundBets the next time the page loads / a new round starts. */
+    try {
+        if (!window.localStorage) return;
+        var payload = {
+            silver: safeAmount(latestMyBets && latestMyBets.silver),
+            gold: safeAmount(latestMyBets && latestMyBets.gold),
+            diamond: safeAmount(latestMyBets && latestMyBets.diamond),
+            round: currentRound
+        };
+        window.localStorage.setItem(tpCurrentRoundStorageKey(), JSON.stringify(payload));
     } catch (e) { /* ignore */ }
 }
 
@@ -188,11 +240,11 @@ function bootTeenPattiGame() {
     startAmbientRain();
     setPhaseBadge("betting");
 
-    // Watchdog: force-reset if animation is stuck for over 8 seconds
+    // Watchdog: force-reset if animation is stuck for over 10 seconds
     setInterval(function () {
         if (isDealingInProgress && dealingStartedAt > 0) {
             var elapsed = Date.now() - dealingStartedAt;
-            if (elapsed > 8000) {
+            if (elapsed > 10000) {
                 console.warn("[TP Watchdog] Animation stuck for " + elapsed + "ms, force-resetting");
                 forceResetRound();
             }
@@ -436,25 +488,40 @@ function syncGlobalState() {
 function updateUI(data) {
     var prevPhase = currentPhase;
     var prevRound = currentRound;
+    var prevMyBets = latestMyBets;
 
     currentRound = data.round;
     currentPhase = data.phase;
 
     // Capture the bets from the previous round as "last round bets" when the round changes.
+    // Use the LAST KNOWN bets from the prior round (before we overwrite with new round data).
     if (prevRound !== null && prevRound !== currentRound) {
-        var prevHasBets = SIDES.some(function (s) { return safeAmount(latestMyBets[s]) > 0; });
+        var prevHasBets = SIDES.some(function (s) { return safeAmount(prevMyBets && prevMyBets[s]) > 0; });
         if (prevHasBets) {
             lastRoundBets = {
-                silver: safeAmount(latestMyBets.silver),
-                gold: safeAmount(latestMyBets.gold),
-                diamond: safeAmount(latestMyBets.diamond)
+                silver: safeAmount(prevMyBets.silver),
+                gold: safeAmount(prevMyBets.gold),
+                diamond: safeAmount(prevMyBets.diamond)
             };
             lastRoundBetsRound = prevRound;
             persistLastRoundBets();
         }
+        // Always clear the in-flight current-round snapshot at round change.
+        try {
+            if (window.localStorage) {
+                window.localStorage.removeItem(tpCurrentRoundStorageKey());
+            }
+        } catch (e) { /* ignore */ }
     }
 
     latestMyBets = data.my_bets;
+
+    // If the freshly synced bets in the CURRENT round are non-zero,
+    // mirror them to the in-flight snapshot so we never lose them.
+    var curHasBets = SIDES.some(function (s) { return safeAmount(latestMyBets[s]) > 0; });
+    if (curHasBets) {
+        persistCurrentRoundSnapshot();
+    }
 
     syncCountdown(data.remaining);
     updateBalanceDisplay(data.balance);
@@ -1451,6 +1518,9 @@ function placeGlobalBet(choose, overrideAmount) {
                 SIDES.forEach(function (side) {
                     $("#tpYou" + sideCap(side)).text(formatBetAmount(latestMyBets[side]));
                 });
+                // Persist the in-flight current-round snapshot so we
+                // never lose the user's bets on refresh / round change.
+                persistCurrentRoundSnapshot();
             }
 
             if (data && data.totals) {
