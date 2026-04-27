@@ -136,6 +136,14 @@
             grid-template-rows: auto auto minmax(88px, .44fr) minmax(212px, 1fr) auto auto;
         }
 
+        body.tp-split-view .tp-dealer-section {
+            display: none !important;
+        }
+
+        body.tp-split-view .tp-stage {
+            grid-template-rows: auto auto minmax(0, 0fr) minmax(212px, 1fr) auto auto;
+        }
+
         .tp-wv-topbar {
             display: none !important;
         }
@@ -454,6 +462,17 @@ function tpFitStageToViewport() {
     stageShell.style.height = Math.ceil(naturalHeight * scale) + 'px';
 }
 
+function tpApplySplitViewMode() {
+    var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    var splitThreshold = 760;
+
+    if (viewportHeight > 0 && viewportHeight <= splitThreshold) {
+        document.body.classList.add('tp-split-view');
+    } else {
+        document.body.classList.remove('tp-split-view');
+    }
+}
+
 function buildWalletTopupUrl() {
     if (!walletTopupUrl) {
         return '';
@@ -568,6 +587,7 @@ function refreshTenantWalletBalance() {
 // Balance refresh helper (called by teenPatti.js after win/loss)
 // The existing game JS updates .bal elements; this also syncs the topbar.
 $(document).ready(function () {
+    tpApplySplitViewMode();
     tpFitStageToViewport();
 
     // Observe .bal changes so the top-bar balance stays in sync
@@ -600,13 +620,23 @@ $(document).ready(function () {
 
     window.addEventListener('load', tpFitStageToViewport);
     window.addEventListener('focus', startWalletRefreshBurst);
-    window.addEventListener('resize', tpFitStageToViewport);
-    window.addEventListener('orientationchange', tpFitStageToViewport);
+    window.addEventListener('resize', function () {
+        tpApplySplitViewMode();
+        tpFitStageToViewport();
+    });
+    window.addEventListener('orientationchange', function () {
+        tpApplySplitViewMode();
+        tpFitStageToViewport();
+    });
 
     if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', tpFitStageToViewport);
+        window.visualViewport.addEventListener('resize', function () {
+            tpApplySplitViewMode();
+            tpFitStageToViewport();
+        });
     }
 
+    window.setTimeout(tpApplySplitViewMode, 120);
     window.setTimeout(tpFitStageToViewport, 150);
     window.setTimeout(tpFitStageToViewport, 450);
 
