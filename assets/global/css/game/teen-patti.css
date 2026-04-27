@@ -966,6 +966,15 @@ body {
   background: #fff;
 }
 
+.tp-card-front > .tp-card-front-img {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  flex: 0 0 100% !important;
+  object-fit: fill;
+}
+
 /* Winner glow on revealed card */
 .tp-card-inner.is-flipped.highlight-card .tp-card-front {
   box-shadow: 0 0 12px var(--tp-gold), 0 0 28px rgba(255,215,0,0.5);

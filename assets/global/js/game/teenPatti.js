@@ -1048,7 +1048,7 @@ function renderCardFront(frontElement, code) {
         front.html(createCardFaceHTML(normalizedCode || code));
     });
 
-    img.removeClass("anime-flip")
+    img.removeClass("tp-card-img anime-flip")
         .addClass("tp-card-front-img")
         .attr("alt", getCardDisplayName(code))
         .attr("title", code);
