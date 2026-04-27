@@ -136,6 +136,82 @@
             grid-template-rows: auto auto minmax(88px, .44fr) minmax(212px, 1fr) auto auto;
         }
 
+        @media (max-height: 760px) {
+            .tp-stage {
+                grid-template-rows: auto auto minmax(62px, .30fr) minmax(170px, 1fr) auto auto;
+            }
+        }
+
+        @media (max-height: 680px) {
+            .tp-stage {
+                grid-template-rows: auto auto minmax(46px, .22fr) minmax(144px, 1fr) auto auto;
+            }
+
+            .tp-dealer-section {
+                min-height: 56px !important;
+            }
+
+            .tp-footer {
+                padding: 4px 5px calc(4px + env(safe-area-inset-bottom)) !important;
+            }
+
+            .tp-chips-row {
+                gap: 4px !important;
+                margin-bottom: 4px !important;
+            }
+
+            .tp-chip-btn {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 9px !important;
+            }
+
+            .tp-bottom-actions {
+                grid-template-columns: minmax(0, 1fr) 44px 64px !important;
+                gap: 4px !important;
+            }
+
+            .tp-bal-p,
+            .tp-win-p,
+            .tp-btn-repeat,
+            .tp-btn-topup {
+                height: 29px !important;
+            }
+
+            .tp-btn-repeat,
+            .tp-btn-topup {
+                font-size: 10px !important;
+                padding-inline: 4px !important;
+            }
+        }
+
+        @media (max-height: 620px) {
+            .tp-stage {
+                grid-template-rows: auto auto minmax(0, 0fr) minmax(120px, 1fr) auto auto;
+            }
+
+            .tp-dealer-section {
+                display: none !important;
+            }
+
+            .tp-history-bar {
+                min-height: 26px !important;
+                margin: 2px 4px !important;
+                padding: 3px 4px !important;
+            }
+
+            .tp-hist-label {
+                font-size: 8px !important;
+            }
+
+            .tp-hist-dot {
+                width: 12px !important;
+                height: 16px !important;
+                flex-basis: 12px !important;
+                font-size: 7px !important;
+            }
+        }
+
         .tp-wv-topbar {
             display: none !important;
         }
