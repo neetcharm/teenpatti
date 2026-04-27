@@ -211,12 +211,12 @@ document.body.classList.add('tp-game-page');
 "use strict";
 document.body.classList.add('tp-game-page');
 let imagePath = "{{ asset(activeTemplate(true) . 'images/cards/') }}";
-let tpCardDeckPaths = @json([
-    asset(activeTemplate(true) . 'images/cards/'),
-    asset('assets/templates/parimatch/images/cards/'),
-    asset('assets/templates/sunfyre/images/cards/'),
-    asset('assets/templates/basic/images/cards/'),
-]);
+let tpCardDeckPaths = [
+    "{{ asset(activeTemplate(true) . 'images/cards/') }}",
+    "{{ asset('assets/templates/parimatch/images/cards/') }}",
+    "{{ asset('assets/templates/sunfyre/images/cards/') }}",
+    "{{ asset('assets/templates/basic/images/cards/') }}"
+];
 let avatarPath = "{{ asset('assets/templates/parimatch/images/') }}";
 let cardBackImage = "{{ asset(activeTemplate(true) . 'images/cards/BACK.png') }}";
 let investUrl = "{{ route('user.play.invest', ['teen_patti', @$isDemo]) }}";
