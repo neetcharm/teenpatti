@@ -137,6 +137,18 @@
         }
 
         body.tp-split-view .tp-dealer-section {
+            display: block !important;
+            min-height: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        body.tp-split-view .tp-dealer-section::before,
+        body.tp-split-view .tp-dealer-section > * {
             display: none !important;
         }
 
