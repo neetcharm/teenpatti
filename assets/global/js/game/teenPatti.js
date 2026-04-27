@@ -25,6 +25,7 @@ let countdownTargetTime = 0;
 let tpAutoLayoutStarted = false;
 let tpAutoLayoutTimer = null;
 let tpAutoLayoutObserver = null;
+let winnerPartyTimer = null;
 
 let lastTotals = { silver: 0, gold: 0, diamond: 0 };
 let latestMyBets = { silver: 0, gold: 0, diamond: 0 };
@@ -36,6 +37,10 @@ const MAX_VISIBLE_HISTORY = 20;
 const SIDES = ["silver", "gold", "diamond"];
 const SIDE_LABELS = { silver: "Silver", gold: "Gold", diamond: "Diamond" };
 const SIDE_COLORS = { silver: "#c0c0c0", gold: "#e9d01b", diamond: "#b9f2ff" };
+const SIDE_HISTORY_CLASS = { silver: "dot-s", gold: "dot-g", diamond: "dot-d" };
+
+let historyHydrationInFlight = false;
+let historyHydratedOnce = false;
 
 function normalizeChipValues() {
     var raw = (typeof tpChipValues !== "undefined" && Array.isArray(tpChipValues)) ? tpChipValues : [400, 2000, 4000, 20000, 40000];
@@ -406,7 +411,9 @@ function updateUI(data) {
     syncCountdown(data.remaining);
     updateBalanceDisplay(data.balance);
     updateTotals(data);
-    updateHistory(buildVisibleHistory(data));
+    var visibleHistory = buildVisibleHistory(data);
+    updateHistory(visibleHistory);
+    hydrateHistoryIfMissing(visibleHistory);
 
     if (currentPhase === "hold") {
         lockBetting();
@@ -818,7 +825,7 @@ function forceResetRound() {
     hideNarration();
     closeWinnerModal();
 
-    $(".tp-col").removeClass("round-winner receiving");
+    $(".tp-col").removeClass("round-winner receiving winner-party");
     $(".tp-winner-crown").remove();
     $(".tp-card-inner").removeClass("highlight-card is-flipped");
     $(".tp-hand-rank").text("--").css({ background: "rgba(0,0,0,0.6)", color: "var(--tp-gold)", fontWeight: "" });
@@ -869,6 +876,50 @@ function cardAssetUrl(filename) {
         base += "/";
     }
     return base + filename;
+}
+
+function deckBaseFromImagePath() {
+    var raw = String((typeof imagePath === "string" ? imagePath : "") || "").trim();
+    if (!raw) {
+        return "";
+    }
+    return raw.charAt(raw.length - 1) === "/" ? raw : (raw + "/");
+}
+
+function addCandidateUrl(target, seen, url) {
+    var value = String(url || "").trim();
+    if (!value || seen[value]) {
+        return;
+    }
+    seen[value] = true;
+    target.push(value);
+}
+
+function buildCardAssetCandidates(code) {
+    var candidates = [];
+    var seen = {};
+    var names = [
+        code + ".png",
+        code.replace("-", "") + ".png",
+        code.replace("-", "_") + ".png",
+    ];
+
+    var primaryBase = deckBaseFromImagePath();
+    names.forEach(function (name) {
+        addCandidateUrl(candidates, seen, cardAssetUrl(name));
+    });
+
+    // Extra hard fallback: try known template decks too.
+    if (primaryBase) {
+        ["parimatch", "sunfyre", "basic"].forEach(function (template) {
+            var fallbackBase = primaryBase.replace(/assets\/templates\/[^/]+\/images\/cards\/?$/i, "assets/templates/" + template + "/images/cards/");
+            names.forEach(function (name) {
+                addCandidateUrl(candidates, seen, fallbackBase + name);
+            });
+        });
+    }
+
+    return candidates;
 }
 
 /* ============================================================
@@ -985,7 +1036,7 @@ function revealRankWithPause(sideCapName, rank, delay, winner) {
 
 function highlightWinnerColumn(winner) {
     var cap = sideCap(winner);
-    $(".tp-col").removeClass("round-winner");
+    $(".tp-col").removeClass("round-winner winner-party");
     $(".tp-winner-crown").remove();
 
     var col = $("#tpCol" + cap);
@@ -1002,15 +1053,17 @@ function highlightWinnerColumn(winner) {
         var rect = colEl.getBoundingClientRect();
         createSparkles(rect.left + rect.width / 2, rect.top + 30, 24);
     }
-    
-    // Dynamic lighting show across the table
-    var tableEl = document.querySelector(".tp-play-area");
-    if (tableEl) {
-        tableEl.classList.add("table-win-lighting", "win-" + winner.toLowerCase());
-        setTimeout(function() {
-            tableEl.classList.remove("table-win-lighting", "win-" + winner.toLowerCase());
-        }, 3000); // exactly 3 seconds
+
+    // Winner party effect should run only on the winner column.
+    if (winnerPartyTimer) {
+        clearTimeout(winnerPartyTimer);
+        winnerPartyTimer = null;
     }
+    col.addClass("winner-party");
+    winnerPartyTimer = setTimeout(function () {
+        col.removeClass("winner-party");
+        winnerPartyTimer = null;
+    }, 2400);
 }
 
 function closeSummaryAndReset() {
@@ -1021,7 +1074,7 @@ function closeSummaryAndReset() {
     dealingStartedAt = 0;
     dealingForRound = null;
 
-    $(".tp-col").removeClass("round-winner receiving");
+    $(".tp-col").removeClass("round-winner receiving winner-party");
     $(".tp-winner-crown").remove();
     $(".tp-card-inner").removeClass("highlight-card is-flipped");
 
@@ -1073,11 +1126,7 @@ function createCardImg(card, onFallback) {
         return img;
     }
 
-    var candidates = [
-        cardAssetUrl(code + ".png"),
-        cardAssetUrl(code.replace("-", "") + ".png"),
-        cardAssetUrl(code.replace("-", "_") + ".png")
-    ];
+    var candidates = buildCardAssetCandidates(code);
     var idx = 0;
 
     var applyNext = function () {
@@ -1178,7 +1227,7 @@ function unlockBetting() {
 
 function resetRoundUI() {
     $(".tp-hand-rank").text("--").css({ background: "rgba(0,0,0,0.6)", color: "var(--tp-gold)", fontWeight: "" });
-    $(".tp-col").removeClass("round-winner receiving");
+    $(".tp-col").removeClass("round-winner receiving winner-party");
     $(".tp-winner-crown").remove();
     $(".tp-card-inner").removeClass("highlight-card is-flipped");
     $(".tp-timer-section").removeClass("hide-timer");
@@ -1364,10 +1413,78 @@ function updateHistory(history) {
     normalizedRows.forEach(function (item) {
         var side = String(item.winner || "").toLowerCase();
         var char = side.charAt(0).toUpperCase();
-        var cls = "dot-" + side;
+        var cls = SIDE_HISTORY_CLASS[side] || ("dot-" + side);
         html += '<div class="tp-hist-dot ' + cls + '" data-round="' + item.round + '" title="Round #' + item.round + '">' + char + "</div>";
     });
     $("#tpHistory").html(html);
+}
+
+function resolveHistoryUrl() {
+    var url = (typeof historyUrl !== "undefined" && historyUrl) ? historyUrl : null;
+    if (!url && typeof syncUrl !== "undefined" && syncUrl) {
+        url = String(syncUrl)
+            .replace("/global/sync/", "/history/")
+            .replace("/global/sync", "/history");
+    }
+    return url;
+}
+
+function hydrateHistoryIfMissing(visibleHistory) {
+    var rows = Array.isArray(visibleHistory) ? visibleHistory : [];
+    if (rows.length > 0 || historyHydrationInFlight || historyHydratedOnce) {
+        return;
+    }
+
+    var url = resolveHistoryUrl();
+    if (!url) {
+        return;
+    }
+
+    historyHydrationInFlight = true;
+
+    $.ajax({
+        url: url,
+        type: "GET",
+        cache: false,
+        timeout: 4000,
+        success: function (data) {
+            var rawRows = Array.isArray(data && data.history) ? data.history : [];
+            var merged = {};
+
+            rawRows.forEach(function (item) {
+                var normalized = normalizeHistoryEntry(item);
+                if (!normalized) {
+                    return;
+                }
+                merged[normalized.round] = normalized;
+            });
+
+            var rounds = Object.keys(merged)
+                .map(function (round) { return safeAmount(round); })
+                .filter(function (round) { return round > 0; })
+                .sort(function (a, b) { return b - a; })
+                .slice(0, MAX_VISIBLE_HISTORY);
+
+            if (!rounds.length) {
+                return;
+            }
+
+            localHistoryMap = {};
+            rounds.forEach(function (round) {
+                localHistoryMap[round] = merged[round];
+            });
+
+            var hydratedRows = rounds.map(function (round) {
+                return localHistoryMap[round];
+            });
+
+            updateHistory(hydratedRows);
+            historyHydratedOnce = true;
+        },
+        complete: function () {
+            historyHydrationInFlight = false;
+        }
+    });
 }
 
 /* ===== CHIP ANIMATIONS ===== */
@@ -1624,12 +1741,7 @@ function closeHistoryPanel() {
 }
 
 function loadHistoryPanel() {
-    var url = (typeof historyUrl !== "undefined" && historyUrl) ? historyUrl : null;
-    if (!url && typeof syncUrl !== "undefined" && syncUrl) {
-        url = String(syncUrl)
-            .replace("/global/sync/", "/history/")
-            .replace("/global/sync", "/history");
-    }
+    var url = resolveHistoryUrl();
     if (!url) {
         $("#tpHistBody").html('<div class="tp-hist-empty">History URL not configured.</div>');
         return;

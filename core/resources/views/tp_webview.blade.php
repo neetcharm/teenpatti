@@ -266,14 +266,14 @@
         }
 
         body.tp-split-view .tp-cards-row {
-            min-height: 18px !important;
-            gap: 1px !important;
-            margin: 0 !important;
+            min-height: 26px !important;
+            gap: 2px !important;
+            margin: 1px 0 !important;
         }
 
         body.tp-split-view .tp-card-container,
         body.tp-split-view .tp-card-img {
-            width: clamp(10px, 28%, 14px) !important;
+            width: clamp(14px, 30%, 20px) !important;
         }
 
         body.tp-split-view .tp-hand-rank {
@@ -320,9 +320,9 @@
         }
 
         body.tp-split-view .tp-hist-dot {
-            width: 10px !important;
-            height: 14px !important;
-            flex-basis: 10px !important;
+            width: 12px !important;
+            height: 12px !important;
+            flex-basis: 12px !important;
             font-size: 7px !important;
         }
 

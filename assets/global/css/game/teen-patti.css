@@ -940,10 +940,11 @@ body {
 .tp-card-back img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 4px;
   display: block;
   opacity: .95;
+  background: #fff;
 }
 
 /* Front face — pre-rotated so it shows AFTER flip */
@@ -959,9 +960,10 @@ body {
 .tp-card-front-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   border-radius: 4px;
+  background: #fff;
 }
 
 /* Winner glow on revealed card */
@@ -1642,6 +1644,9 @@ body {
 .dot-s { background: var(--tp-silver); }
 .dot-g { background: var(--tp-gold); }
 .dot-d { background: var(--tp-diamond); }
+.dot-silver { background: var(--tp-silver); }
+.dot-gold { background: var(--tp-gold); }
+.dot-diamond { background: var(--tp-diamond); }
 
 /* Footer Chips */
 .tp-footer {
@@ -1989,35 +1994,36 @@ body {
 }
 
 /* Dynamic table lighting show */
-.table-win-lighting {
-  animation: table-lighting-flash 3s ease-in-out forwards;
+.tp-col.winner-party {
   position: relative;
+  isolation: isolate;
+  animation: table-lighting-flash 2.4s ease-in-out forwards;
 }
 
-.table-win-lighting::before {
+.tp-col.winner-party::after {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   border-radius: inherit;
-  z-index: 10;
+  z-index: 2;
   pointer-events: none;
-  mix-blend-mode: overlay;
-  animation: table-overlay-flash 3s ease-in-out forwards;
+  mix-blend-mode: screen;
+  animation: table-overlay-flash 2.4s ease-in-out forwards;
 }
 
-.table-win-lighting.win-silver::before {
-  background: radial-gradient(circle at center, rgba(192,192,192,0.4) 0%, transparent 70%);
-  box-shadow: inset 0 0 50px rgba(192,192,192,0.5);
+.tp-col.winner-party[data-choose="silver"]::after {
+  background: radial-gradient(circle at center, rgba(192,192,192,0.34) 0%, transparent 72%);
+  box-shadow: inset 0 0 36px rgba(192,192,192,0.38);
 }
 
-.table-win-lighting.win-gold::before {
-  background: radial-gradient(circle at center, rgba(255,215,0,0.4) 0%, transparent 70%);
-  box-shadow: inset 0 0 50px rgba(255,215,0,0.5);
+.tp-col.winner-party[data-choose="gold"]::after {
+  background: radial-gradient(circle at center, rgba(255,215,0,0.34) 0%, transparent 72%);
+  box-shadow: inset 0 0 36px rgba(255,215,0,0.38);
 }
 
-.table-win-lighting.win-diamond::before {
-  background: radial-gradient(circle at center, rgba(0,212,255,0.4) 0%, transparent 70%);
-  box-shadow: inset 0 0 50px rgba(0,212,255,0.5);
+.tp-col.winner-party[data-choose="diamond"]::after {
+  background: radial-gradient(circle at center, rgba(0,212,255,0.34) 0%, transparent 72%);
+  box-shadow: inset 0 0 36px rgba(0,212,255,0.38);
 }
 
 @keyframes table-lighting-flash {
@@ -2941,17 +2947,18 @@ body:has(.tp-game-wrapper) .col-12 {
 }
 
 .tp-cards-row {
-  min-height: 30px;
-  gap: 1px;
-  margin: 1px 0 0;
+  min-height: 58px;
+  gap: 2px;
+  margin: 4px 0 2px;
   width: 100%;
 }
 
 .tp-card-container,
 .tp-card-img {
-  width: clamp(14px, 28%, 22px);
+  width: clamp(30px, 31%, 48px);
   height: auto;
   aspect-ratio: 44 / 64;
+  flex: 0 0 auto;
   flex-shrink: 1;
   min-width: 0;
 }
@@ -2959,11 +2966,11 @@ body:has(.tp-game-wrapper) .col-12 {
 .tp-hand-rank {
   width: 90%;
   min-width: 0;
-  min-height: 18px;
+  min-height: 20px;
   margin: 1px 0;
   color: #eaf7ff;
   border-radius: 999px;
-  font-size: 7px;
+  font-size: 8px;
   background: rgba(4, 17, 27, 0.58);
 }
 
@@ -3014,29 +3021,36 @@ body:has(.tp-game-wrapper) .col-12 {
 }
 
 .tp-history-bar {
-  min-height: 34px;
-  margin: 4px 6px;
-  padding: 4px 6px;
+  min-height: 36px;
+  margin: 1px 6px 2px;
+  padding: 5px 7px;
   gap: 4px;
   border: 1px solid var(--tp-glass-border);
   border-radius: 15px;
+  background: linear-gradient(135deg, rgba(15, 58, 78, 0.9), rgba(13, 34, 56, 0.88));
+  box-shadow: inset 0 1px 0 rgba(134, 232, 255, 0.16);
   max-width: 100%;
   overflow: hidden;
 }
 
 .tp-hist-items {
   min-width: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   gap: 2px;
   flex: 1;
   max-width: 100%;
 }
 
 .tp-hist-dot {
-  width: 14px;
-  height: 20px;
-  flex: 0 0 14px;
-  font-size: 9px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border-radius: 50%;
+  font-size: 10px;
+  color: #04111d;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .tp-btn-chart {
@@ -3247,13 +3261,14 @@ body:has(.tp-game-wrapper) .col-12 {
   }
 
   .tp-cards-row {
-    min-height: 26px;
-    gap: 1px;
+    min-height: 44px;
+    gap: 2px;
+    margin: 1px 0;
   }
 
   .tp-card-container,
   .tp-card-img {
-    width: clamp(12px, 26%, 18px);
+    width: clamp(22px, 31%, 34px);
   }
 
   .tp-hand-rank {
@@ -3282,7 +3297,7 @@ body:has(.tp-game-wrapper) .col-12 {
 
   .tp-history-bar {
     min-height: 32px;
-    margin: 3px 5px;
+    margin: 1px 5px 2px;
     padding: 4px 5px;
   }
 
@@ -3291,9 +3306,9 @@ body:has(.tp-game-wrapper) .col-12 {
   }
 
   .tp-hist-dot {
-    width: 14px;
-    height: 20px;
-    flex-basis: 14px;
+    width: 16px;
+    height: 16px;
+    flex-basis: 16px;
     font-size: 8px;
   }
 
@@ -3365,7 +3380,7 @@ body:has(.tp-game-wrapper) .col-12 {
 
   .tp-card-container,
   .tp-card-img {
-    width: 11px;
+    width: 18px;
   }
 
   .tp-bet-slot {
@@ -3512,14 +3527,14 @@ body:has(.tp-game-wrapper) .col-12 {
   }
 
   body.tp-game-page .tp-cards-row {
-    min-height: 18px !important;
+    min-height: 24px !important;
     gap: 1px !important;
     margin: 0 !important;
   }
 
   body.tp-game-page .tp-card-container,
   body.tp-game-page .tp-card-img {
-    width: clamp(10px, 28%, 14px) !important;
+    width: clamp(14px, 30%, 22px) !important;
   }
 
   body.tp-game-page .tp-hand-rank {
