@@ -109,10 +109,12 @@ class TeenPattiGlobalManager
                 'diamond' => (float) ($bets['diamond'] ?? 0),
             ];
 
-            $winner = $this->chooseWinnerFromTotals($totals);
-
-            // Deal hands (rigged so winner gets best hand)
-            $hands = $this->dealRiggedHands($winner);
+            $manualSide = $this->manualOverrideWinnerSide();
+            $hands = $manualSide !== null
+                ? $this->dealHandsForWinner($manualSide)
+                : $this->dealRankedHands();
+            $winner = $this->determineWinnerFromHands($hands);
+            $scores = $this->handScores($hands);
 
             $result = [
                 'round'    => $round,
@@ -128,12 +130,13 @@ class TeenPattiGlobalManager
                     'gold'    => $this->highCard($hands['gold']),
                     'diamond' => $this->highCard($hands['diamond']),
                 ],
+                'scores' => $scores,
                 'totals' => [
                     'silver'  => round((float) $totals['silver'], 2),
                     'gold'    => round((float) $totals['gold'], 2),
                     'diamond' => round((float) $totals['diamond'], 2),
                 ],
-                'reason' => $this->winnerReason($winner, $totals),
+                'reason' => $this->winnerReason($winner, $totals, $hands),
                 'user_payouts' => $this->processPayoutsSafe($round, $winner, $bets),
             ];
 
@@ -156,37 +159,22 @@ class TeenPattiGlobalManager
         }
     }
 
-    private function chooseWinnerFromTotals(array $totals): string
-    {
-        $manualSide = $this->manualOverrideWinnerSide();
-        if ($manualSide !== null) {
-            return $manualSide;
-        }
-
-        return $this->nextFairRandomWinner();
-    }
-
-    private function winnerReason(string $winner, array $totals): string
+    private function winnerReason(string $winner, array $totals, array $hands = []): string
     {
         $manualSide = $this->manualOverrideWinnerSide();
         if ($manualSide !== null) {
             return sprintf(
-                'Manual override is active for this tenant, so %s was selected from the tenant panel.',
+                'Manual override selected %s and the dealt cards were generated so %s wins by Teen Patti hand ranking.',
+                ucfirst($winner),
                 ucfirst($winner)
             );
         }
 
-        $normalized = [
-            'silver' => (float) ($totals['silver'] ?? 0),
-            'gold' => (float) ($totals['gold'] ?? 0),
-            'diamond' => (float) ($totals['diamond'] ?? 0),
-        ];
-
-        if (array_sum($normalized) <= 0.00001) {
-            return sprintf('No bets were placed, so %s was selected randomly.', ucfirst($winner));
-        }
-
-        return sprintf('Fair random mode selected %s for this round.', ucfirst($winner));
+        return sprintf(
+            '%s won by Teen Patti hand ranking: %s.',
+            ucfirst($winner),
+            $this->rankLabel($hands[$winner] ?? [])
+        );
     }
 
     public function getManualOverrideInsights(?int $round = null): array
@@ -1115,22 +1103,65 @@ class TeenPattiGlobalManager
     /* ================================================================
      *  CARD DEALING
      * ================================================================ */
-    private function dealRiggedHands(string $winner): array
+    private function dealRankedHands(): array
     {
         $deck = $this->fullDeck();
         shuffle($deck);
         $hands = ['silver' => [], 'gold' => [], 'diamond' => []];
 
-        // Give winner 3 random cards first
-        $hands[$winner] = [array_pop($deck), array_pop($deck), array_pop($deck)];
+        foreach (['silver', 'gold', 'diamond'] as $side) {
+            $hands[$side] = [array_pop($deck), array_pop($deck), array_pop($deck)];
+        }
 
-        // Give losers 3 random cards each
-        foreach (['silver', 'gold', 'diamond'] as $ph) {
-            if ($ph !== $winner) {
-                $hands[$ph] = [array_pop($deck), array_pop($deck), array_pop($deck)];
+        return $hands;
+    }
+
+    private function dealHandsForWinner(string $winner): array
+    {
+        for ($attempt = 0; $attempt < 250; $attempt++) {
+            $hands = $this->dealRankedHands();
+            if ($this->determineWinnerFromHands($hands) === $winner) {
+                return $hands;
             }
         }
+
+        return $this->forcedWinnerHands($winner);
+    }
+
+    private function forcedWinnerHands(string $winner): array
+    {
+        $winner = in_array($winner, ['silver', 'gold', 'diamond'], true) ? $winner : 'gold';
+        $hands = [
+            'silver' => ['K-H', '9-D', '4-S'],
+            'gold' => ['Q-C', '8-H', '3-D'],
+            'diamond' => ['J-S', '7-C', '2-H'],
+        ];
+
+        $hands[$winner] = ['A-S', 'A-H', 'A-D'];
+
         return $hands;
+    }
+
+    private function handScores(array $hands): array
+    {
+        return [
+            'silver' => $this->rankHand($hands['silver'] ?? []),
+            'gold' => $this->rankHand($hands['gold'] ?? []),
+            'diamond' => $this->rankHand($hands['diamond'] ?? []),
+        ];
+    }
+
+    private function determineWinnerFromHands(array $hands): string
+    {
+        $scores = $this->handScores($hands);
+        $maxScore = max($scores);
+        $candidates = array_keys(array_filter($scores, static fn ($score) => $score === $maxScore));
+
+        if (!$candidates) {
+            return 'gold';
+        }
+
+        return $candidates[array_rand($candidates)];
     }
 
     private function fullDeck(): array
@@ -1215,7 +1246,7 @@ class TeenPattiGlobalManager
             6 => 'Trail',
             5 => 'Pure Sequence',
             4 => 'Sequence',
-            3 => 'Flush',
+            3 => 'Color',
             2 => 'Pair',
             default => 'High Card',
         };

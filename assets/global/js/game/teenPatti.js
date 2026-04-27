@@ -1000,7 +1000,16 @@ function highlightWinnerColumn(winner) {
     var colEl = col[0];
     if (colEl) {
         var rect = colEl.getBoundingClientRect();
-        createSparkles(rect.left + rect.width / 2, rect.top + 30, 12);
+        createSparkles(rect.left + rect.width / 2, rect.top + 30, 24);
+    }
+    
+    // Dynamic lighting show across the table
+    var tableEl = document.querySelector(".tp-play-area");
+    if (tableEl) {
+        tableEl.classList.add("table-win-lighting", "win-" + winner.toLowerCase());
+        setTimeout(function() {
+            tableEl.classList.remove("table-win-lighting", "win-" + winner.toLowerCase());
+        }, 3000); // exactly 3 seconds
     }
 }
 
@@ -1558,30 +1567,41 @@ function triggerWinConfetti(side) {
     var wrapper = document.querySelector(".tp-game-wrapper");
     if (!wrapper) return;
     var palette = CONF_PALETTES[side] || CONF_PALETTES.gold;
-    var shapes  = ["", "circle", "strip"];
+    var shapes  = ["", "circle", "strip", "chip"]; // Added chip shape
 
-    for (var i = 0; i < 72; i++) {
+    for (var i = 0; i < 120; i++) { // Increased particle count
         (function (delay) {
             setTimeout(function () {
                 var p = document.createElement("div");
-                p.className = "tp-confetti " + shapes[Math.floor(Math.random() * shapes.length)];
+                var shape = shapes[Math.floor(Math.random() * shapes.length)];
+                p.className = "tp-confetti " + shape;
                 var color = palette[Math.floor(Math.random() * palette.length)];
-                var cx    = (Math.random() * 200 - 100).toFixed(1);
-                var cy    = (Math.random() * 240 + 80).toFixed(1);
+                
+                if (shape === "chip") {
+                    p.style.backgroundColor = color;
+                    p.style.border = "2px dashed rgba(255,255,255,0.8)";
+                    p.style.boxShadow = "inset 0 0 5px rgba(0,0,0,0.5)";
+                } else {
+                    p.style.background = color;
+                }
+                
+                var cx    = (Math.random() * 300 - 150).toFixed(1); // Wider spread
+                var cy    = (Math.random() * 340 + 80).toFixed(1);  // Deeper fall
                 var cr    = (Math.random() * 720 - 360).toFixed(1);
-                var dur   = (Math.random() * 0.6 + 0.65).toFixed(3);
-                p.style.cssText =
-                    "left:" + (Math.random() * 92 + 4) + "%" +
-                    ";top:" + (Math.random() * 35 + 5) + "%" +
-                    ";background:" + color +
-                    ";--cx:" + cx + "px" +
-                    ";--cy:" + cy + "px" +
-                    ";--cr:" + cr + "deg" +
-                    ";--confetti-dur:" + dur + "s";
+                var dur   = (Math.random() * 1.5 + 1.5).toFixed(3); // Make it last exactly up to 3s
+                
+                p.style.left = (Math.random() * 92 + 4) + "%";
+                p.style.top = "-5%"; // Start from above the screen for rain effect
+                
+                p.style.setProperty("--cx", cx + "px");
+                p.style.setProperty("--cy", cy + "px");
+                p.style.setProperty("--cr", cr + "deg");
+                p.style.setProperty("--confetti-dur", dur + "s");
+                
                 wrapper.appendChild(p);
-                setTimeout(function () { p.remove(); }, 2000);
+                setTimeout(function () { p.remove(); }, parseFloat(dur) * 1000);
             }, delay);
-        })(Math.random() * 900);
+        })(Math.random() * 1500); // Spread the burst over 1.5s so it continues to rain
     }
 }
 

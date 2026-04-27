@@ -95,7 +95,7 @@ class TeenPatti extends Game
             6 => 'Trail',
             5 => 'Pure Sequence',
             4 => 'Sequence',
-            3 => 'Flush',
+            3 => 'Color',
             2 => 'Pair',
             default => 'High Card',
         };

@@ -4,6 +4,7 @@
 /core/storage/framework/views/*.php
 /core/storage/logs/*.log
 /core/vendor/
+/core/.composer/
 /node_modules/
 core/.env
 .env
