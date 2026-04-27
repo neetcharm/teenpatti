@@ -133,11 +133,52 @@
             min-width: 0;
             overflow: hidden;
             display: grid;
-            grid-template-rows: auto auto minmax(88px, .44fr) minmax(212px, 1fr) auto auto;
+            position: relative;
+            /* 5 rows: header / timer / play (1fr) / history / footer  — dealer row removed */
+            grid-template-rows: auto auto minmax(0, 1fr) auto auto;
         }
 
         body.tp-split-view .tp-stage {
-            grid-template-rows: auto auto auto minmax(88px, 1fr) auto auto;
+            grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+        }
+
+        /* Dealer + narration are completely removed from the layout in the webview */
+        .tp-dealer-section,
+        .tp-dealer-avatar,
+        .tp-dealer-avatar-body,
+        .tp-dealer-hand-layer,
+        .tp-dealer-name,
+        .tp-dealer-status,
+        .dealer-glow-ring,
+        .tp-narration-bar,
+        body.tp-split-view .tp-dealer-section,
+        body.tp-split-view .tp-dealer-avatar,
+        body.tp-split-view .tp-dealer-avatar-body,
+        body.tp-split-view .dealer-glow-ring,
+        body.tp-split-view .tp-dealer-name,
+        body.tp-split-view .tp-dealer-status,
+        body.tp-split-view .tp-narration-bar {
+            display: none !important;
+        }
+
+        /* Invisible deal anchor for flying-card animation only */
+        .tp-deal-anchor {
+            position: absolute;
+            top: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 1px;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1;
+        }
+        .tp-deal-anchor .tp-shuffle-deck {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translate(-50%, -50%);
+            opacity: 0;
         }
 
         body.tp-split-view .tp-header {
@@ -190,44 +231,6 @@
 
         body.tp-split-view .tp-timer-num {
             font-size: 14px !important;
-        }
-
-        body.tp-split-view .tp-dealer-section {
-            display: flex !important;
-            min-height: 30px !important;
-            height: 30px !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            align-items: center !important;
-            overflow: hidden !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-
-        body.tp-split-view .tp-dealer-section::before {
-            display: block !important;
-            width: 112px !important;
-            height: 18px !important;
-            bottom: 5px !important;
-            border-radius: 9px !important;
-        }
-
-        body.tp-split-view .tp-dealer-avatar {
-            display: flex !important;
-            width: 28px !important;
-            height: 30px !important;
-        }
-
-        body.tp-split-view .tp-dealer-avatar-body {
-            width: 24px !important;
-            height: 30px !important;
-        }
-
-        body.tp-split-view .dealer-glow-ring,
-        body.tp-split-view .tp-dealer-name,
-        body.tp-split-view .tp-dealer-status,
-        body.tp-split-view .tp-shuffle-deck {
-            display: none !important;
         }
 
         body.tp-split-view .tp-play-area {
@@ -356,24 +359,36 @@
         }
 
         body.tp-split-view .tp-bottom-actions {
-            grid-template-columns: minmax(0, 1fr) 42px 58px !important;
-            gap: 3px !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto auto auto !important;
+            gap: 4px !important;
+            align-items: center !important;
         }
 
         body.tp-split-view .tp-bal-p,
         body.tp-split-view .tp-win-p,
         body.tp-split-view .tp-btn-repeat,
         body.tp-split-view .tp-btn-topup {
-            height: 23px !important;
+            height: 26px !important;
             border-radius: 8px !important;
         }
 
         body.tp-split-view .tp-bal-p {
-            padding: 0 5px !important;
+            padding: 0 6px !important;
+            min-width: 0 !important;
         }
 
         body.tp-split-view .tp-bal-val {
             font-size: 10px !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        body.tp-split-view .tp-win-p {
+            padding: 1px 6px !important;
+            min-width: 38px !important;
         }
 
         body.tp-split-view .tp-win-label {
@@ -381,14 +396,23 @@
         }
 
         body.tp-split-view .tp-win-val {
-            font-size: 12px !important;
+            font-size: 11px !important;
         }
 
-        body.tp-split-view .tp-btn-repeat,
         body.tp-split-view .tp-btn-topup {
-            padding: 0 4px !important;
+            padding: 0 6px !important;
             font-size: 9px !important;
             line-height: 1 !important;
+            min-width: 38px !important;
+        }
+
+        body.tp-split-view .tp-btn-repeat.tp-btn-repeat--icon {
+            width: 26px !important;
+            height: 26px !important;
+            min-width: 26px !important;
+            padding: 0 !important;
+            font-size: 12px !important;
+            border-radius: 50% !important;
         }
 
         .tp-wv-topbar {
@@ -435,30 +459,8 @@
                     </div>
                 </div>
 
-                {{-- Fantasy Dealer Lady --}}
-                <div class="tp-dealer-section">
-                    <div class="tp-dealer-avatar" id="tpDealerAvatar">
-                        <div class="tp-dealer-avatar-body">
-                            <img
-                                src="{{ asset('assets/templates/parimatch/images/dealer_avatar_body.png') }}"
-                                class="tp-dealer-avatar-img"
-                                alt="Dealer Avatar"
-                                loading="eager"
-                                decoding="async"
-                            >
-                            <div class="tp-dealer-hand-layer tp-dealer-hand-right" aria-hidden="true">
-                                <img
-                                    src="{{ asset('assets/templates/parimatch/images/dealer_avatar_hand_right.png') }}"
-                                    alt=""
-                                    loading="eager"
-                                    decoding="async"
-                                >
-                            </div>
-                        </div>
-                        <div class="dealer-glow-ring"></div>
-                        <div class="tp-dealer-name">Dealer Riya</div>
-                    </div>
-                    <div class="tp-dealer-status" id="tpDealerStatus">Waiting...</div>
+                {{-- Invisible deal anchor (origin for flying card animation) --}}
+                <div class="tp-deal-anchor" id="tpDealerAvatar" aria-hidden="true">
                     <div class="tp-shuffle-deck" id="tpShuffleDeck">
                         <div class="tp-shuffle-card shuffle-1"></div>
                         <div class="tp-shuffle-card shuffle-2"></div>
@@ -581,7 +583,9 @@
                         >
                             Top Up
                         </button>
-                        <button class="tp-btn-repeat" id="tpBtnRepeat">Repeat</button>
+                        <button class="tp-btn-repeat tp-btn-repeat--icon" id="tpBtnRepeat" type="button" title="Repeat last bet" aria-label="Repeat last bet">
+                            <i class="fas fa-redo-alt" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -609,16 +613,21 @@
             <div class="tp-stop-sign"><span>Stop Betting!</span></div>
         </div>
 
-        {{-- Winner modal --}}
-        <div class="tp-winner-modal" id="tpWinnerModal">
-            <div class="tp-avatar-pop">
-                <div class="tp-avatar-pop-frame">
-                    <img src="" id="tpWinnerImg" alt="winner">
+        {{-- Win celebration modal --}}
+        <div class="tp-win-modal" id="tpWinnerModal" aria-hidden="true">
+            <div class="tp-win-modal__backdrop"></div>
+            <div class="tp-win-modal__confetti" id="tpWinConfetti" aria-hidden="true"></div>
+            <div class="tp-win-modal__card" role="dialog" aria-live="polite">
+                <div class="tp-win-modal__rays" aria-hidden="true"></div>
+                <div class="tp-win-modal__ring" aria-hidden="true"></div>
+                <div class="tp-win-modal__crown" aria-hidden="true"><i class="fas fa-crown"></i></div>
+                <div class="tp-win-modal__title" id="tpWinnerRoundTitle">You Win</div>
+                <div class="tp-win-modal__amount" id="tpWinAmount">
+                    <span class="tp-win-modal__currency">+</span>
+                    <span class="tp-win-modal__amount-value" id="tpWinAmountValue">0</span>
                 </div>
-                <div class="tp-avatar-pop-sign">
-                    <div class="tp-pop-round" id="tpWinnerRoundTitle">Round Result</div>
-                    <div class="tp-pop-message" id="tpWinnerStatusMsg">Winner Popup</div>
-                </div>
+                <div class="tp-win-modal__message" id="tpWinnerStatusMsg">Congratulations!</div>
+                <img src="" id="tpWinnerImg" alt="" class="tp-win-modal__avatar" aria-hidden="true">
             </div>
         </div>
 

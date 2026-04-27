@@ -22,21 +22,9 @@
                 </div>
             </div>
 
-            {{-- Dealer --}}
-            <div class="tp-dealer-section">
-                <div class="tp-dealer-avatar" id="tpDealerAvatar">
-                    <div class="tp-dealer-avatar-body">
-                        <img
-                            src="{{ asset('assets/templates/parimatch/images/dealer_avatar_body.png') }}"
-                            class="tp-dealer-avatar-img"
-                            alt="Dealer Avatar"
-                            loading="eager"
-                            decoding="async"
-                        >
-                    </div>
-                    <div class="dealer-glow-ring"></div>
-                </div>
-                <div class="tp-dealer-status" id="tpDealerStatus">Waiting...</div>
+            {{-- Invisible deal anchor (origin for flying card animation) --}}
+            <div class="tp-deal-anchor" id="tpDealerAvatar" aria-hidden="true">
+                <div id="tpDealerStatus" style="display:none"></div>
             </div>
 
             {{-- Betting area --}}

@@ -3772,15 +3772,44 @@ body:has(.tp-game-wrapper) {
     position: relative;
 }
 
-/* Kill the old dealer section / extra spacing completely */
+/* Kill the old dealer section / extra spacing completely.
+   Ultra-high specificity to override any earlier rules including
+   per-template !important overrides. */
 .tp-dealer-section,
 .tp-dealer-avatar,
 .tp-dealer-avatar-body,
+.tp-dealer-avatar-img,
 .tp-dealer-hand-layer,
+.tp-dealer-hand-right,
 .tp-dealer-name,
 .tp-dealer-status,
-.dealer-glow-ring {
+.dealer-glow-ring,
+body .tp-dealer-section,
+body .tp-dealer-avatar,
+body .tp-dealer-name,
+body.tp-game-page .tp-dealer-section,
+body.tp-game-page .tp-dealer-avatar,
+body.tp-game-page .tp-dealer-name,
+body.tp-split-view .tp-dealer-section,
+body.tp-split-view .tp-dealer-avatar,
+body.tp-split-view .tp-dealer-name,
+.tp-game-wrapper .tp-dealer-section,
+.tp-game-wrapper .tp-dealer-avatar,
+.tp-game-wrapper .tp-dealer-name,
+.tp-stage .tp-dealer-section,
+.tp-stage .tp-dealer-avatar,
+.tp-stage .tp-dealer-name {
     display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
 }
 
 /* Also hide the old narration bar — frees vertical space */
