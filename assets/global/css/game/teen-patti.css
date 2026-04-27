@@ -3719,3 +3719,515 @@ body.tp-game-page .tp-btn-repeat.tp-btn-repeat--icon {
     }
 }
 
+
+/* ============================================================
+   RESPONSIVE WEBVIEW LAYOUT v2 — Dealer removed, edge-to-edge
+   ============================================================ */
+
+/* Use dynamic viewport units everywhere so content fits in
+   any webview / split-screen / small-device context. */
+:root {
+    --tp-app-height: 100dvh;
+}
+
+/* Edge-to-edge: let the game take the ENTIRE viewport
+   (inside the 40% webview on mobile, or full screen on desktop) */
+body.tp-game-page .row.min-vh-100,
+body.tp-game-page .col-12,
+body.tp-game-page .col-md-8,
+body.tp-game-page .col-lg-5,
+body:has(.tp-game-wrapper) .row.min-vh-100,
+body:has(.tp-game-wrapper) .col-12,
+body:has(.tp-game-wrapper) .col-md-8,
+body:has(.tp-game-wrapper) .col-lg-5 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+}
+
+body.tp-game-page,
+body:has(.tp-game-wrapper) {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 5-row grid (no dealer section). The invisible deal anchor
+   is absolutely positioned so it doesn't consume a row. */
+.tp-game-wrapper,
+.tp-wv-root .tp-game-wrapper {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto !important;
+    border-radius: 0 !important;
+    border: none !important;
+    position: relative;
+}
+
+/* Kill the old dealer section / extra spacing completely */
+.tp-dealer-section,
+.tp-dealer-avatar,
+.tp-dealer-avatar-body,
+.tp-dealer-hand-layer,
+.tp-dealer-name,
+.tp-dealer-status,
+.dealer-glow-ring {
+    display: none !important;
+}
+
+/* Also hide the old narration bar — frees vertical space */
+.tp-narration-bar,
+.tp-game-wrapper .tp-narration-bar {
+    display: none !important;
+}
+
+/* Invisible "deal anchor" (origin of flying cards). Sits at
+   top-center, behind content, takes no grid space. */
+.tp-deal-anchor {
+    position: absolute !important;
+    top: clamp(40px, 8dvh, 80px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 1;
+}
+.tp-deal-anchor .tp-shuffle-deck {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+}
+
+/* Header: compact, safe on tiny screens */
+.tp-header,
+body.tp-game-page .tp-header {
+    min-height: 38px;
+    padding: 4px 8px;
+    margin: 4px 6px 0;
+}
+
+/* Timer / phase badge: tighter */
+.tp-timer-section,
+body.tp-game-page .tp-timer-section {
+    min-height: 34px;
+    padding: 3px 8px;
+    margin: 3px 6px 0;
+}
+
+/* Play area takes all remaining vertical space */
+.tp-play-area,
+body.tp-game-page .tp-play-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 4px 5px 0;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+.tp-columns,
+body.tp-game-page .tp-columns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+}
+
+.tp-col,
+body.tp-game-page .tp-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    height: 100%;
+    padding: 4px 3px;
+    gap: 3px;
+}
+
+/* Character frame scales with column width */
+.tp-col .tp-char-frame {
+    width: clamp(34px, 12vw, 62px);
+    height: clamp(34px, 12vw, 62px);
+    flex: 0 0 auto;
+}
+
+.tp-col .tp-side-name {
+    font-size: clamp(8px, 2.2vw, 11px);
+    margin: 1px 0;
+    flex: 0 0 auto;
+}
+
+.tp-cards-row {
+    gap: 2px;
+    flex: 0 0 auto;
+}
+.tp-cards-row .tp-card-img,
+.tp-cards-row .tp-card-inner {
+    width: clamp(20px, 6vw, 36px);
+    height: clamp(28px, 8vw, 50px);
+}
+
+.tp-hand-rank {
+    font-size: clamp(8px, 2vw, 10px);
+    padding: 1px 4px;
+    flex: 0 0 auto;
+}
+
+/* Bet slot grows to fill remaining column space */
+.tp-bet-slot {
+    flex: 1 1 auto;
+    min-height: 48px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.tp-bet-info {
+    font-size: clamp(8px, 2vw, 10px);
+}
+
+/* History bar: single line, compact */
+.tp-history-bar,
+body.tp-game-page .tp-history-bar {
+    min-height: 28px;
+    padding: 3px 8px;
+    margin: 3px 6px;
+    font-size: clamp(9px, 2.2vw, 11px);
+}
+
+/* Footer compact, chips row wraps on small screens */
+.tp-footer,
+body.tp-game-page .tp-footer {
+    padding: 4px 6px 6px;
+    margin: 0 6px 4px;
+    gap: 4px;
+}
+
+.tp-chips-row,
+body.tp-game-page .tp-chips-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: clamp(3px, 1.2vw, 8px);
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 0;
+}
+.tp-chips-row::-webkit-scrollbar { display: none; }
+
+.tp-chip-btn,
+body.tp-game-page .tp-chip-btn {
+    flex: 1 1 0;
+    min-width: clamp(36px, 14vw, 52px);
+    height: clamp(36px, 11vw, 48px);
+    font-size: clamp(9px, 2.4vw, 12px);
+}
+
+.tp-bottom-actions,
+body.tp-game-page .tp-bottom-actions {
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 1.5vw, 10px);
+    flex-wrap: nowrap;
+}
+
+.tp-bal-p,
+body.tp-game-page .tp-bal-p {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 4px 10px;
+    font-size: clamp(10px, 2.6vw, 13px);
+}
+.tp-bal-val,
+body.tp-game-page .tp-bal-val {
+    font-size: clamp(10px, 2.6vw, 13px);
+}
+
+.tp-win-p,
+body.tp-game-page .tp-win-p {
+    flex: 0 0 auto;
+    min-width: 54px;
+    padding: 3px 8px;
+}
+.tp-win-label { font-size: clamp(7px, 1.8vw, 9px); }
+.tp-win-val   { font-size: clamp(11px, 3vw, 15px); }
+
+/* Repeat button kept compact */
+.tp-btn-repeat.tp-btn-repeat--icon,
+body.tp-game-page .tp-btn-repeat.tp-btn-repeat--icon {
+    flex: 0 0 auto;
+    width: clamp(32px, 10vw, 40px);
+    height: clamp(32px, 10vw, 40px);
+    min-width: clamp(32px, 10vw, 40px);
+    font-size: clamp(13px, 3.5vw, 16px);
+}
+
+/* ============================================================
+   WIN / RESULT POPUP MODAL
+   ============================================================ */
+.tp-win-modal {
+    position: absolute;
+    inset: 0;
+    z-index: 250;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+.tp-win-modal.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.25s ease, visibility 0s linear 0s;
+}
+
+.tp-win-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at center, rgba(255, 200, 90, 0.15) 0%, rgba(0, 0, 0, 0.72) 60%);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.tp-win-modal__confetti {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.tp-confetti-piece {
+    position: absolute;
+    top: -20px;
+    display: block;
+    border-radius: 2px;
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    animation-name: tp-confetti-fall;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+    will-change: transform, opacity;
+}
+
+@keyframes tp-confetti-fall {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, -10px, 0) rotate(0deg);
+    }
+    10% { opacity: 1; }
+    100% {
+        opacity: 0.9;
+        transform: translate3d(var(--tp-confetti-drift, 0), 110dvh, 0) rotate(var(--tp-confetti-rotate, 360deg));
+    }
+}
+
+.tp-win-modal__card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: min(86%, 320px);
+    padding: clamp(18px, 5vw, 28px) clamp(16px, 5vw, 24px) clamp(20px, 5vw, 30px);
+    border-radius: 22px;
+    text-align: center;
+    background:
+        radial-gradient(ellipse at top, rgba(255, 220, 120, 0.35), transparent 60%),
+        linear-gradient(160deg, #1a0f2e 0%, #2a1540 50%, #1a0f2e 100%);
+    border: 1.5px solid rgba(255, 215, 100, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 100, 0.25) inset,
+        0 0 60px rgba(255, 200, 90, 0.35),
+        0 30px 80px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.tp-win-modal.is-open .tp-win-modal__card {
+    animation: tp-win-pop-in 0.55s cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards;
+    opacity: 1;
+}
+
+@keyframes tp-win-pop-in {
+    0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+    60%  { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+/* Animated glowing border ring */
+.tp-win-modal__ring {
+    position: absolute;
+    inset: -2px;
+    border-radius: 22px;
+    pointer-events: none;
+    background: conic-gradient(
+        from 0deg,
+        rgba(255, 215, 100, 0.9),
+        rgba(255, 120, 200, 0.6),
+        rgba(110, 200, 255, 0.7),
+        rgba(120, 255, 190, 0.6),
+        rgba(255, 215, 100, 0.9)
+    );
+    filter: blur(6px);
+    opacity: 0.55;
+    z-index: -1;
+    animation: tp-ring-spin 6s linear infinite;
+}
+@keyframes tp-ring-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Sun rays behind */
+.tp-win-modal__rays {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180%;
+    height: 180%;
+    transform: translate(-50%, -50%);
+    background:
+        repeating-conic-gradient(
+            from 0deg,
+            rgba(255, 220, 120, 0.18) 0deg 6deg,
+            transparent 6deg 18deg
+        );
+    opacity: 0.0;
+    pointer-events: none;
+    z-index: 0;
+}
+.tp-win-modal.is-win .tp-win-modal__rays {
+    opacity: 0.9;
+    animation: tp-rays-rotate 12s linear infinite;
+}
+@keyframes tp-rays-rotate {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.tp-win-modal__crown {
+    position: relative;
+    z-index: 2;
+    width: clamp(44px, 11vw, 64px);
+    height: clamp(44px, 11vw, 64px);
+    margin: 0 auto clamp(6px, 1.5vw, 12px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(22px, 6vw, 32px);
+    color: #3c1e00;
+    background: radial-gradient(circle at 30% 25%, #fff5c7, #f2b733 55%, #a96c0a 100%);
+    box-shadow:
+        0 0 24px rgba(255, 200, 80, 0.8),
+        0 6px 16px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    animation: tp-crown-bob 1.8s ease-in-out infinite;
+}
+.tp-win-modal.is-lose .tp-win-modal__crown,
+.tp-win-modal.is-idle .tp-win-modal__crown {
+    background: radial-gradient(circle at 30% 25%, #e6e6e6, #7f7f7f 55%, #2a2a2a 100%);
+    color: #1a1a1a;
+    animation: none;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+@keyframes tp-crown-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+}
+
+.tp-win-modal__title {
+    position: relative;
+    z-index: 2;
+    font-family: 'Playfair Display', 'Georgia', serif;
+    font-size: clamp(20px, 6vw, 30px);
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    margin-bottom: clamp(4px, 1vw, 8px);
+    background: linear-gradient(180deg, #fff1b0 0%, #ffc24a 55%, #e08a1b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 8px rgba(255, 180, 60, 0.35);
+}
+.tp-win-modal.is-lose .tp-win-modal__title,
+.tp-win-modal.is-idle .tp-win-modal__title {
+    background: linear-gradient(180deg, #f0f0f0, #a0a0a0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.tp-win-modal__amount {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    margin: clamp(6px, 1.5vw, 12px) 0 clamp(8px, 2vw, 14px);
+    padding: clamp(8px, 2vw, 14px) clamp(14px, 4vw, 22px);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 220, 120, 0.12), rgba(255, 180, 60, 0.05));
+    border: 1px solid rgba(255, 215, 100, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+.tp-win-modal.is-lose .tp-win-modal__amount,
+.tp-win-modal.is-idle .tp-win-modal__amount {
+    display: none;
+}
+.tp-win-modal__currency {
+    font-size: clamp(14px, 4vw, 20px);
+    font-weight: 800;
+    color: #ffd870;
+}
+.tp-win-modal__amount-value {
+    font-size: clamp(22px, 7vw, 36px);
+    font-weight: 900;
+    line-height: 1;
+    color: #fff8d9;
+    text-shadow:
+        0 0 18px rgba(255, 200, 80, 0.7),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+    font-variant-numeric: tabular-nums;
+}
+
+.tp-win-modal__message {
+    position: relative;
+    z-index: 2;
+    font-size: clamp(11px, 3vw, 14px);
+    font-weight: 600;
+    color: #f5e9c9;
+    opacity: 0.92;
+    margin-top: 2px;
+}
+.tp-win-modal.is-lose .tp-win-modal__message,
+.tp-win-modal.is-idle .tp-win-modal__message {
+    color: #d8d8d8;
+}
+
+.tp-win-modal__avatar {
+    display: none;
+}
+
+/* Ensure the old .tp-winner-modal override doesn't clobber the new modal */
+.tp-win-modal { display: block !important; }
+

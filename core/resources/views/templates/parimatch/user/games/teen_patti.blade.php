@@ -29,30 +29,8 @@ document.body.classList.add('tp-game-page');
                 </div>
             </div>
 
-            <!-- ===== FANTASY DEALER LADY ===== -->
-            <div class="tp-dealer-section">
-                <div class="tp-dealer-avatar" id="tpDealerAvatar">
-                    <div class="tp-dealer-avatar-body">
-                        <img
-                            src="{{ asset('assets/templates/parimatch/images/dealer_avatar_body.png') }}"
-                            class="tp-dealer-avatar-img"
-                            alt="Dealer Avatar"
-                            loading="eager"
-                            decoding="async"
-                        >
-                        <div class="tp-dealer-hand-layer tp-dealer-hand-right" aria-hidden="true">
-                            <img
-                                src="{{ asset('assets/templates/parimatch/images/dealer_avatar_hand_right.png') }}"
-                                alt=""
-                                loading="eager"
-                                decoding="async"
-                            >
-                        </div>
-                    </div>
-                    <div class="dealer-glow-ring"></div>
-                    <div class="tp-dealer-name">Dealer Riya</div>
-                </div>
-                <div class="tp-dealer-status" id="tpDealerStatus">Waiting...</div>
+            <!-- ===== CARD DEALER ANCHOR (invisible origin for flying cards) ===== -->
+            <div class="tp-deal-anchor" id="tpDealerAvatar" aria-hidden="true">
                 <div class="tp-shuffle-deck" id="tpShuffleDeck">
                     <div class="tp-shuffle-card shuffle-1"></div>
                     <div class="tp-shuffle-card shuffle-2"></div>
@@ -176,15 +154,21 @@ document.body.classList.add('tp-game-page');
                 </div>
             </div>
 
-            <div class="tp-winner-modal" id="tpWinnerModal">
-                <div class="tp-avatar-pop">
-                    <div class="tp-avatar-pop-frame">
-                        <img src="" id="tpWinnerImg" alt="winner">
+            <!-- ===== WIN CELEBRATION MODAL ===== -->
+            <div class="tp-win-modal" id="tpWinnerModal" aria-hidden="true">
+                <div class="tp-win-modal__backdrop"></div>
+                <div class="tp-win-modal__confetti" id="tpWinConfetti" aria-hidden="true"></div>
+                <div class="tp-win-modal__card" role="dialog" aria-live="polite">
+                    <div class="tp-win-modal__rays" aria-hidden="true"></div>
+                    <div class="tp-win-modal__ring" aria-hidden="true"></div>
+                    <div class="tp-win-modal__crown" aria-hidden="true"><i class="fas fa-crown"></i></div>
+                    <div class="tp-win-modal__title" id="tpWinnerRoundTitle">@lang('You Win')</div>
+                    <div class="tp-win-modal__amount" id="tpWinAmount">
+                        <span class="tp-win-modal__currency">+</span>
+                        <span class="tp-win-modal__amount-value" id="tpWinAmountValue">0</span>
                     </div>
-                    <div class="tp-avatar-pop-sign">
-                        <div class="tp-pop-round" id="tpWinnerRoundTitle">@lang('Round Result')</div>
-                        <div class="tp-pop-message" id="tpWinnerStatusMsg">@lang('Winner Popup')</div>
-                    </div>
+                    <div class="tp-win-modal__message" id="tpWinnerStatusMsg">@lang('Congratulations!')</div>
+                    <img src="" id="tpWinnerImg" alt="" class="tp-win-modal__avatar" aria-hidden="true">
                 </div>
             </div>
 

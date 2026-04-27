@@ -843,7 +843,7 @@ function handleResult(result) {
                     $(".tp-timer-section").removeClass("hide-timer");
                     isDealingInProgress = false;
                     dealingStartedAt = 0;
-                }, 1400));
+                }, 2600));
 
             }, 1200));
 
@@ -1246,6 +1246,9 @@ function showWinnerModal(result) {
     var winnerLabel = SIDE_LABELS[winner] || "Winner";
     window.tpLastWinnerSide = winner;
 
+    var $modal = $("#tpWinnerModal");
+    if (!$modal.length) return;
+
     var winnerImage = avatarAsset(winner + "_character.png");
     $("#tpWinnerImg")
         .off("error")
@@ -1254,18 +1257,23 @@ function showWinnerModal(result) {
         })
         .attr("src", winnerImage);
 
-    $("#tpWinnerRoundTitle").text("Round #" + (result.round || currentRound) + " \u2022 " + winnerLabel + " Won!");
-
     var payouts = result && result.user_payouts ? result.user_payouts : {};
     var payoutEntry = payouts[String(currentUserId)] || null;
     var hasOwnBet = SIDES.some(function (side) { return safeAmount(latestMyBets[side]) > 0; });
 
+    // Reset classes
+    $modal.removeClass("is-win is-lose is-idle").attr("aria-hidden", "false");
+
     if (payoutEntry) {
         var payout = safeAmount(payoutEntry.payout);
+        $modal.addClass("is-win");
+        $("#tpWinnerRoundTitle").text("You Win!");
         $("#tpWinnerStatusMsg")
             .removeClass("lost")
-            .text("You won " + formatBetAmount(payout) + " on " + winnerLabel + "!");
+            .text("Congratulations! " + winnerLabel + " took the pot.");
         $("#tpWinVal").text(formatBetAmount(payout));
+        animateWinAmount(payout);
+        spawnWinConfetti();
         playTpSound("win.wav");
         if (typeof triggerFantasyWin === "function") triggerFantasyWin();
 
@@ -1275,22 +1283,90 @@ function showWinnerModal(result) {
             }, 350);
         }
     } else if (hasOwnBet) {
+        $modal.addClass("is-lose");
+        $("#tpWinnerRoundTitle").text(winnerLabel + " Wins");
         $("#tpWinnerStatusMsg")
             .addClass("lost")
-            .text(winnerLabel + " won this round. Better luck next round.");
+            .text("Better luck next round!");
+        $("#tpWinAmountValue").text("0");
         playTpSound("lose.wav");
     } else {
+        $modal.addClass("is-idle");
+        $("#tpWinnerRoundTitle").text(winnerLabel + " Wins");
         $("#tpWinnerStatusMsg")
             .addClass("lost")
-            .text("No bet placed. " + winnerLabel + " won this round.");
-        playTpSound("lose.wav");
+            .text("Round complete — place your bets next round!");
+        $("#tpWinAmountValue").text("0");
     }
 
-    closeWinnerModal();
+    // Reveal modal
+    $modal.addClass("is-open");
+}
+
+function animateWinAmount(finalAmount) {
+    var $val = $("#tpWinAmountValue");
+    if (!$val.length) {
+        return;
+    }
+    var duration = 900;
+    var start = performance && performance.now ? performance.now() : Date.now();
+    var from = 0;
+    var to = Math.max(0, Math.floor(safeAmount(finalAmount)));
+
+    function step(now) {
+        var elapsed = (now || Date.now()) - start;
+        var t = Math.min(1, elapsed / duration);
+        // easeOutCubic
+        var eased = 1 - Math.pow(1 - t, 3);
+        var current = Math.round(from + (to - from) * eased);
+        $val.text(formatBetAmount(current));
+        if (t < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            $val.text(formatBetAmount(to));
+        }
+    }
+    window.requestAnimationFrame(step);
+}
+
+function spawnWinConfetti() {
+    var host = document.getElementById("tpWinConfetti");
+    if (!host) return;
+    host.innerHTML = "";
+    var colors = ["#ffd84a", "#ff6bbf", "#5ee7ff", "#7cff7c", "#ffb347", "#b18cff"];
+    var count = 38;
+    for (var i = 0; i < count; i++) {
+        var piece = document.createElement("span");
+        piece.className = "tp-confetti-piece";
+        var left = Math.random() * 100;
+        var delay = Math.random() * 0.4;
+        var duration = 1.6 + Math.random() * 1.4;
+        var size = 6 + Math.random() * 6;
+        var rotate = Math.floor(Math.random() * 360);
+        var color = colors[Math.floor(Math.random() * colors.length)];
+        var drift = (Math.random() * 60 - 30).toFixed(1) + "vw";
+        piece.style.left = left + "%";
+        piece.style.width = size + "px";
+        piece.style.height = (size * 1.4) + "px";
+        piece.style.background = color;
+        piece.style.animationDelay = delay + "s";
+        piece.style.animationDuration = duration + "s";
+        piece.style.setProperty("--tp-confetti-rotate", rotate + "deg");
+        piece.style.setProperty("--tp-confetti-drift", drift);
+        host.appendChild(piece);
+    }
+    // Auto-clear after 3s
+    setTimeout(function () {
+        if (host) host.innerHTML = "";
+    }, 3200);
 }
 
 function closeWinnerModal() {
-    $("#tpWinnerModal").hide();
+    var $modal = $("#tpWinnerModal");
+    if (!$modal.length) return;
+    $modal.removeClass("is-open").attr("aria-hidden", "true");
+    var host = document.getElementById("tpWinConfetti");
+    if (host) host.innerHTML = "";
 }
 
 /* ===== BETTING FLOW ===== */
